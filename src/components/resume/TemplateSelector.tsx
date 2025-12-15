@@ -4,7 +4,12 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 import TemplatePreview from './TemplatePreview';
 
-export type TemplateType = 'modern' | 'classic' | 'minimal';
+export type TemplateType =
+  | 'executive'
+  | 'tech'
+  | 'corporate'
+  | 'creative'
+  | 'academic';
 
 import { ResumeData } from '@/types/resume.unified';
 
@@ -16,20 +21,20 @@ interface TemplateSelectorProps {
 
 const templates = [
   {
-    id: 'modern' as TemplateType,
-    name: 'Modern',
+    id: 'executive' as TemplateType,
+    name: 'Executive',
     description: 'Professional with gradient header',
     preview: '/api/placeholder/150/200',
   },
   {
-    id: 'classic' as TemplateType,
-    name: 'Classic',
+    id: 'tech' as TemplateType,
+    name: 'Tech',
     description: 'Traditional serif layout',
     preview: '/api/placeholder/150/200',
   },
   {
-    id: 'minimal' as TemplateType,
-    name: 'Minimal',
+    id: 'corporate' as TemplateType,
+    name: 'Corporate',
     description: 'Clean and simple design',
     preview: '/api/placeholder/150/200',
   },
@@ -60,9 +65,9 @@ export default function TemplateSelector({
                       {
                         personalInfo: {
                           name:
-                            template.id === 'modern'
+                            template.id === 'executive'
                               ? 'Alex'
-                              : template.id === 'classic'
+                              : template.id === 'tech'
                                 ? 'Sam'
                                 : 'Jordan',
                           email: 'email@example.com',

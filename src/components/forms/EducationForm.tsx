@@ -36,8 +36,7 @@ export default function EducationForm({
 }: EducationFormProps) {
   const form = useForm<EducationArrayData>({
     resolver: zodResolver(EducationArraySchema),
-    mode: 'onBlur',
-    reValidateMode: 'onChange',
+    mode: 'onChange',
     defaultValues: initialData || {
       education: [
         {
@@ -63,12 +62,12 @@ export default function EducationForm({
   // Update parent state when form values change (debounced for performance)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (form.formState.isDirty) {
+      if (form.formState.isDirty && form.formState.isValid) {
         onSubmit(watchedValues as EducationArrayData);
       }
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [watchedValues, form.formState.isDirty, onSubmit]);
+  }, [watchedValues, form.formState.isDirty, form.formState.isValid, onSubmit]);
 
   const addEducation = () => {
     append({

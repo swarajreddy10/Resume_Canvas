@@ -1,4 +1,6 @@
 import puppeteer from 'puppeteer';
+import { appConfig } from '@/lib/config/app.config';
+import { logger } from '@/lib/utils/logger';
 
 interface ResumeDataForPDF {
   title?: string;
@@ -441,15 +443,30 @@ export async function generatePDF(
   let browser;
 
   try {
+    const launchArgs = [
+      '--disable-dev-shm-usage',
+      '--disable-gpu',
+      '--disable-software-rasterizer',
+    ];
+
+    if (!appConfig.security.puppeteer.sandbox) {
+      launchArgs.push('--no-sandbox', '--disable-setuid-sandbox');
+    }
+
     browser = await puppeteer.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      args: launchArgs,
+      timeout: appConfig.security.puppeteer.timeout,
+      protocolTimeout: appConfig.security.puppeteer.protocolTimeout,
     });
 
     const page = await browser.newPage();
     const html = generateModernTemplateHTML(resumeData);
 
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, {
+      waitUntil: 'networkidle0',
+      timeout: 10000,
+    });
 
     const pdfBuffer = await page.pdf({
       format: 'A4',
@@ -460,11 +477,12 @@ export async function generatePDF(
         bottom: '0.25in',
         left: '0.25in',
       },
+      timeout: 15000,
     });
 
     return Buffer.from(pdfBuffer);
   } catch (error) {
-    console.error('Error generating PDF:', error);
+    logger.error('Error generating PDF', { error });
     throw new Error('Failed to generate PDF');
   } finally {
     if (browser) {

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import connectDB from '@/lib/db/connection';
 import { Resume } from '@/lib/db/models/Resume';
+import { sanitizeResumeData } from '@/lib/security/sanitize';
 
 export async function GET(
   request: NextRequest,
@@ -44,7 +45,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = sanitizeResumeData(await request.json());
     await connectDB();
 
     const { id } = await params;

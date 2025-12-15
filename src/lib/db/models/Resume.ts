@@ -2,18 +2,42 @@ import mongoose from 'mongoose';
 
 const resumeSchema = new mongoose.Schema(
   {
-    userEmail: { type: String, required: true },
-    title: { type: String, required: true },
-    slug: { type: String, required: true, unique: true },
+    userEmail: {
+      type: String,
+      required: true,
+      lowercase: true,
+      trim: true,
+      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    },
+    title: {
+      type: String,
+      required: true,
+      trim: true,
+      minlength: 1,
+      maxlength: 200,
+    },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: /^[a-z0-9-]+$/,
+    },
     personalInfo: {
-      name: String,
-      email: String,
-      phone: String,
-      address: String,
-      linkedin: String,
-      github: String,
-      website: String,
-      summary: String,
+      name: { type: String, trim: true, maxlength: 100 },
+      email: {
+        type: String,
+        lowercase: true,
+        trim: true,
+        match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      },
+      phone: { type: String, trim: true, maxlength: 20 },
+      address: { type: String, trim: true, maxlength: 200 },
+      linkedin: { type: String, trim: true, maxlength: 200 },
+      github: { type: String, trim: true, maxlength: 200 },
+      website: { type: String, trim: true, maxlength: 200 },
+      summary: { type: String, trim: true, maxlength: 1000 },
     },
     education: [
       {
@@ -37,38 +61,44 @@ const resumeSchema = new mongoose.Schema(
         bullets: [String],
       },
     ],
-    skills: [String],
+    skills: [{ type: String, trim: true, maxlength: 100 }],
     projects: [
       {
-        name: String,
-        description: String,
-        technologies: [String],
-        url: String,
-        startDate: String,
-        endDate: String,
+        name: { type: String, trim: true, maxlength: 100 },
+        description: { type: String, trim: true, maxlength: 1000 },
+        technologies: [{ type: String, trim: true, maxlength: 50 }],
+        url: { type: String, trim: true, maxlength: 200 },
+        startDate: { type: String, trim: true },
+        endDate: { type: String, trim: true },
       },
     ],
     certifications: [
       {
-        name: String,
-        issuer: String,
-        date: String,
-        url: String,
+        name: { type: String, trim: true, maxlength: 100 },
+        issuer: { type: String, trim: true, maxlength: 100 },
+        date: { type: String, trim: true },
+        url: { type: String, trim: true, maxlength: 200 },
       },
     ],
     templateId: {
       type: String,
-      enum: ['modern', 'classic', 'minimal'],
-      default: 'modern',
+      enum: ['executive', 'tech', 'corporate', 'creative', 'academic'],
+      default: 'tech',
     },
     isPublic: { type: Boolean, default: false },
-    atsScore: Number,
+    atsScore: { type: Number, min: 0, max: 100 },
     viewCount: { type: Number, default: 0 },
   },
   { timestamps: true }
 );
 
+// Indexes for performance
 resumeSchema.index({ slug: 1 }, { unique: true });
+resumeSchema.index({ userEmail: 1, updatedAt: -1 });
+resumeSchema.index({ userEmail: 1, isPublic: 1 });
+resumeSchema.index({ createdAt: 1 });
+resumeSchema.index({ atsScore: -1 });
+resumeSchema.index({ userEmail: 1, templateId: 1 });
 
 export const Resume =
   mongoose.models.Resume || mongoose.model('Resume', resumeSchema);
