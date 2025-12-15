@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { handleApiResponse, handleError } from '@/lib/utils/errorHandler';
 
 export const dynamic = 'force-dynamic';
 import { Button } from '@/components/ui/button';
@@ -42,12 +43,10 @@ export default function DashboardPage() {
   const fetchResumes = async () => {
     try {
       const response = await fetch('/api/resumes');
-      if (response.ok) {
-        const data = await response.json();
-        setResumes(data.resumes);
-      }
+      const data = await handleApiResponse<{ resumes: Resume[] }>(response);
+      setResumes(data.resumes);
     } catch (error) {
-      console.error('Failed to fetch resumes:', error);
+      handleError(error);
     } finally {
       setLoading(false);
     }
@@ -60,12 +59,10 @@ export default function DashboardPage() {
       const response = await fetch(`/api/resumes/${id}`, {
         method: 'DELETE',
       });
-
-      if (response.ok) {
-        setResumes(resumes.filter((resume) => resume._id !== id));
-      }
+      await handleApiResponse(response);
+      setResumes(resumes.filter((resume) => resume._id !== id));
     } catch (error) {
-      console.error('Failed to delete resume:', error);
+      handleError(error);
     }
   };
 

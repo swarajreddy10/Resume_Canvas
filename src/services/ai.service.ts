@@ -1,7 +1,9 @@
 import Groq from 'groq-sdk';
+import { appConfig } from '@/lib/config/app.config';
+import { logger } from '@/lib/utils/logger';
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: appConfig.ai.groqApiKey,
 });
 
 export interface BulletPointRequest {
@@ -33,8 +35,8 @@ Return only the bullet points, one per line, without bullet symbols.
 
     const completion = await groq.chat.completions.create({
       messages: [{ role: 'user', content: prompt }],
-      model: 'llama3-8b-8192',
-      temperature: 0.7,
+      model: appConfig.ai.model,
+      temperature: appConfig.ai.temperature,
       max_tokens: 500,
     });
 
@@ -45,7 +47,7 @@ Return only the bullet points, one per line, without bullet symbols.
       .map((line) => line.trim())
       .slice(0, 5);
   } catch (error) {
-    console.error('Error generating bullet points:', error);
+    logger.error('Error generating bullet points', { error });
     return [
       'Led cross-functional teams to deliver high-impact projects',
       'Improved system performance by implementing best practices',
@@ -80,9 +82,9 @@ Format as JSON:
 
     const completion = await groq.chat.completions.create({
       messages: [{ role: 'user', content: prompt }],
-      model: 'llama3-8b-8192',
+      model: appConfig.ai.model,
       temperature: 0.3,
-      max_tokens: 800,
+      max_tokens: appConfig.ai.maxTokens,
     });
 
     const content = completion.choices[0]?.message?.content || '';
@@ -108,7 +110,7 @@ Format as JSON:
       ],
     };
   } catch (error) {
-    console.error('Error optimizing resume:', error);
+    logger.error('Error optimizing resume', { error });
     return {
       atsScore: 75,
       suggestions: [

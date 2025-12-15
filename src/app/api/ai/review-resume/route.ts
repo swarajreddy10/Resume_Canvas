@@ -1,31 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
-import { rateLimit, aiRateLimit } from '@/lib/security/rateLimit';
+import { withAuth } from '@/lib/middleware/withAuth';
+import { withRateLimit } from '@/lib/middleware/withRateLimit';
+import { aiRateLimit } from '@/lib/security/rateLimit';
+import { sanitizeInput } from '@/lib/security/sanitize';
 import Groq from 'groq-sdk';
+import { appConfig } from '@/lib/config/app.config';
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: appConfig.ai.groqApiKey,
 });
 
-export async function POST(request: NextRequest) {
-  try {
-    // Rate limiting
-    const { success } = await rateLimit(request, aiRateLimit);
-    if (!success) {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded' },
-        { status: 429 }
-      );
-    }
+export const POST = withRateLimit(aiRateLimit)(
+  withAuth(async (request: NextRequest) => {
+    try {
+      const { resumeData } = sanitizeInput(await request.json());
 
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { resumeData } = await request.json();
-
-    const prompt = `
+      const prompt = `
     Review this resume and provide detailed feedback with a score out of 100.
     
     Resume Data:
@@ -58,40 +48,42 @@ export async function POST(request: NextRequest) {
     - Quantifiable achievements
     `;
 
-    const completion = await groq.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
-      model: 'llama3-8b-8192',
-      temperature: 0.3,
-    });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No response from AI');
-    }
-
-    try {
-      const review = JSON.parse(content);
-      return NextResponse.json(review);
-    } catch {
-      // Fallback if JSON parsing fails
-      return NextResponse.json({
-        score: 75,
-        suggestions: [
-          {
-            type: 'improvement',
-            section: 'General',
-            message: 'Resume analysis completed',
-            suggestion:
-              'Consider adding more quantifiable achievements and specific metrics to strengthen your resume.',
-          },
-        ],
+      const completion = await groq.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model: appConfig.ai.model,
+        temperature: 0.3,
+        max_tokens: appConfig.ai.maxTokens,
       });
+
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('No response from AI');
+      }
+
+      try {
+        const review = JSON.parse(content);
+        return NextResponse.json(review);
+      } catch {
+        // Fallback if JSON parsing fails
+        return NextResponse.json({
+          score: 75,
+          suggestions: [
+            {
+              type: 'improvement',
+              section: 'General',
+              message: 'Resume analysis completed',
+              suggestion:
+                'Consider adding more quantifiable achievements and specific metrics to strengthen your resume.',
+            },
+          ],
+        });
+      }
+    } catch (error) {
+      console.error('Error reviewing resume:', error);
+      return NextResponse.json(
+        { error: 'Failed to review resume' },
+        { status: 500 }
+      );
     }
-  } catch (error) {
-    console.error('Error reviewing resume:', error);
-    return NextResponse.json(
-      { error: 'Failed to review resume' },
-      { status: 500 }
-    );
-  }
-}
+  })
+);

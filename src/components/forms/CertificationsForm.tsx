@@ -32,8 +32,7 @@ export default function CertificationsForm({
 }: CertificationsFormProps) {
   const form = useForm({
     resolver: zodResolver(CertificationsArraySchema),
-    mode: 'onBlur',
-    reValidateMode: 'onChange',
+    mode: 'onChange',
     defaultValues: initialData || {
       certifications: [
         {
@@ -56,12 +55,12 @@ export default function CertificationsForm({
   // Update parent state when form values change (debounced for performance)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (form.formState.isDirty) {
+      if (form.formState.isDirty && form.formState.isValid) {
         onSubmit(watchedValues as CertificationsArrayData);
       }
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [watchedValues, form.formState.isDirty, onSubmit]);
+  }, [watchedValues, form.formState.isDirty, form.formState.isValid, onSubmit]);
 
   const addCertification = () => {
     append({

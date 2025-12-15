@@ -6,7 +6,15 @@ import { cn } from '@/lib/utils';
 import { navigationConfig, type NavItem } from '@/lib/config/navigation.config';
 import { useSidebar } from '@/hooks/useSidebar';
 
-function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
+function NavLink({
+  item,
+  collapsed,
+  onClick,
+}: {
+  item: NavItem;
+  collapsed: boolean;
+  onClick?: () => void;
+}) {
   const pathname = usePathname();
   const isActive =
     pathname === item.href ||
@@ -54,6 +62,7 @@ function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
       href={item.href}
       className={className}
       aria-current={isActive ? 'page' : undefined}
+      onClick={onClick}
     >
       {content}
       {collapsed && (
@@ -65,15 +74,29 @@ function NavLink({ item, collapsed }: { item: NavItem; collapsed: boolean }) {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({
+  mobile = false,
+  onNavigate,
+}: {
+  mobile?: boolean;
+  onNavigate?: () => void;
+}) {
   const { collapsed } = useSidebar();
+
+  const handleNavClick = () => {
+    if (mobile && onNavigate) {
+      onNavigate();
+    }
+  };
 
   return (
     <aside
       className={cn(
-        'fixed left-0 top-0 z-40 h-screen bg-white border-r border-gray-200 transition-all duration-300',
-        collapsed ? 'w-16' : 'w-64',
-        'hidden md:block'
+        'h-screen bg-white border-r border-gray-200 transition-all duration-300',
+        !mobile && 'fixed left-0 top-0 z-40',
+        !mobile && (collapsed ? 'w-16' : 'w-64'),
+        !mobile && 'hidden md:block',
+        mobile && 'w-full'
       )}
       aria-label="Sidebar navigation"
     >
@@ -113,7 +136,12 @@ export default function Sidebar() {
           {navigationConfig.map((group, idx) => (
             <div key={idx}>
               {group.items.map((item) => (
-                <NavLink key={item.href} item={item} collapsed={collapsed} />
+                <NavLink
+                  key={item.href}
+                  item={item}
+                  collapsed={mobile ? false : collapsed}
+                  onClick={handleNavClick}
+                />
               ))}
               {idx < navigationConfig.length - 1 && (
                 <div className="my-3 border-t border-gray-200" />

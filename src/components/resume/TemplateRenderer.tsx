@@ -1,6 +1,8 @@
-import ModernTemplate from './templates/ModernTemplate';
-import ClassicTemplate from './templates/ClassicTemplate';
-import MinimalTemplate from './templates/MinimalTemplate';
+import ExecutiveTemplate from './templates/ExecutiveTemplate';
+import TechTemplate from './templates/TechTemplate';
+import CorporateTemplate from './templates/CorporateTemplate';
+import CreativeTemplate from './templates/CreativeTemplate';
+import AcademicTemplate from './templates/AcademicTemplate';
 import { TemplateType } from './TemplateSelector';
 import { ResumeData } from '@/types/resume.unified';
 
@@ -14,12 +16,17 @@ export default function TemplateRenderer({
   data,
 }: TemplateRendererProps) {
   switch (template) {
-    case 'classic':
-      return <ClassicTemplate data={data} />;
-    case 'minimal':
-      return <MinimalTemplate data={data} />;
-    case 'modern':
+    case 'executive':
+      return <ExecutiveTemplate data={data} />;
+    case 'tech':
+      return <TechTemplate data={data} />;
+    case 'corporate':
+      return <CorporateTemplate data={data} />;
+    case 'creative':
+      return <CreativeTemplate data={data} />;
+    case 'academic':
+      return <AcademicTemplate data={data} />;
     default:
-      return <ModernTemplate data={data} />;
+      return <TechTemplate data={data} />;
   }
 }
