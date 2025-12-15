@@ -270,29 +270,42 @@ export default function ExperienceForm({
               <FormField
                 control={form.control}
                 name={`experiences.${experienceIndex}.description`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Brief description of your role and responsibilities..."
-                        {...field}
-                        className={
-                          form.formState.errors.experiences?.[experienceIndex]
-                            ?.description
-                            ? 'border-red-500 focus:border-red-500'
-                            : ''
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const charCount = field.value?.length || 0;
+                  const isValid = charCount >= 20;
+                  return (
+                    <FormItem>
+                      <FormLabel className="flex items-center justify-between">
+                        <span>Description *</span>
+                        <span
+                          className={`text-xs ${isValid ? 'text-green-600' : charCount > 0 ? 'text-red-500' : 'text-gray-500'}`}
+                        >
+                          {charCount}/20 min
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Describe your role and key responsibilities (minimum 20 characters). Example: Led development of user authentication system using React and Node.js..."
+                          {...field}
+                          className={
+                            form.formState.errors.experiences?.[experienceIndex]
+                              ?.description
+                              ? 'border-red-500 focus:border-red-500'
+                              : isValid
+                                ? 'border-green-500 focus:border-green-500'
+                                : ''
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <FormLabel>Key Achievements</FormLabel>
+                  <FormLabel>Key Achievements (min 20 chars each)</FormLabel>
                   <div className="flex gap-2">
                     <Button
                       type="button"
@@ -345,17 +358,43 @@ export default function ExperienceForm({
                     <FormField
                       control={form.control}
                       name={`experiences.${experienceIndex}.bullets.${bulletIndex}`}
-                      render={({ field }) => (
-                        <FormItem className="flex-1">
-                          <FormControl>
-                            <Input
-                              placeholder="• Achieved 25% increase in team productivity..."
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
+                      render={({ field }) => {
+                        const charCount = field.value?.length || 0;
+                        const isValid = charCount >= 20;
+                        return (
+                          <FormItem className="flex-1">
+                            <FormControl>
+                              <div className="relative">
+                                <Input
+                                  placeholder="• Achieved 25% increase in team productivity by implementing agile methodologies (min 20 chars)"
+                                  {...field}
+                                  className={
+                                    form.formState.errors.experiences?.[
+                                      experienceIndex
+                                    ]?.bullets?.[bulletIndex]
+                                      ? 'border-red-500 focus:border-red-500 pr-16'
+                                      : isValid
+                                        ? 'border-green-500 focus:border-green-500 pr-16'
+                                        : 'pr-16'
+                                  }
+                                />
+                                <span
+                                  className={`absolute right-2 top-1/2 transform -translate-y-1/2 text-xs ${
+                                    isValid
+                                      ? 'text-green-600'
+                                      : charCount > 0
+                                        ? 'text-red-500'
+                                        : 'text-gray-400'
+                                  }`}
+                                >
+                                  {charCount}/20
+                                </span>
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        );
+                      }}
                     />
                     {(
                       form.getValues(

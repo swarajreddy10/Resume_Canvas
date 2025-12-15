@@ -4,6 +4,9 @@ const nextConfig: NextConfig = {
   // Turbopack configuration (empty to silence warning)
   turbopack: {},
 
+  // Conditional standalone output for Docker
+  ...(process.env.DOCKER_BUILD === 'true' && { output: 'standalone' }),
+
   // Performance optimizations
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
