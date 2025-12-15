@@ -1,4 +1,4 @@
-interface RateLimitConfig {
+export interface RateLimitConfig {
   windowMs: number;
   maxRequests: number;
 }
@@ -10,27 +10,35 @@ interface RateLimitStore {
   };
 }
 
-class RateLimiter {
+export class RateLimiter {
   private store: RateLimitStore = {};
-  private config: RateLimitConfig;
+  public readonly config: RateLimitConfig;
 
   constructor(config: RateLimitConfig) {
     this.config = config;
   }
 
+  private getIdentifier(request: Request): string {
+    return (
+      request.headers.get('x-forwarded-for') ||
+      request.headers.get('x-real-ip') ||
+      'unknown'
+    );
+  }
+
   async checkLimit(
-    identifier: string
+    request: Request | string
   ): Promise<{ success: boolean; remaining: number; resetTime: number }> {
+    const identifier =
+      typeof request === 'string' ? request : this.getIdentifier(request);
     const now = Date.now();
 
-    // Clean up expired entries
     Object.keys(this.store).forEach((key) => {
       if (this.store[key].resetTime < now) {
         delete this.store[key];
       }
     });
 
-    // Get or create entry for this identifier
     if (!this.store[identifier] || this.store[identifier].resetTime < now) {
       this.store[identifier] = {
         count: 0,
@@ -58,30 +66,10 @@ class RateLimiter {
   }
 }
 
-// Rate limiters for different endpoints
-export const apiRateLimit = new RateLimiter({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 100,
-});
+import { appConfig } from '@/lib/config/app.config';
 
-export const aiRateLimit = new RateLimiter({
-  windowMs: 60 * 60 * 1000, // 1 hour
-  maxRequests: 50,
-});
-
-export const authRateLimit = new RateLimiter({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  maxRequests: 5,
-});
-
-export async function rateLimit(
-  request: Request,
-  limiter: RateLimiter = apiRateLimit
-): Promise<{ success: boolean; remaining: number; resetTime: number }> {
-  const ip =
-    request.headers.get('x-forwarded-for') ||
-    request.headers.get('x-real-ip') ||
-    'unknown';
-
-  return limiter.checkLimit(ip);
-}
+export const apiRateLimit = new RateLimiter(appConfig.security.rateLimits.api);
+export const aiRateLimit = new RateLimiter(appConfig.security.rateLimits.ai);
+export const authRateLimit = new RateLimiter(
+  appConfig.security.rateLimits.auth
+);

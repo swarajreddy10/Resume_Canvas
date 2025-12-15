@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   ExperienceArrayData,
   ExperienceArraySchema,
+  VALIDATION_LIMITS,
 } from '@/lib/validation/resume.schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
@@ -33,8 +34,7 @@ export default function ExperienceForm({
 }: ExperienceFormProps) {
   const form = useForm({
     resolver: zodResolver(ExperienceArraySchema),
-    mode: 'onBlur',
-    reValidateMode: 'onChange',
+    mode: 'onChange',
     defaultValues: initialData || {
       experiences: [
         {
@@ -61,7 +61,7 @@ export default function ExperienceForm({
     const subscription = form.watch((value) => {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        if (form.formState.isDirty) {
+        if (form.formState.isDirty && form.formState.isValid) {
           onSubmit(value as ExperienceArrayData);
         }
       }, 300);
@@ -272,28 +272,27 @@ export default function ExperienceForm({
                 name={`experiences.${experienceIndex}.description`}
                 render={({ field }) => {
                   const charCount = field.value?.length || 0;
-                  const isValid = charCount >= 20;
+                  const hasError =
+                    charCount > 0 &&
+                    charCount < VALIDATION_LIMITS.description.min;
                   return (
                     <FormItem>
                       <FormLabel className="flex items-center justify-between">
                         <span>Description *</span>
-                        <span
-                          className={`text-xs ${isValid ? 'text-green-600' : charCount > 0 ? 'text-red-500' : 'text-gray-500'}`}
-                        >
-                          {charCount}/20 min
-                        </span>
+                        {hasError && (
+                          <span className="text-xs text-red-500">
+                            {charCount}/{VALIDATION_LIMITS.description.min} min
+                          </span>
+                        )}
                       </FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Describe your role and key responsibilities (minimum 20 characters). Example: Led development of user authentication system using React and Node.js..."
+                          placeholder={`Describe your role and key responsibilities (minimum ${VALIDATION_LIMITS.description.min} characters). Example: Led development of user authentication system using React and Node.js...`}
                           {...field}
                           className={
-                            form.formState.errors.experiences?.[experienceIndex]
-                              ?.description
+                            hasError
                               ? 'border-red-500 focus:border-red-500'
-                              : isValid
-                                ? 'border-green-500 focus:border-green-500'
-                                : ''
+                              : ''
                           }
                         />
                       </FormControl>
@@ -360,35 +359,27 @@ export default function ExperienceForm({
                       name={`experiences.${experienceIndex}.bullets.${bulletIndex}`}
                       render={({ field }) => {
                         const charCount = field.value?.length || 0;
-                        const isValid = charCount >= 20;
+                        const hasError =
+                          charCount > 0 &&
+                          charCount < VALIDATION_LIMITS.bullet.min;
                         return (
                           <FormItem className="flex-1">
                             <FormControl>
                               <div className="relative">
                                 <Input
-                                  placeholder="• Achieved 25% increase in team productivity by implementing agile methodologies (min 20 chars)"
+                                  placeholder={`• Achieved 25% increase in team productivity by implementing agile methodologies (min ${VALIDATION_LIMITS.bullet.min} chars)`}
                                   {...field}
                                   className={
-                                    form.formState.errors.experiences?.[
-                                      experienceIndex
-                                    ]?.bullets?.[bulletIndex]
+                                    hasError
                                       ? 'border-red-500 focus:border-red-500 pr-16'
-                                      : isValid
-                                        ? 'border-green-500 focus:border-green-500 pr-16'
-                                        : 'pr-16'
+                                      : 'pr-16'
                                   }
                                 />
-                                <span
-                                  className={`absolute right-2 top-1/2 transform -translate-y-1/2 text-xs ${
-                                    isValid
-                                      ? 'text-green-600'
-                                      : charCount > 0
-                                        ? 'text-red-500'
-                                        : 'text-gray-400'
-                                  }`}
-                                >
-                                  {charCount}/20
-                                </span>
+                                {hasError && (
+                                  <span className="absolute right-2 top-1/2 transform -translate-y-1/2 text-xs text-red-500">
+                                    {charCount}/{VALIDATION_LIMITS.bullet.min}
+                                  </span>
+                                )}
                               </div>
                             </FormControl>
                             <FormMessage />

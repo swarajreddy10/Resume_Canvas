@@ -79,7 +79,7 @@ export default function ResumeBuilderPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
-    useState<TemplateType>('modern');
+    useState<TemplateType>('tech');
   const [isPublic, setIsPublic] = useState(false);
   const [viewCount] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
@@ -400,21 +400,29 @@ export default function ResumeBuilderPage() {
     ]
   );
 
-  // Auto-save functionality for drafts
-  const autoSave = useCallback(() => {
-    if (hasUnsavedChanges && (resumeData.personalInfo?.name || resumeId)) {
-      const timeoutId = setTimeout(() => {
-        saveResume(true); // Save as draft
-      }, 2000); // Auto-save after 2 seconds of inactivity
-      return () => clearTimeout(timeoutId);
-    }
-  }, [hasUnsavedChanges, resumeData.personalInfo?.name, resumeId, saveResume]);
+  // Auto-save with proper debounce
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Trigger auto-save when data changes
   useEffect(() => {
-    const cleanup = autoSave();
-    return cleanup;
-  }, [autoSave]);
+    // Clear existing timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+
+    // Only auto-save if there are unsaved changes and we have data
+    // Forms already validate before submitting, so we only receive valid data
+    if (hasUnsavedChanges && (resumeData.personalInfo?.name || resumeId)) {
+      autoSaveTimeoutRef.current = setTimeout(() => {
+        saveResume(true); // Save as draft
+      }, 3000); // Auto-save after 3 seconds of inactivity
+    }
+
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, [hasUnsavedChanges, resumeData, resumeId, saveResume]);
 
   const downloadPDF = async () => {
     if (!resumeId) return;
@@ -499,24 +507,14 @@ export default function ResumeBuilderPage() {
             </div>
             <div className="space-x-2">
               <Button
-                variant="outline"
-                onClick={() => saveResume(true)}
-                disabled={saving}
-              >
-                {saving ? 'Saving...' : 'Save Draft'}
-              </Button>
-              <Button
                 onClick={() => saveResume(false)}
                 disabled={saving || hasValidationErrors}
-                className={
-                  hasValidationErrors ? 'opacity-50 cursor-not-allowed' : ''
-                }
               >
                 {saving
-                  ? 'Saving...'
+                  ? 'Publishing...'
                   : hasValidationErrors
                     ? 'Fix Errors to Publish'
-                    : 'Save & Publish'}
+                    : 'Publish Resume'}
               </Button>
               {resumeId && (
                 <ShareButton

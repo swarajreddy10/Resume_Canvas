@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth/config';
 import connectDB from '@/lib/db/connection';
 import { Resume } from '@/lib/db/models/Resume';
 import { generateSlug } from '@/lib/utils/slug';
+import { sanitizeResumeData } from '@/lib/security/sanitize';
+import { resumeCache } from '@/lib/cache/memory-cache';
 
 export async function GET() {
   try {
@@ -11,11 +13,18 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const cacheKey = `resumes:${session.user.email}`;
+    const cached = resumeCache.get(cacheKey);
+    if (cached) {
+      return NextResponse.json({ resumes: cached });
+    }
+
     await connectDB();
     const resumes = await Resume.find({ userEmail: session.user.email }).sort({
       updatedAt: -1,
     });
 
+    resumeCache.set(cacheKey, resumes);
     return NextResponse.json({ resumes });
   } catch (error) {
     console.error('Error fetching resumes:', error);
@@ -33,13 +42,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const body = await request.json();
+    const body = sanitizeResumeData(await request.json());
     await connectDB();
 
     let slug = generateSlug(body.title);
     let counter = 1;
 
-    // Handle slug conflicts
     while (await Resume.findOne({ slug, userEmail: session.user.email })) {
       slug = `${generateSlug(body.title)}-${counter}`;
       counter++;

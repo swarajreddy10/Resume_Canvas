@@ -1,27 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
+import { withAuth } from '@/lib/middleware/withAuth';
+import { withRateLimit } from '@/lib/middleware/withRateLimit';
+import { aiRateLimit } from '@/lib/security/rateLimit';
+import { sanitizeInput } from '@/lib/security/sanitize';
+import { appConfig } from '@/lib/config/app.config';
+import { logger } from '@/lib/utils/logger';
 import Groq from 'groq-sdk';
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: appConfig.ai.groqApiKey,
 });
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { resumeData, jobTitle, companyName, jobDescription } =
-      (await request.json()) as {
+export const POST = withRateLimit(aiRateLimit)(
+  withAuth(async (request: NextRequest) => {
+    try {
+      const body = sanitizeInput(await request.json());
+      const { resumeData, jobTitle, companyName, jobDescription } = body as {
         resumeData: Record<string, unknown>;
         jobTitle: string;
         companyName: string;
         jobDescription?: string;
       };
 
-    const prompt = `
+      const prompt = `
     Generate a professional cover letter based on the resume data and job information.
     
     Resume Information:
@@ -73,23 +74,25 @@ export async function POST(request: NextRequest) {
     - Signature line
     `;
 
-    const completion = await groq.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
-      model: 'llama3-8b-8192',
-      temperature: 0.7,
-    });
+      const completion = await groq.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model: appConfig.ai.model,
+        temperature: appConfig.ai.temperature,
+        max_tokens: appConfig.ai.maxTokens,
+      });
 
-    const coverLetter = completion.choices[0]?.message?.content;
-    if (!coverLetter) {
-      throw new Error('No response from AI');
+      const coverLetter = completion.choices[0]?.message?.content;
+      if (!coverLetter) {
+        throw new Error('No response from AI');
+      }
+
+      return NextResponse.json({ coverLetter });
+    } catch (error) {
+      logger.error('Error generating cover letter', { error });
+      return NextResponse.json(
+        { error: 'Failed to generate cover letter' },
+        { status: 500 }
+      );
     }
-
-    return NextResponse.json({ coverLetter });
-  } catch (error) {
-    console.error('Error generating cover letter:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate cover letter' },
-      { status: 500 }
-    );
-  }
-}
+  })
+);

@@ -6,6 +6,7 @@ import { Check } from 'lucide-react';
 import {
   PersonalInfoFormData,
   PersonalInfoSchema,
+  VALIDATION_LIMITS,
 } from '@/lib/validation/resume.schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useEffect } from 'react';
@@ -31,8 +32,7 @@ export default function PersonalInfoForm({
 }: PersonalInfoFormProps) {
   const form = useForm<PersonalInfoFormData>({
     resolver: zodResolver(PersonalInfoSchema),
-    mode: 'onBlur',
-    reValidateMode: 'onChange',
+    mode: 'onChange',
     defaultValues: {
       name: '',
       email: '',
@@ -57,13 +57,13 @@ export default function PersonalInfoForm({
   // Update parent state when form values change (debounced for performance)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      // Only submit if form has been touched and is valid
-      if (form.formState.isDirty) {
+      // Only submit if form is valid (no validation errors)
+      if (form.formState.isDirty && form.formState.isValid) {
         onSubmit(watchedValues as PersonalInfoFormData);
       }
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [watchedValues, form.formState.isDirty, onSubmit]);
+  }, [watchedValues, form.formState.isDirty, form.formState.isValid, onSubmit]);
 
   return (
     <Form {...form}>
@@ -246,24 +246,31 @@ export default function PersonalInfoForm({
         <FormField
           control={form.control}
           name="summary"
-          render={({ field }) => (
-            <FormItem>
-              <div className="flex justify-between items-center">
-                <FormLabel>Professional Summary *</FormLabel>
-                <span className="text-xs text-gray-500">
-                  {field.value?.length || 0}/500 characters
-                </span>
-              </div>
-              <FormControl>
-                <Textarea
-                  placeholder="Brief summary of your professional background and key achievements..."
-                  className={`min-h-[100px] ${form.formState.errors.summary ? 'border-red-500 focus:border-red-500' : ''}`}
-                  {...field}
-                />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
+          render={({ field }) => {
+            const charCount = field.value?.length || 0;
+            const hasError =
+              charCount > 0 && charCount < VALIDATION_LIMITS.summary.min;
+            return (
+              <FormItem>
+                <div className="flex justify-between items-center">
+                  <FormLabel>Professional Summary *</FormLabel>
+                  {hasError && (
+                    <span className="text-xs text-red-500">
+                      {charCount}/{VALIDATION_LIMITS.summary.min} min
+                    </span>
+                  )}
+                </div>
+                <FormControl>
+                  <Textarea
+                    placeholder={`Brief summary of your professional background and key achievements (minimum ${VALIDATION_LIMITS.summary.min} characters)...`}
+                    className={`min-h-[100px] ${hasError ? 'border-red-500 focus:border-red-500' : ''}`}
+                    {...field}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            );
+          }}
         />
       </div>
     </Form>
