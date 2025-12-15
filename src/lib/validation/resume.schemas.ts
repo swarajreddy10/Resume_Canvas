@@ -1,4 +1,12 @@
 import { z } from 'zod';
+import { fieldLimits } from '@/lib/config/limits.config';
+
+// Validation constants - Single source of truth
+export const VALIDATION_LIMITS = {
+  description: { min: 25, max: 500 },
+  summary: { min: 25, max: 1000 },
+  bullet: { min: 25, max: 200 },
+} as const;
 
 // Helper for optional URL validation
 const optionalUrl = z
@@ -36,8 +44,14 @@ const dateString = z.string().refine(
 export const PersonalInfoSchema = z.object({
   name: z
     .string()
-    .min(2, 'Name must be at least 2 characters')
-    .max(100, 'Name must be less than 100 characters')
+    .min(
+      fieldLimits.personalInfo.name.min,
+      'Name must be at least 2 characters'
+    )
+    .max(
+      fieldLimits.personalInfo.name.max,
+      'Name must be less than 100 characters'
+    )
     .regex(
       /^[a-zA-Z\s\-\.]+$/,
       'Name can only contain letters, spaces, hyphens, and periods'
@@ -46,7 +60,10 @@ export const PersonalInfoSchema = z.object({
     .string()
     .min(1, 'Email is required')
     .email('Please enter a valid email address')
-    .max(254, 'Email must be less than 254 characters'),
+    .max(
+      fieldLimits.personalInfo.email.max,
+      'Email must be less than 254 characters'
+    ),
   phone: z
     .string()
     .min(1, 'Phone number is required')
@@ -61,8 +78,14 @@ export const PersonalInfoSchema = z.object({
   website: optionalUrl,
   summary: z
     .string()
-    .min(50, 'Summary must be at least 50 characters')
-    .max(500, 'Summary must be less than 500 characters'),
+    .min(
+      VALIDATION_LIMITS.summary.min,
+      `Summary must be at least ${VALIDATION_LIMITS.summary.min} characters`
+    )
+    .max(
+      VALIDATION_LIMITS.summary.max,
+      `Summary must be less than ${VALIDATION_LIMITS.summary.max} characters`
+    ),
 });
 
 export const EducationSchema = z.object({
@@ -128,14 +151,26 @@ export const ExperienceSchema = z.object({
   }),
   description: z
     .string()
-    .min(20, 'Description must be at least 20 characters')
-    .max(500, 'Description must be less than 500 characters'),
+    .min(
+      VALIDATION_LIMITS.description.min,
+      `Description must be at least ${VALIDATION_LIMITS.description.min} characters`
+    )
+    .max(
+      VALIDATION_LIMITS.description.max,
+      `Description must be less than ${VALIDATION_LIMITS.description.max} characters`
+    ),
   bullets: z
     .array(
       z
         .string()
-        .min(20, 'Bullet must be at least 20 characters')
-        .max(200, 'Bullet must be less than 200 characters')
+        .min(
+          VALIDATION_LIMITS.bullet.min,
+          `Bullet must be at least ${VALIDATION_LIMITS.bullet.min} characters`
+        )
+        .max(
+          VALIDATION_LIMITS.bullet.max,
+          `Bullet must be less than ${VALIDATION_LIMITS.bullet.max} characters`
+        )
     )
     .min(2, 'At least 2 bullet points required')
     .max(5, 'Maximum 5 bullet points allowed')
@@ -149,8 +184,14 @@ export const ProjectSchema = z.object({
     .max(100, 'Project name must be less than 100 characters'),
   description: z
     .string()
-    .min(50, 'Description must be at least 50 characters')
-    .max(500, 'Description must be less than 500 characters'),
+    .min(
+      VALIDATION_LIMITS.description.min,
+      `Description must be at least ${VALIDATION_LIMITS.description.min} characters`
+    )
+    .max(
+      VALIDATION_LIMITS.description.max,
+      `Description must be less than ${VALIDATION_LIMITS.description.max} characters`
+    ),
   technologies: z
     .string()
     .min(5, 'At least one technology required')
@@ -185,7 +226,9 @@ export const ResumeSchema = z.object({
   education: z.array(EducationSchema).default([]),
   experience: z.array(ExperienceSchema).default([]),
   skills: z.array(z.string().max(50)).default([]),
-  templateId: z.enum(['modern', 'classic', 'minimal']).default('modern'),
+  templateId: z
+    .enum(['executive', 'tech', 'corporate', 'creative', 'academic'])
+    .default('tech'),
 });
 
 // Array schemas for forms

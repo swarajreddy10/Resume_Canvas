@@ -1,21 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
+import { withAuth } from '@/lib/middleware/withAuth';
+import { withRateLimit } from '@/lib/middleware/withRateLimit';
+import { aiRateLimit } from '@/lib/security/rateLimit';
+import { sanitizeInput } from '@/lib/security/sanitize';
+import { appConfig } from '@/lib/config/app.config';
+import { logger } from '@/lib/utils/logger';
 import Groq from 'groq-sdk';
 
 const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
+  apiKey: appConfig.ai.groqApiKey,
 });
 
-export async function POST(request: NextRequest) {
-  try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+export const POST = withRateLimit(aiRateLimit)(
+  withAuth(async (request: NextRequest) => {
+    try {
+      const { jobTitle, company } = sanitizeInput(await request.json());
 
-    const { jobTitle, company } = await request.json();
-
-    const prompt = `
+      const prompt = `
     Generate interview questions for a ${jobTitle} position at ${company || 'a company'}.
     
     Provide response in this JSON format:
@@ -40,51 +41,53 @@ export async function POST(request: NextRequest) {
     Mix difficulty levels appropriately for the role level.
     `;
 
-    const completion = await groq.chat.completions.create({
-      messages: [{ role: 'user', content: prompt }],
-      model: 'llama3-8b-8192',
-      temperature: 0.7,
-    });
-
-    const content = completion.choices[0]?.message?.content;
-    if (!content) {
-      throw new Error('No response from AI');
-    }
-
-    try {
-      const questions = JSON.parse(content);
-      return NextResponse.json(questions);
-    } catch {
-      return NextResponse.json({
-        questions: [
-          {
-            question: 'Tell me about yourself and your experience.',
-            category: 'behavioral',
-            difficulty: 'easy',
-            tips: [
-              'Keep it concise and relevant to the role',
-              'Focus on professional achievements',
-              "End with why you're interested in this position",
-            ],
-          },
-          {
-            question: 'Describe a challenging project you worked on.',
-            category: 'behavioral',
-            difficulty: 'medium',
-            tips: [
-              'Use the STAR method (Situation, Task, Action, Result)',
-              'Focus on your specific contributions',
-              'Highlight the positive outcome and lessons learned',
-            ],
-          },
-        ],
+      const completion = await groq.chat.completions.create({
+        messages: [{ role: 'user', content: prompt }],
+        model: appConfig.ai.model,
+        temperature: appConfig.ai.temperature,
+        max_tokens: appConfig.ai.maxTokens,
       });
+
+      const content = completion.choices[0]?.message?.content;
+      if (!content) {
+        throw new Error('No response from AI');
+      }
+
+      try {
+        const questions = JSON.parse(content);
+        return NextResponse.json(questions);
+      } catch {
+        return NextResponse.json({
+          questions: [
+            {
+              question: 'Tell me about yourself and your experience.',
+              category: 'behavioral',
+              difficulty: 'easy',
+              tips: [
+                'Keep it concise and relevant to the role',
+                'Focus on professional achievements',
+                "End with why you're interested in this position",
+              ],
+            },
+            {
+              question: 'Describe a challenging project you worked on.',
+              category: 'behavioral',
+              difficulty: 'medium',
+              tips: [
+                'Use the STAR method (Situation, Task, Action, Result)',
+                'Focus on your specific contributions',
+                'Highlight the positive outcome and lessons learned',
+              ],
+            },
+          ],
+        });
+      }
+    } catch (error) {
+      logger.error('Error generating interview questions', { error });
+      return NextResponse.json(
+        { error: 'Failed to generate questions' },
+        { status: 500 }
+      );
     }
-  } catch (error) {
-    console.error('Error generating interview questions:', error);
-    return NextResponse.json(
-      { error: 'Failed to generate questions' },
-      { status: 500 }
-    );
-  }
-}
+  })
+);

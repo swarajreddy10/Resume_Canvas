@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   ProjectsArrayData,
   ProjectsArraySchema,
+  VALIDATION_LIMITS,
 } from '@/lib/validation/resume.schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
@@ -33,8 +34,7 @@ export default function ProjectsForm({
 }: ProjectsFormProps) {
   const form = useForm({
     resolver: zodResolver(ProjectsArraySchema),
-    mode: 'onBlur',
-    reValidateMode: 'onChange',
+    mode: 'onChange',
     defaultValues: initialData || {
       projects: [
         {
@@ -59,12 +59,12 @@ export default function ProjectsForm({
   // Update parent state when form values change (debounced for performance)
   useEffect(() => {
     const timeoutId = setTimeout(() => {
-      if (form.formState.isDirty) {
+      if (form.formState.isDirty && form.formState.isValid) {
         onSubmit(watchedValues as ProjectsArrayData);
       }
     }, 300);
     return () => clearTimeout(timeoutId);
-  }, [watchedValues, form.formState.isDirty, onSubmit]);
+  }, [watchedValues, form.formState.isDirty, form.formState.isValid, onSubmit]);
 
   const addProject = () => {
     append({
@@ -168,16 +168,16 @@ export default function ProjectsForm({
                 name={`projects.${index}.technologies`}
                 render={({ field }) => {
                   const charCount = field.value?.length || 0;
-                  const isValid = charCount >= 5;
+                  const hasError = charCount > 0 && charCount < 5;
                   return (
                     <FormItem>
                       <FormLabel className="flex items-center justify-between">
                         <span>Technologies Used *</span>
-                        <span
-                          className={`text-xs ${isValid ? 'text-green-600' : charCount > 0 ? 'text-red-500' : 'text-gray-500'}`}
-                        >
-                          {charCount}/5 min
-                        </span>
+                        {hasError && (
+                          <span className="text-xs text-red-500">
+                            {charCount}/5 min
+                          </span>
+                        )}
                       </FormLabel>
                       <FormControl>
                         <Input
@@ -190,12 +190,9 @@ export default function ProjectsForm({
                           }
                           onChange={(e) => field.onChange(e.target.value)}
                           className={
-                            form.formState.errors.projects?.[index]
-                              ?.technologies
+                            hasError
                               ? 'border-red-500 focus:border-red-500'
-                              : isValid
-                                ? 'border-green-500 focus:border-green-500'
-                                : ''
+                              : ''
                           }
                         />
                       </FormControl>
@@ -210,27 +207,27 @@ export default function ProjectsForm({
                 name={`projects.${index}.description`}
                 render={({ field }) => {
                   const charCount = field.value?.length || 0;
-                  const isValid = charCount >= 50;
+                  const hasError =
+                    charCount > 0 &&
+                    charCount < VALIDATION_LIMITS.description.min;
                   return (
                     <FormItem>
                       <FormLabel className="flex items-center justify-between">
                         <span>Description *</span>
-                        <span
-                          className={`text-xs ${isValid ? 'text-green-600' : charCount > 0 ? 'text-red-500' : 'text-gray-500'}`}
-                        >
-                          {charCount}/50 min
-                        </span>
+                        {hasError && (
+                          <span className="text-xs text-red-500">
+                            {charCount}/{VALIDATION_LIMITS.description.min} min
+                          </span>
+                        )}
                       </FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="Detailed description of the project, your role, and key features (minimum 50 characters). Example: Built a full-stack e-commerce platform with React frontend and Node.js backend, featuring user authentication, payment processing, and inventory management..."
+                          placeholder={`Detailed description of the project, your role, and key features (minimum ${VALIDATION_LIMITS.description.min} characters). Example: Built a full-stack e-commerce platform with React frontend and Node.js backend...`}
                           {...field}
                           className={
-                            form.formState.errors.projects?.[index]?.description
+                            hasError
                               ? 'border-red-500 focus:border-red-500'
-                              : isValid
-                                ? 'border-green-500 focus:border-green-500'
-                                : ''
+                              : ''
                           }
                         />
                       </FormControl>
