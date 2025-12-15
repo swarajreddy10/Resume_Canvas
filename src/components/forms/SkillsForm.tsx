@@ -111,17 +111,45 @@ export default function SkillsForm({ initialData, onSubmit }: SkillsFormProps) {
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Add Skills</FormLabel>
-                <div className="flex gap-2">
-                  <FormControl>
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <FormControl>
+                      <Input
+                        placeholder="Type a skill and press Enter"
+                        {...field}
+                        onKeyPress={handleKeyPress}
+                      />
+                    </FormControl>
+                    <Button type="button" onClick={addSkill}>
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="text-xs text-gray-600">
+                    Or paste comma-separated skills:
                     <Input
-                      placeholder="Type a skill and press Enter"
-                      {...field}
-                      onKeyPress={handleKeyPress}
+                      placeholder="React, Node.js, Python, JavaScript, etc."
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          const value = (e.target as HTMLInputElement).value;
+                          if (value.trim()) {
+                            const newSkills = value
+                              .split(',')
+                              .map((s) => s.trim())
+                              .filter((s) => s && !skills.includes(s));
+                            if (newSkills.length > 0) {
+                              const updatedSkills = [...skills, ...newSkills];
+                              setSkills(updatedSkills);
+                              form.setValue('skills', updatedSkills);
+                              onSubmit({ skills: updatedSkills });
+                              (e.target as HTMLInputElement).value = '';
+                            }
+                          }
+                        }
+                      }}
+                      className="mt-1"
                     />
-                  </FormControl>
-                  <Button type="button" onClick={addSkill}>
-                    <Plus className="h-4 w-4" />
-                  </Button>
+                  </div>
                 </div>
                 <FormMessage />
               </FormItem>

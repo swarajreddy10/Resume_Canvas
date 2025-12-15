@@ -289,106 +289,132 @@ export default function ResumeBuilderPage() {
     checkValidationStatus();
   }, [checkValidationStatus]);
 
-  const saveResume = useCallback(async () => {
-    setSaving(true);
-    try {
-      // Check validation before saving
-      const isValid = checkValidationStatus();
-
-      if (!isValid) {
-        const errorSections = Object.keys(validationErrors);
-        showDetailedError(
-          'Cannot save resume - Please fix validation errors',
-          [`Errors found in: ${errorSections.join(', ')}`],
-          { duration: 8000 }
-        );
-        setSaving(false);
-        return;
-      }
-
-      // Show saving indicator
-      showInfo('Saving your resume...', { duration: 2000 });
-      const payload = {
-        title: resumeData.personalInfo?.name
-          ? `${resumeData.personalInfo.name}'s Resume`
-          : 'My Resume',
-        personalInfo: resumeData.personalInfo,
-        experience: resumeData.experience?.experiences || [],
-        education: resumeData.education?.education || [],
-        skills: resumeData.skills?.skills || [],
-        projects: resumeData.projects?.projects || [],
-        certifications: resumeData.certifications?.certifications || [],
-        templateId: selectedTemplate,
-      };
-
-      if (resumeId) {
-        // Update existing resume
-        const response = await fetch(`/api/resumes/${resumeId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-
-        if (response.ok) {
-          await response.json();
-          setLastSaved(new Date());
-          setHasUnsavedChanges(false);
-          showSuccess('Resume saved successfully!');
-          // Calculate ATS score
-          fetch(`/api/resumes/${resumeId}/ats-score`, { method: 'POST' });
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to save resume');
+  const saveResume = useCallback(
+    async (isDraft = false) => {
+      setSaving(true);
+      try {
+        // For final save, check validation
+        if (!isDraft) {
+          const isValid = checkValidationStatus();
+          if (!isValid) {
+            const errorSections = Object.keys(validationErrors);
+            showDetailedError(
+              'Cannot save resume - Please fix validation errors',
+              [`Errors found in: ${errorSections.join(', ')}`],
+              { duration: 8000 }
+            );
+            setSaving(false);
+            return;
+          }
         }
-      } else {
-        // Create new resume
-        const response = await fetch('/api/resumes', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
 
-        if (response.ok) {
-          const data = await response.json();
-          setResumeId(data.resume._id);
-          setLastSaved(new Date());
-          setHasUnsavedChanges(false);
-          showSuccess('Resume created successfully!');
-          // Calculate ATS score for new resume
-          fetch(`/api/resumes/${data.resume._id}/ats-score`, {
-            method: 'POST',
+        // Show saving indicator
+        showInfo(isDraft ? 'Saving draft...' : 'Saving your resume...', {
+          duration: 2000,
+        });
+        const payload = {
+          title: resumeData.personalInfo?.name
+            ? `${resumeData.personalInfo.name}'s Resume`
+            : 'My Resume',
+          personalInfo: resumeData.personalInfo,
+          experience: resumeData.experience?.experiences || [],
+          education: resumeData.education?.education || [],
+          skills: resumeData.skills?.skills || [],
+          projects: resumeData.projects?.projects || [],
+          certifications: resumeData.certifications?.certifications || [],
+          templateId: selectedTemplate,
+          isDraft,
+        };
+
+        if (resumeId) {
+          // Update existing resume
+          const response = await fetch(`/api/resumes/${resumeId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
           });
-        } else {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(errorData.error || 'Failed to create resume');
-        }
-      }
-    } catch (error) {
-      console.error('Failed to save resume:', error);
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : 'Failed to save resume. Please try again.';
-      showError(errorMessage);
-    } finally {
-      setSaving(false);
-    }
-  }, [
-    resumeId,
-    resumeData,
-    selectedTemplate,
-    validationErrors,
-    checkValidationStatus,
-  ]);
 
-  // Auto-save functionality (currently disabled to prevent conflicts with manual validation)
-  // const autoSave = useCallback(() => {
-  //   debouncedAutoSave(() => {
-  //     if (resumeData.personalInfo?.name) {
-  //       saveResume();
-  //     }
-  //   });
-  // }, [resumeData.personalInfo?.name, saveResume]);
+          if (response.ok) {
+            await response.json();
+            setLastSaved(new Date());
+            setHasUnsavedChanges(false);
+            showSuccess(
+              isDraft
+                ? 'Draft saved successfully!'
+                : 'Resume saved successfully!'
+            );
+            // Calculate ATS score only for final saves
+            if (!isDraft) {
+              fetch(`/api/resumes/${resumeId}/ats-score`, { method: 'POST' });
+            }
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to save resume');
+          }
+        } else {
+          // Create new resume
+          const response = await fetch('/api/resumes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            setResumeId(data.resume._id);
+            setLastSaved(new Date());
+            setHasUnsavedChanges(false);
+            showSuccess(
+              isDraft
+                ? 'Draft created successfully!'
+                : 'Resume created successfully!'
+            );
+            // Calculate ATS score only for final saves
+            if (!isDraft) {
+              fetch(`/api/resumes/${data.resume._id}/ats-score`, {
+                method: 'POST',
+              });
+            }
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || 'Failed to create resume');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to save resume:', error);
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'Failed to save resume. Please try again.';
+        showError(errorMessage);
+      } finally {
+        setSaving(false);
+      }
+    },
+    [
+      resumeId,
+      resumeData,
+      selectedTemplate,
+      validationErrors,
+      checkValidationStatus,
+    ]
+  );
+
+  // Auto-save functionality for drafts
+  const autoSave = useCallback(() => {
+    if (hasUnsavedChanges && (resumeData.personalInfo?.name || resumeId)) {
+      const timeoutId = setTimeout(() => {
+        saveResume(true); // Save as draft
+      }, 2000); // Auto-save after 2 seconds of inactivity
+      return () => clearTimeout(timeoutId);
+    }
+  }, [hasUnsavedChanges, resumeData.personalInfo?.name, resumeId, saveResume]);
+
+  // Trigger auto-save when data changes
+  useEffect(() => {
+    const cleanup = autoSave();
+    return cleanup;
+  }, [autoSave]);
 
   const downloadPDF = async () => {
     if (!resumeId) return;
@@ -414,7 +440,7 @@ export default function ResumeBuilderPage() {
     }
   };
 
-  // Update handlers to trigger auto-save
+  // Update handlers with immediate state persistence
   const handlePersonalInfoSubmit = (data: PersonalInfoFormData) => {
     setResumeData((prev) => ({ ...prev, personalInfo: data }));
     setHasUnsavedChanges(true);
@@ -427,6 +453,16 @@ export default function ResumeBuilderPage() {
 
   const handleEducationSubmit = (data: EducationArrayData) => {
     setResumeData((prev) => ({ ...prev, education: data }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleProjectsSubmit = (data: ProjectsArrayData) => {
+    setResumeData((prev) => ({ ...prev, projects: data }));
+    setHasUnsavedChanges(true);
+  };
+
+  const handleCertificationsSubmit = (data: CertificationsArrayData) => {
+    setResumeData((prev) => ({ ...prev, certifications: data }));
     setHasUnsavedChanges(true);
   };
 
@@ -464,7 +500,13 @@ export default function ResumeBuilderPage() {
             <div className="space-x-2">
               <Button
                 variant="outline"
-                onClick={saveResume}
+                onClick={() => saveResume(true)}
+                disabled={saving}
+              >
+                {saving ? 'Saving...' : 'Save Draft'}
+              </Button>
+              <Button
+                onClick={() => saveResume(false)}
                 disabled={saving || hasValidationErrors}
                 className={
                   hasValidationErrors ? 'opacity-50 cursor-not-allowed' : ''
@@ -473,8 +515,8 @@ export default function ResumeBuilderPage() {
                 {saving
                   ? 'Saving...'
                   : hasValidationErrors
-                    ? 'Fix Errors to Save'
-                    : 'Save Draft'}
+                    ? 'Fix Errors to Publish'
+                    : 'Save & Publish'}
               </Button>
               {resumeId && (
                 <ShareButton
@@ -494,6 +536,11 @@ export default function ResumeBuilderPage() {
               {lastSaved && (
                 <span className="text-xs text-gray-500">
                   Last saved: {lastSaved.toLocaleTimeString()}
+                </span>
+              )}
+              {hasUnsavedChanges && (
+                <span className="text-xs text-orange-600 font-medium">
+                  Unsaved changes
                 </span>
               )}
             </div>
@@ -580,10 +627,7 @@ export default function ResumeBuilderPage() {
                           }
                         : undefined
                     }
-                    onSubmit={(data) => {
-                      setResumeData((prev) => ({ ...prev, projects: data }));
-                      setHasUnsavedChanges(true);
-                    }}
+                    onSubmit={handleProjectsSubmit}
                   />
                 </TabsContent>
 
@@ -597,13 +641,7 @@ export default function ResumeBuilderPage() {
                           }
                         : undefined
                     }
-                    onSubmit={(data) => {
-                      setResumeData((prev) => ({
-                        ...prev,
-                        certifications: data,
-                      }));
-                      setHasUnsavedChanges(true);
-                    }}
+                    onSubmit={handleCertificationsSubmit}
                   />
                 </TabsContent>
               </Tabs>

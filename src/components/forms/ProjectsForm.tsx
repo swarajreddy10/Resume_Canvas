@@ -110,7 +110,9 @@ export default function ProjectsForm({
                           className={
                             form.formState.errors.projects?.[index]?.name
                               ? 'border-red-500 focus:border-red-500'
-                              : ''
+                              : field.value && field.value.length > 0
+                                ? 'border-green-500 focus:border-green-500'
+                                : ''
                           }
                         />
                       </FormControl>
@@ -164,45 +166,78 @@ export default function ProjectsForm({
               <FormField
                 control={form.control}
                 name={`projects.${index}.technologies`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Technologies Used</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="React, Node.js, MongoDB"
-                        {...field}
-                        className={
-                          form.formState.errors.projects?.[index]?.technologies
-                            ? 'border-red-500 focus:border-red-500'
-                            : ''
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const charCount = field.value?.length || 0;
+                  const isValid = charCount >= 5;
+                  return (
+                    <FormItem>
+                      <FormLabel className="flex items-center justify-between">
+                        <span>Technologies Used *</span>
+                        <span
+                          className={`text-xs ${isValid ? 'text-green-600' : charCount > 0 ? 'text-red-500' : 'text-gray-500'}`}
+                        >
+                          {charCount}/5 min
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="React, Node.js, MongoDB, Express.js (comma-separated, minimum 5 characters)"
+                          {...field}
+                          value={
+                            Array.isArray(field.value)
+                              ? field.value.join(', ')
+                              : field.value || ''
+                          }
+                          onChange={(e) => field.onChange(e.target.value)}
+                          className={
+                            form.formState.errors.projects?.[index]
+                              ?.technologies
+                              ? 'border-red-500 focus:border-red-500'
+                              : isValid
+                                ? 'border-green-500 focus:border-green-500'
+                                : ''
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
 
               <FormField
                 control={form.control}
                 name={`projects.${index}.description`}
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Description</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Brief description of the project and your role..."
-                        {...field}
-                        className={
-                          form.formState.errors.projects?.[index]?.description
-                            ? 'border-red-500 focus:border-red-500'
-                            : ''
-                        }
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const charCount = field.value?.length || 0;
+                  const isValid = charCount >= 50;
+                  return (
+                    <FormItem>
+                      <FormLabel className="flex items-center justify-between">
+                        <span>Description *</span>
+                        <span
+                          className={`text-xs ${isValid ? 'text-green-600' : charCount > 0 ? 'text-red-500' : 'text-gray-500'}`}
+                        >
+                          {charCount}/50 min
+                        </span>
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Detailed description of the project, your role, and key features (minimum 50 characters). Example: Built a full-stack e-commerce platform with React frontend and Node.js backend, featuring user authentication, payment processing, and inventory management..."
+                          {...field}
+                          className={
+                            form.formState.errors.projects?.[index]?.description
+                              ? 'border-red-500 focus:border-red-500'
+                              : isValid
+                                ? 'border-green-500 focus:border-green-500'
+                                : ''
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             </CardContent>
           </Card>
