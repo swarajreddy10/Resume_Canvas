@@ -68,7 +68,7 @@ export default function PWAInstallPrompt() {
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-2">
             <Smartphone className="h-5 w-5 text-blue-600" />
-            <CardTitle className="text-lg">Install CareerCanvas</CardTitle>
+            <CardTitle className="text-lg">Install ResumeCanvas</CardTitle>
           </div>
           <Button
             variant="ghost"

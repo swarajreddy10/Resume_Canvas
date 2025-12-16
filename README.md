@@ -1,8 +1,8 @@
-# 🎨 CareerCanvas - Paint Your Professional Masterpiece
+# 🎨 ResumeCanvas - Paint Your Professional Masterpiece
 
 <div align="center">
 
-![CareerCanvas Banner](https://img.shields.io/badge/CareerCanvas-AI%20Resume%20Builder-blue?style=for-the-badge&logo=briefcase)
+![ResumeCanvas Banner](https://img.shields.io/badge/ResumeCanvas-AI%20Resume%20Builder-blue?style=for-the-badge&logo=briefcase)
 
 **An Enterprise-Grade AI-Powered Resume Builder**
 
@@ -19,9 +19,9 @@ _Where careers are crafted, dreams are designed, and futures are painted with pr
 
 ---
 
-## 🌟 What is CareerCanvas?
+## 🌟 What is ResumeCanvas?
 
-**CareerCanvas** is not just another resume builder—it's your personal career architect, powered by cutting-edge AI technology. Like an artist with a blank canvas, you start with your raw experiences and skills, and CareerCanvas helps you paint a masterpiece that captures the attention of recruiters and passes through the toughest Applicant Tracking Systems (ATS).
+**ResumeCanvas** is not just another resume builder—it's your personal career architect, powered by cutting-edge AI technology. Like an artist with a blank canvas, you start with your raw experiences and skills, and ResumeCanvas helps you paint a masterpiece that captures the attention of recruiters and passes through the toughest Applicant Tracking Systems (ATS).
 
 ### 🎯 The Problem We Solve
 
@@ -34,7 +34,7 @@ In today's competitive job market:
 
 ### 💡 Our Solution
 
-CareerCanvas combines **AI intelligence**, **professional design**, and **enterprise-grade architecture** to deliver:
+ResumeCanvas combines **AI intelligence**, **professional design**, and **enterprise-grade architecture** to deliver:
 
 - ⚡ **10x faster** resume creation with AI-powered content generation
 - 🎯 **95%+ ATS compatibility** with intelligent keyword optimization
@@ -44,7 +44,7 @@ CareerCanvas combines **AI intelligence**, **professional design**, and **enterp
 
 ---
 
-## 🎪 Who Benefits from CareerCanvas?
+## 🎪 Who Benefits from ResumeCanvas?
 
 ### 👨‍🎓 Students & Fresh Graduates
 
@@ -181,7 +181,7 @@ All templates are:
 
 ### 🎯 Built with Enterprise Standards
 
-CareerCanvas follows **SOLID principles**, **Clean Architecture**, and **industry best practices** to ensure:
+ResumeCanvas follows **SOLID principles**, **Clean Architecture**, and **industry best practices** to ensure:
 
 - 🔒 **Type Safety** - 100% TypeScript with strict mode
 - 🧪 **Testability** - Comprehensive unit and integration tests
@@ -436,12 +436,12 @@ code .env.local  # If using VS Code
 
    - Choose: **M0 Sandbox (Free)**
    - Region: Select closest to you
-   - Cluster Name: `CareerCanvas`
+   - Cluster Name: `ResumeCanvas`
 
 3. **Setup Database Access**
 
    - Database Access → Add New User
-   - Username: `careercanvas_user`
+   - Username: `ResumeCanvas_user`
    - Password: Generate secure password
    - Role: `Read and write to any database`
 
@@ -455,10 +455,10 @@ code .env.local  # If using VS Code
    - Clusters → Connect → Connect your application
    - Copy connection string
    - Replace `<password>` with your database password
-   - Add database name: `/careercanvas`
+   - Add database name: `/ResumeCanvas`
 
 ```env
-MONGODB_URI=mongodb+srv://careercanvas_user:YOUR_PASSWORD@cluster0.xxxxx.mongodb.net/careercanvas?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://ResumeCanvas_user:YOUR_PASSWORD@cluster0.xxxxx.mongodb.net/ResumeCanvas?retryWrites=true&w=majority
 ```
 
 #### 3.3 Configure Google OAuth
@@ -466,7 +466,7 @@ MONGODB_URI=mongodb+srv://careercanvas_user:YOUR_PASSWORD@cluster0.xxxxx.mongodb
 1. **Create Google Cloud Project**
 
    - Visit: https://console.cloud.google.com
-   - Create New Project: `CareerCanvas`
+   - Create New Project: `ResumeCanvas`
 
 2. **Enable Google+ API**
 
@@ -478,11 +478,11 @@ MONGODB_URI=mongodb+srv://careercanvas_user:YOUR_PASSWORD@cluster0.xxxxx.mongodb
    - APIs & Services → Credentials
    - Create Credentials → OAuth 2.0 Client ID
    - Application Type: `Web application`
-   - Name: `CareerCanvas Auth`
+   - Name: `ResumeCanvas Auth`
 4. **Configure OAuth Consent Screen**
 
    - User Type: External
-   - App Name: `CareerCanvas`
+   - App Name: `ResumeCanvas`
    - Support Email: Your email
    - Authorized Domains: `localhost` (for development)
 
@@ -529,7 +529,7 @@ NEXTAUTH_URL=http://localhost:3000
 #### 3.6 Configure App Settings
 
 ```env
-NEXT_PUBLIC_APP_NAME=CareerCanvas
+NEXT_PUBLIC_APP_NAME=ResumeCanvas
 NEXT_PUBLIC_APP_TAGLINE="Paint Your Professional Masterpiece"
 ```
 
@@ -647,7 +647,7 @@ PORT=3001 yarn dev
 
 ## 🎓 Development Standards & Principles
 
-CareerCanvas is built following **enterprise-grade software development standards**:
+ResumeCanvas is built following **enterprise-grade software development standards**:
 
 ### 🏛️ SOLID Principles
 
@@ -764,7 +764,7 @@ User Click → NextAuth.js → Google OAuth → Callback
 
 ```bash
 git add .
-git commit -m "feat: initial CareerCanvas deployment"
+git commit -m "feat: initial ResumeCanvas deployment"
 git push origin main
 ```
 
@@ -857,7 +857,7 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ```
 MIT License
 
-Copyright (c) 2024 CareerCanvas
+Copyright (c) 2024 ResumeCanvas
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -895,7 +895,7 @@ copies or substantial portions of the Software.
 
 ### Get Help
 
-- 📧 **Email**: support@careercanvas.com
+- 📧 **Email**: support@ResumeCanvas.com
 - 💬 **Discord**: [Join our community](#)
 - 🐛 **Issues**: [GitHub Issues](https://github.com/yourusername/career_canvas/issues)
 - 📖 **Docs**: [Documentation](#documentation)
@@ -937,11 +937,11 @@ copies or substantial portions of the Software.
 
 ---
 
-## 💎 Why CareerCanvas Stands Out
+## 💎 Why ResumeCanvas Stands Out
 
 ### 🎨 Creative Excellence
 
-Like a master painter, CareerCanvas helps you create a masterpiece. Every stroke (feature) is intentional, every color (design choice) is purposeful, and every canvas (resume) tells a unique story.
+Like a master painter, ResumeCanvas helps you create a masterpiece. Every stroke (feature) is intentional, every color (design choice) is purposeful, and every canvas (resume) tells a unique story.
 
 ### 🏗️ Engineering Excellence
 
@@ -971,7 +971,7 @@ Built on modern, actively maintained technologies with strong community support 
 
 <div align="center">
 
-## 🎨 Paint Your Future with CareerCanvas
+## 🎨 Paint Your Future with ResumeCanvas
 
 **Every great career starts with a great resume.**
 
@@ -981,6 +981,6 @@ Built on modern, actively maintained technologies with strong community support 
 
 Made with ❤️ by developers who care about your career
 
-[⬆ Back to Top](#-careercanvas---paint-your-professional-masterpiece)
+[⬆ Back to Top](#-ResumeCanvas---paint-your-professional-masterpiece)
 
 </div>

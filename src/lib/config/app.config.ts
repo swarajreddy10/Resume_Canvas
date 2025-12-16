@@ -99,7 +99,7 @@ export const appConfig: AppConfig = {
   },
 
   app: {
-    name: process.env.NEXT_PUBLIC_APP_NAME || 'CareerCanvas',
+    name: process.env.NEXT_PUBLIC_APP_NAME || 'ResumeCanvas',
     tagline:
       process.env.NEXT_PUBLIC_APP_TAGLINE ||
       'Paint Your Professional Masterpiece',
