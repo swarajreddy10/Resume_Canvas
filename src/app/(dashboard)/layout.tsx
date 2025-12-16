@@ -55,7 +55,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </SheetContent>
               </Sheet>
               <span className="text-2xl font-black bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 bg-clip-text text-transparent tracking-tight">
-                CareerCanvas
+                ResumeCanvas
               </span>
             </div>
 
