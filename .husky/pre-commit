@@ -1,1 +1,1 @@
-npm test
+bunx lint-staged
