@@ -7,10 +7,18 @@ import { Badge } from '@/components/ui/badge';
 import { Sparkles, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
 
 interface ReviewSuggestion {
-  type: 'improvement' | 'warning' | 'error';
+  type: 'critical' | 'warning' | 'improvement' | 'info';
   section: string;
   message: string;
   suggestion: string;
+  impact?: 'high' | 'medium' | 'low';
+}
+
+interface ReviewResponse {
+  score: number;
+  overallAssessment?: string;
+  strengths?: string[];
+  suggestions: ReviewSuggestion[];
 }
 
 interface ResumeReviewerProps {
@@ -19,8 +27,7 @@ interface ResumeReviewerProps {
 
 export default function ResumeReviewer({ resumeData }: ResumeReviewerProps) {
   const [reviewing, setReviewing] = useState(false);
-  const [suggestions, setSuggestions] = useState<ReviewSuggestion[]>([]);
-  const [score, setScore] = useState<number | null>(null);
+  const [review, setReview] = useState<ReviewResponse | null>(null);
 
   const reviewResume = async () => {
     setReviewing(true);
@@ -33,8 +40,7 @@ export default function ResumeReviewer({ resumeData }: ResumeReviewerProps) {
 
       if (response.ok) {
         const data = await response.json();
-        setSuggestions(data.suggestions);
-        setScore(data.score);
+        setReview(data);
       }
     } catch (error) {
       console.error('Failed to review resume:', error);
@@ -45,28 +51,63 @@ export default function ResumeReviewer({ resumeData }: ResumeReviewerProps) {
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'improvement':
-        return <CheckCircle className="h-4 w-4 text-blue-600" />;
+      case 'critical':
+        return <XCircle className="h-5 w-5 text-red-600" />;
       case 'warning':
-        return <AlertCircle className="h-4 w-4 text-yellow-600" />;
-      case 'error':
-        return <XCircle className="h-4 w-4 text-red-600" />;
+        return <AlertCircle className="h-5 w-5 text-yellow-600" />;
+      case 'improvement':
+        return <CheckCircle className="h-5 w-5 text-blue-600" />;
+      case 'info':
+        return <CheckCircle className="h-5 w-5 text-gray-600" />;
       default:
-        return <CheckCircle className="h-4 w-4 text-gray-600" />;
+        return <CheckCircle className="h-5 w-5 text-gray-600" />;
     }
   };
 
   const getBadgeVariant = (type: string) => {
     switch (type) {
-      case 'improvement':
-        return 'default';
+      case 'critical':
+        return 'destructive';
       case 'warning':
         return 'secondary';
-      case 'error':
-        return 'destructive';
+      case 'improvement':
+        return 'default';
+      case 'info':
+        return 'outline';
       default:
         return 'outline';
     }
+  };
+
+  const getScoreColor = (score: number) => {
+    if (score >= 90) return 'text-green-600';
+    if (score >= 80) return 'text-blue-600';
+    if (score >= 70) return 'text-yellow-600';
+    if (score >= 60) return 'text-orange-600';
+    return 'text-red-600';
+  };
+
+  const getScoreLabel = (score: number) => {
+    if (score >= 90) return 'Exceptional';
+    if (score >= 80) return 'Strong';
+    if (score >= 70) return 'Good';
+    if (score >= 60) return 'Average';
+    if (score >= 50) return 'Below Average';
+    return 'Needs Major Improvement';
+  };
+
+  const getImpactBadge = (impact?: string) => {
+    if (!impact) return null;
+    const colors = {
+      high: 'bg-red-100 text-red-800 border-red-200',
+      medium: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+      low: 'bg-blue-100 text-blue-800 border-blue-200',
+    };
+    return (
+      <Badge className={`text-xs ${colors[impact as keyof typeof colors]}`}>
+        {impact.toUpperCase()} IMPACT
+      </Badge>
+    );
   };
 
   return (
@@ -78,12 +119,53 @@ export default function ResumeReviewer({ resumeData }: ResumeReviewerProps) {
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {score !== null && (
-          <div className="text-center p-4 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg">
-            <div className="text-3xl font-bold text-purple-600 mb-1">
-              {score}/100
+        {review && (
+          <div className="space-y-4">
+            {/* Score Display */}
+            <div className="text-center p-6 bg-gradient-to-r from-purple-50 to-blue-50 rounded-lg border-2 border-purple-100">
+              <div
+                className={`text-5xl font-bold mb-2 ${getScoreColor(review.score)}`}
+              >
+                {review.score}/100
+              </div>
+              <p className="text-lg font-semibold text-gray-700 mb-1">
+                {getScoreLabel(review.score)}
+              </p>
+              <p className="text-sm text-gray-600">Resume Quality Score</p>
             </div>
-            <p className="text-sm text-gray-600">Resume Quality Score</p>
+
+            {/* Overall Assessment */}
+            {review.overallAssessment && (
+              <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded">
+                <h4 className="font-semibold text-blue-900 mb-2">
+                  Overall Assessment
+                </h4>
+                <p className="text-sm text-blue-800">
+                  {review.overallAssessment}
+                </p>
+              </div>
+            )}
+
+            {/* Strengths */}
+            {review.strengths && review.strengths.length > 0 && (
+              <div className="p-4 bg-green-50 border-l-4 border-green-500 rounded">
+                <h4 className="font-semibold text-green-900 mb-2 flex items-center gap-2">
+                  <CheckCircle className="h-4 w-4" />
+                  Strengths
+                </h4>
+                <ul className="space-y-1">
+                  {review.strengths.map((strength, index) => (
+                    <li
+                      key={index}
+                      className="text-sm text-green-800 flex items-start gap-2"
+                    >
+                      <span className="text-green-600 mt-0.5">✓</span>
+                      <span>{strength}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
         )}
 
@@ -92,35 +174,59 @@ export default function ResumeReviewer({ resumeData }: ResumeReviewerProps) {
           disabled={reviewing}
           className="w-full bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700"
         >
-          {reviewing ? 'Analyzing...' : 'Get AI Review'}
+          {reviewing
+            ? 'Analyzing Resume...'
+            : review
+              ? 'Re-analyze Resume'
+              : 'Get Professional AI Review'}
         </Button>
 
-        {suggestions.length > 0 && (
+        {review && review.suggestions.length > 0 && (
           <div className="space-y-3">
-            <h4 className="font-semibold text-gray-900">Suggestions</h4>
-            {suggestions.map((suggestion, index) => (
-              <div key={index} className="border rounded-lg p-3">
-                <div className="flex items-start gap-3">
-                  {getIcon(suggestion.type)}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <Badge
-                        variant={getBadgeVariant(suggestion.type)}
-                        className="text-xs"
-                      >
-                        {suggestion.section}
-                      </Badge>
+            <h4 className="font-semibold text-gray-900 text-lg">
+              Areas for Improvement
+            </h4>
+            <p className="text-xs text-gray-600 mb-3">
+              Prioritized by impact on your job search success
+            </p>
+            {review.suggestions
+              .sort((a, b) => {
+                const impactOrder = { high: 0, medium: 1, low: 2 };
+                return (
+                  (impactOrder[a.impact as keyof typeof impactOrder] || 3) -
+                  (impactOrder[b.impact as keyof typeof impactOrder] || 3)
+                );
+              })
+              .map((suggestion, index) => (
+                <div
+                  key={index}
+                  className="border-2 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start gap-3">
+                    {getIcon(suggestion.type)}
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2 flex-wrap">
+                        <Badge
+                          variant={getBadgeVariant(suggestion.type)}
+                          className="text-xs font-semibold"
+                        >
+                          {suggestion.section}
+                        </Badge>
+                        {getImpactBadge(suggestion.impact)}
+                      </div>
+                      <p className="text-sm font-semibold text-gray-900 mb-2">
+                        {suggestion.message}
+                      </p>
+                      <div className="text-sm text-gray-700 bg-gray-50 p-3 rounded border-l-4 border-blue-400">
+                        <span className="font-semibold text-blue-700">
+                          💡 Action:
+                        </span>{' '}
+                        {suggestion.suggestion}
+                      </div>
                     </div>
-                    <p className="text-sm text-gray-700 mb-2">
-                      {suggestion.message}
-                    </p>
-                    <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded">
-                      💡 {suggestion.suggestion}
-                    </p>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
       </CardContent>
