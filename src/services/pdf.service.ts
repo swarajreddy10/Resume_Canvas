@@ -10,6 +10,7 @@ interface ResumeDataForPDF {
     email?: string;
     phone?: string;
     address?: string;
+    position?: string;
     summary?: string;
     linkedin?: string;
     github?: string;
@@ -50,7 +51,128 @@ interface ResumeDataForPDF {
   }>;
 }
 
-function generateModernTemplateHTML(data: ResumeDataForPDF): string {
+const safe = (val?: string) => val || '';
+const renderList = (items?: string[], className = '') =>
+  items?.length
+    ? `<ul class="${className}">${items
+        .filter(Boolean)
+        .map((item) => `<li>${item}</li>`)
+        .join('')}</ul>`
+    : '';
+
+function executiveTemplate(data: ResumeDataForPDF): string {
+  const { personalInfo, experience, education, skills, certifications } = data;
+  return `<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${safe(personalInfo?.name || 'Resume')}</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Georgia', serif; color: #0f172a; background: white; }
+      .container { display: grid; grid-template-columns: 1fr 2fr; width: 8.5in; min-height: 11in; margin: 0 auto; }
+      .sidebar { background: #0f172a; color: #e2e8f0; padding: 28px; }
+      .main { padding: 28px; background: white; }
+      h1 { font-size: 28px; font-weight: 800; letter-spacing: 0.4px; }
+      .label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: #cbd5e1; margin: 18px 0 10px; }
+      .pill { display: inline-block; background: #1e293b; padding: 6px 10px; border-radius: 10px; margin-bottom: 8px; font-size: 12px; }
+      .section { margin-bottom: 22px; page-break-inside: avoid; }
+      .section h2 { font-size: 14px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px; margin-bottom: 12px; }
+      .item { margin-bottom: 12px; }
+      .row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+      .title { font-size: 15px; font-weight: 700; }
+      .subtitle { font-size: 13px; color: #1d4ed8; font-weight: 600; }
+      .meta { font-size: 12px; color: #475569; }
+      .desc { font-size: 12px; color: #334155; margin: 6px 0; }
+      ul { padding-left: 18px; color: #cbd5e1; font-size: 12px; }
+      ul li { margin-bottom: 6px; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <aside class="sidebar">
+        ${
+          personalInfo?.position
+            ? `<div class="pill">${safe(personalInfo.position)}</div>`
+            : ''
+        }
+        <h1>${safe(personalInfo?.name || 'Your Name')}</h1>
+        <div class="section">
+          <div class="label">Contact</div>
+          ${safe(personalInfo?.email)}<br/>
+          ${safe(personalInfo?.phone)}<br/>
+          ${safe(personalInfo?.address)}<br/>
+          ${safe(personalInfo?.linkedin)}
+        </div>
+        ${
+          skills?.length
+            ? `<div class="section"><div class="label">Key Competencies</div>${renderList(skills)}</div>`
+            : ''
+        }
+        ${
+          certifications?.length
+            ? `<div class="section"><div class="label">Certifications</div>${renderList(
+                certifications.map(
+                  (c) =>
+                    `${safe(c.name)}${c.issuer ? ` — ${safe(c.issuer)}` : ''}`
+                )
+              )}</div>`
+            : ''
+        }
+      </aside>
+      <main class="main">
+        ${
+          personalInfo?.summary
+            ? `<div class="section"><h2>Profile</h2><p class="desc">${safe(personalInfo.summary)}</p></div>`
+            : ''
+        }
+        ${
+          experience?.length
+            ? `<div class="section"><h2>Experience</h2>${experience
+                .map(
+                  (exp) => `
+              <div class="item">
+                <div class="row">
+                  <div>
+                    <div class="title">${safe(exp.position)}</div>
+                    <div class="subtitle">${safe(exp.company)}</div>
+                  </div>
+                  <div class="meta">${safe(exp.startDate)} — ${safe(exp.endDate)}</div>
+                </div>
+                <div class="meta">${safe(exp.location)}</div>
+                ${exp.description ? `<div class="desc">${safe(exp.description)}</div>` : ''}
+                ${renderList(exp.bullets)}
+              </div>
+            `
+                )
+                .join('')}</div>`
+            : ''
+        }
+        ${
+          education?.length
+            ? `<div class="section"><h2>Education</h2>${education
+                .map(
+                  (edu) => `
+              <div class="item">
+                <div class="row">
+                  <div class="title">${safe(edu.degree)} in ${safe(edu.field)}</div>
+                  <div class="meta">${safe(edu.startDate)} — ${safe(edu.endDate)}</div>
+                </div>
+                <div class="subtitle">${safe(edu.school)}</div>
+                <div class="meta">${safe(edu.location)}${edu.gpa ? ` • GPA: ${safe(edu.gpa)}` : ''}</div>
+              </div>
+            `
+                )
+                .join('')}</div>`
+            : ''
+        }
+      </main>
+    </div>
+  </body>
+  </html>`;
+}
+
+function techTemplate(data: ResumeDataForPDF): string {
   const {
     personalInfo,
     experience,
@@ -59,382 +181,262 @@ function generateModernTemplateHTML(data: ResumeDataForPDF): string {
     projects,
     certifications,
   } = data;
-
-  return `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>${data.title || 'Resume'}</title>
-      <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { 
-          font-family: 'Arial', sans-serif;
-          line-height: 1.5;
-          color: #333;
-          background: white;
-        }
-        .resume-container {
-          width: 8.5in;
-          min-height: 11in;
-          margin: 0 auto;
-          background: white;
-        }
-        .header {
-          background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-          color: white;
-          padding: 2rem;
-        }
-        .header h1 {
-          font-size: 2.5rem;
-          font-weight: bold;
-          margin-bottom: 0.5rem;
-        }
-        .header .contact {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 1.5rem;
-          color: #dbeafe;
-          margin-bottom: 0.5rem;
-        }
-        .header .links {
-          display: flex;
-          flex-wrap: wrap;
-          gap: 1.5rem;
-          color: #bfdbfe;
-          font-size: 0.875rem;
-        }
-        .content {
-          padding: 2rem;
-        }
-        .section {
-          margin-bottom: 2rem;
-          page-break-inside: avoid;
-        }
-        .section-title {
-          font-size: 1.5rem;
-          font-weight: bold;
-          color: #111827;
-          margin-bottom: 1rem;
-          padding-bottom: 0.5rem;
-          border-bottom: 2px solid #2563eb;
-        }
-        .summary {
-          color: #374151;
-          line-height: 1.6;
-          text-align: justify;
-        }
-        .experience-item {
-          position: relative;
-          padding-left: 1.5rem;
-          border-left: 2px solid #dbeafe;
-          margin-bottom: 1.5rem;
-        }
-        .experience-item::before {
-          content: '';
-          position: absolute;
-          left: -8px;
-          top: 0;
-          width: 16px;
-          height: 16px;
-          background: #2563eb;
-          border-radius: 50%;
-        }
-        .job-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 0.5rem;
-        }
-        .job-title {
-          font-size: 1.25rem;
-          font-weight: 600;
-          color: #111827;
-        }
-        .company {
-          color: #2563eb;
-          font-weight: 500;
-          font-size: 1.125rem;
-        }
-        .date-badge {
-          background: #f3f4f6;
-          color: #4b5563;
-          font-weight: 500;
-          padding: 0.25rem 0.75rem;
-          border-radius: 0.25rem;
-          font-size: 0.875rem;
-        }
-        .job-description {
-          color: #374151;
-          margin-bottom: 0.75rem;
-          font-style: italic;
-        }
-        .bullets {
-          list-style: none;
-        }
-        .bullets li {
-          display: flex;
-          align-items: flex-start;
-          margin-bottom: 0.5rem;
-          color: #374151;
-        }
-        .bullets li::before {
-          content: '▸';
-          color: #2563eb;
-          margin-right: 0.5rem;
-          margin-top: 0.25rem;
-        }
-        .education-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 1rem;
-        }
-        .degree {
-          font-size: 1.125rem;
-          font-weight: 600;
-          color: #111827;
-        }
-        .school {
-          color: #2563eb;
-          font-weight: 500;
-        }
-        .field {
-          color: #4b5563;
-        }
-        .skills-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-          gap: 0.75rem;
-        }
-        .skill-item {
-          background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-          border: 1px solid #bfdbfe;
-          padding: 0.75rem 1rem;
-          border-radius: 0.5rem;
-          text-align: center;
-          color: #1e40af;
-          font-weight: 500;
-        }
-        .project-item {
-          border-left: 4px solid #dbeafe;
-          padding-left: 1rem;
-          margin-bottom: 1rem;
-        }
-        .project-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 0.5rem;
-        }
-        .project-name {
-          font-size: 1.125rem;
-          font-weight: 600;
-          color: #111827;
-        }
-        .project-tech {
-          color: #2563eb;
-          font-size: 0.875rem;
-          margin-bottom: 0.5rem;
-        }
-        .project-description {
-          color: #374151;
-          font-size: 0.875rem;
-        }
-        .cert-grid {
-          display: grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap: 1rem;
-        }
-        .cert-item {
-          background: #f9fafb;
-          padding: 1rem;
-          border-radius: 0.5rem;
-        }
-        .cert-name {
-          font-weight: 600;
-          color: #111827;
-        }
-        .cert-issuer {
-          color: #2563eb;
-          font-size: 0.875rem;
-        }
-        .cert-date {
-          color: #4b5563;
-          font-size: 0.875rem;
-        }
-        @media print {
-          .resume-container { margin: 0; }
-          .section { page-break-inside: avoid; }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="resume-container">
-        <!-- Header Section -->
-        <div class="header">
-          <h1>${personalInfo?.name || 'Your Name'}</h1>
-          <div class="contact">
-            ${personalInfo?.email ? `<span>${personalInfo.email}</span>` : ''}
-            ${personalInfo?.phone ? `<span>${personalInfo.phone}</span>` : ''}
-            ${personalInfo?.address ? `<span>${personalInfo.address}</span>` : ''}
-          </div>
-          ${
-            personalInfo?.linkedin ||
-            personalInfo?.github ||
-            personalInfo?.website
-              ? `
-          <div class="links">
-            ${personalInfo?.linkedin ? `<span>LinkedIn: ${personalInfo.linkedin.replace('https://', '')}</span>` : ''}
-            ${personalInfo?.github ? `<span>GitHub: ${personalInfo.github.replace('https://', '')}</span>` : ''}
-            ${personalInfo?.website ? `<span>Website: ${personalInfo.website.replace('https://', '')}</span>` : ''}
-          </div>
-          `
-              : ''
-          }
+  return `<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${safe(personalInfo?.name || 'Resume')}</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', sans-serif; color: #0f172a; background: white; }
+      .grid { display: grid; grid-template-columns: 2fr 1fr; width: 8.5in; min-height: 11in; margin: 0 auto; gap: 20px; padding: 20px; }
+      .header { grid-column: 1 / -1; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; }
+      h1 { font-size: 28px; font-weight: 800; letter-spacing: -0.3px; }
+      .meta { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; color: #334155; font-size: 12px; }
+      .section { margin-top: 14px; page-break-inside: avoid; }
+      .section h2 { font-size: 13px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; }
+      .item { margin-bottom: 12px; }
+      .row { display: flex; justify-content: space-between; gap: 8px; }
+      .title { font-size: 15px; font-weight: 700; }
+      .subtitle { font-size: 13px; color: #2563eb; font-weight: 600; }
+      .text { font-size: 12px; color: #475569; }
+      ul { padding-left: 16px; color: #334155; font-size: 12px; }
+      ul li { margin-bottom: 6px; }
+      .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid #dbeafe; background: #f8fafc; padding: 6px 10px; border-radius: 999px; font-size: 12px; color: #1d4ed8; margin: 4px 4px 0 0; }
+      .sidebar { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 14px; }
+    </style>
+  </head>
+  <body>
+    <div class="grid">
+      <header class="header">
+        <h1>${safe(personalInfo?.name || 'Your Name')}</h1>
+        <div class="meta">
+          ${personalInfo?.email ? `<span>${safe(personalInfo.email)}</span>` : ''}
+          ${personalInfo?.phone ? `<span>${safe(personalInfo.phone)}</span>` : ''}
+          ${personalInfo?.address ? `<span>${safe(personalInfo.address)}</span>` : ''}
+          ${personalInfo?.linkedin ? `<span>${safe(personalInfo.linkedin)}</span>` : ''}
+          ${personalInfo?.github ? `<span>${safe(personalInfo.github)}</span>` : ''}
         </div>
+        ${personalInfo?.summary ? `<p class="text" style="margin-top:8px;">${safe(personalInfo.summary)}</p>` : ''}
+      </header>
 
-        <div class="content">
-          <!-- Professional Summary -->
-          ${
-            personalInfo?.summary
-              ? `
-          <section class="section">
-            <h2 class="section-title">Professional Summary</h2>
-            <p class="summary">${personalInfo.summary}</p>
-          </section>
+      <main>
+        ${
+          experience?.length
+            ? `<div class="section"><h2>Experience</h2>${experience
+                .map(
+                  (exp) => `
+            <div class="item">
+              <div class="row">
+                <div>
+                  <div class="title">${safe(exp.position)}</div>
+                  <div class="subtitle">${safe(exp.company)}</div>
+                </div>
+                <div class="text">${safe(exp.startDate)} — ${safe(exp.endDate)}</div>
+              </div>
+              <div class="text">${safe(exp.location)}</div>
+              ${exp.description ? `<div class="text" style="margin:6px 0;">${safe(exp.description)}</div>` : ''}
+              ${renderList(exp.bullets)}
+            </div>
           `
-              : ''
-          }
+                )
+                .join('')}</div>`
+            : ''
+        }
 
-          <!-- Experience Section -->
-          ${
-            experience?.length
-              ? `
-          <section class="section">
-            <h2 class="section-title">Professional Experience</h2>
-            ${experience
+        ${
+          projects?.length
+            ? `<div class="section"><h2>Projects</h2>${projects
+                .map(
+                  (project) => `
+            <div class="item">
+              <div class="row">
+                <div class="title">${safe(project.name)}</div>
+                <div class="text">${safe(project.startDate)} — ${safe(project.endDate)}</div>
+              </div>
+              <div class="text" style="color:#1d4ed8;">${safe(project.technologies)}</div>
+              <div class="text">${safe(project.description)}</div>
+            </div>
+          `
+                )
+                .join('')}</div>`
+            : ''
+        }
+
+        ${
+          education?.length
+            ? `<div class="section"><h2>Education</h2>${education
+                .map(
+                  (edu) => `
+            <div class="item">
+              <div class="row">
+                <div class="title">${safe(edu.degree)} in ${safe(edu.field)}</div>
+                <div class="text">${safe(edu.startDate)} — ${safe(edu.endDate)}</div>
+              </div>
+              <div class="subtitle">${safe(edu.school)}</div>
+              <div class="text">${safe(edu.location)}${edu.gpa ? ` • GPA: ${safe(edu.gpa)}` : ''}</div>
+            </div>
+          `
+                )
+                .join('')}</div>`
+            : ''
+        }
+      </main>
+
+      <aside class="sidebar">
+        ${
+          skills?.length
+            ? `<div class="section" style="margin-top:0;"><h2>Skills</h2><div>${skills
+                .map((skill) => `<span class="pill">${safe(skill)}</span>`)
+                .join('')}</div></div>`
+            : ''
+        }
+        ${
+          certifications?.length
+            ? `<div class="section"><h2>Certifications</h2>${renderList(
+                certifications.map(
+                  (c) =>
+                    `${safe(c.name)}${c.issuer ? ` — ${safe(c.issuer)}` : ''}`
+                )
+              )}</div>`
+            : ''
+        }
+      </aside>
+    </div>
+  </body>
+  </html>`;
+}
+
+function standardTemplate(data: ResumeDataForPDF, accent = '#1d4ed8'): string {
+  const {
+    personalInfo,
+    experience,
+    education,
+    skills,
+    projects,
+    certifications,
+  } = data;
+  return `<!DOCTYPE html>
+  <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>${safe(personalInfo?.name || 'Resume')}</title>
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { font-family: 'Inter', sans-serif; color: #0f172a; background: white; }
+      .container { width: 8.5in; min-height: 11in; margin: 0 auto; padding: 26px; }
+      .header { border-bottom: 1px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 12px; }
+      h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.2px; color: #0f172a; }
+      .contact { display: flex; flex-wrap: wrap; gap: 10px; color: #334155; font-size: 12px; margin-top: 6px; }
+      .summary { font-size: 13px; color: #475569; margin-top: 10px; }
+      .section { margin-top: 16px; page-break-inside: avoid; }
+      .section h2 { font-size: 13px; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; color: #0f172a; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; }
+      .item { margin-bottom: 12px; }
+      .row { display: flex; justify-content: space-between; gap: 8px; }
+      .title { font-size: 15px; font-weight: 700; }
+      .subtitle { font-size: 13px; color: ${accent}; font-weight: 600; }
+      .text { font-size: 12px; color: #475569; }
+      ul { padding-left: 16px; color: #334155; font-size: 12px; }
+      ul li { margin-bottom: 6px; }
+      .badge { display: inline-block; padding: 5px 10px; border: 1px solid #e2e8f0; border-radius: 999px; font-size: 12px; color: ${accent}; background: #f8fafc; margin: 4px 4px 0 0; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <h1>${safe(personalInfo?.name || 'Your Name')}</h1>
+        <div class="contact">
+          ${personalInfo?.email ? `<span>${safe(personalInfo.email)}</span>` : ''}
+          ${personalInfo?.phone ? `<span>${safe(personalInfo.phone)}</span>` : ''}
+          ${personalInfo?.address ? `<span>${safe(personalInfo.address)}</span>` : ''}
+          ${personalInfo?.linkedin ? `<span>${safe(personalInfo.linkedin)}</span>` : ''}
+          ${personalInfo?.github ? `<span>${safe(personalInfo.github)}</span>` : ''}
+        </div>
+        ${personalInfo?.summary ? `<p class="summary">${safe(personalInfo.summary)}</p>` : ''}
+      </div>
+
+      ${
+        experience?.length
+          ? `<div class="section"><h2>Experience</h2>${experience
               .map(
                 (exp) => `
-            <div class="experience-item">
-              <div class="job-header">
-                <div>
-                  <h3 class="job-title">${exp.position || ''}</h3>
-                  <p class="company">${exp.company || ''} • ${exp.location || ''}</p>
-                </div>
-                <span class="date-badge">${exp.startDate || ''} - ${exp.endDate || ''}</span>
-              </div>
-              ${exp.description ? `<p class="job-description">${exp.description}</p>` : ''}
-              ${
-                exp.bullets?.length
-                  ? `
-              <ul class="bullets">
-                ${exp.bullets.map((bullet) => (bullet ? `<li>${bullet}</li>` : '')).join('')}
-              </ul>
-              `
-                  : ''
-              }
+        <div class="item">
+          <div class="row">
+            <div>
+              <div class="title">${safe(exp.position)}</div>
+              <div class="subtitle">${safe(exp.company)}</div>
             </div>
-            `
+            <div class="text">${safe(exp.startDate)} — ${safe(exp.endDate)}</div>
+          </div>
+          <div class="text">${safe(exp.location)}</div>
+          ${exp.description ? `<div class="text" style="margin:6px 0;">${safe(exp.description)}</div>` : ''}
+          ${renderList(exp.bullets)}
+        </div>
+      `
               )
-              .join('')}
-          </section>
-          `
-              : ''
-          }
+              .join('')}</div>`
+          : ''
+      }
 
-          <!-- Education Section -->
-          ${
-            education?.length
-              ? `
-          <section class="section">
-            <h2 class="section-title">Education</h2>
-            ${education
+      ${
+        education?.length
+          ? `<div class="section"><h2>Education</h2>${education
               .map(
                 (edu) => `
-            <div class="education-item">
-              <div>
-                <h3 class="degree">${edu.degree || ''}</h3>
-                <p class="school">${edu.school || ''}</p>
-                <p class="field">${edu.field || ''} • ${edu.location || ''}${edu.gpa ? ` • GPA: ${edu.gpa}` : ''}</p>
-              </div>
-              <span class="date-badge">${edu.startDate || ''} - ${edu.endDate || ''}</span>
-            </div>
-            `
+        <div class="item">
+          <div class="row">
+            <div class="title">${safe(edu.degree)} in ${safe(edu.field)}</div>
+            <div class="text">${safe(edu.startDate)} — ${safe(edu.endDate)}</div>
+          </div>
+          <div class="subtitle">${safe(edu.school)}</div>
+          <div class="text">${safe(edu.location)}${edu.gpa ? ` • GPA: ${safe(edu.gpa)}` : ''}</div>
+        </div>
+      `
               )
-              .join('')}
-          </section>
-          `
-              : ''
-          }
+              .join('')}</div>`
+          : ''
+      }
 
-          <!-- Skills Section -->
-          ${
-            skills?.length
-              ? `
-          <section class="section">
-            <h2 class="section-title">Technical Skills</h2>
-            <div class="skills-grid">
-              ${skills.map((skill) => `<div class="skill-item">${skill}</div>`).join('')}
-            </div>
-          </section>
-          `
-              : ''
-          }
+      ${
+        skills?.length
+          ? `<div class="section"><h2>Skills</h2><div>${skills
+              .map((skill) => `<span class="badge">${safe(skill)}</span>`)
+              .join('')}</div></div>`
+          : ''
+      }
 
-          <!-- Projects Section -->
-          ${
-            projects?.length
-              ? `
-          <section class="section">
-            <h2 class="section-title">Projects</h2>
-            ${projects
+      ${
+        projects?.length
+          ? `<div class="section"><h2>Projects</h2>${projects
               .map(
                 (project) => `
-            <div class="project-item">
-              <div class="project-header">
-                <h3 class="project-name">${project.name || ''}</h3>
-                <span class="date-badge">${project.startDate || ''} - ${project.endDate || ''}</span>
-              </div>
-              <p class="project-tech">${project.technologies || ''}</p>
-              <p class="project-description">${project.description || ''}</p>
-            </div>
-            `
-              )
-              .join('')}
-          </section>
-          `
-              : ''
-          }
-
-          <!-- Certifications Section -->
-          ${
-            certifications?.length
-              ? `
-          <section class="section">
-            <h2 class="section-title">Certifications</h2>
-            <div class="cert-grid">
-              ${certifications
-                .map(
-                  (cert) => `
-              <div class="cert-item">
-                <h3 class="cert-name">${cert.name || ''}</h3>
-                <p class="cert-issuer">${cert.issuer || ''}</p>
-                <p class="cert-date">${cert.date || ''}</p>
-              </div>
-              `
-                )
-                .join('')}
-            </div>
-          </section>
-          `
-              : ''
-          }
+        <div class="item">
+          <div class="row">
+            <div class="title">${safe(project.name)}</div>
+            <div class="text">${safe(project.startDate)} — ${safe(project.endDate)}</div>
+          </div>
+          <div class="text" style="color:${accent};">${safe(project.technologies)}</div>
+          <div class="text">${safe(project.description)}</div>
         </div>
-      </div>
-    </body>
-    </html>
-  `;
+      `
+              )
+              .join('')}</div>`
+          : ''
+      }
+
+      ${
+        certifications?.length
+          ? `<div class="section"><h2>Certifications</h2>${renderList(
+              certifications.map(
+                (c) =>
+                  `${safe(c.name)}${c.issuer ? ` — ${safe(c.issuer)}` : ''}`
+              )
+            )}</div>`
+          : ''
+      }
+    </div>
+  </body>
+  </html>`;
 }
 
 export async function generatePDF(
@@ -448,7 +450,6 @@ export async function generatePDF(
       '--disable-gpu',
       '--disable-software-rasterizer',
     ];
-
     if (!appConfig.security.puppeteer.sandbox) {
       launchArgs.push('--no-sandbox', '--disable-setuid-sandbox');
     }
@@ -461,12 +462,24 @@ export async function generatePDF(
     });
 
     const page = await browser.newPage();
-    const html = generateModernTemplateHTML(resumeData);
+    const templateId = resumeData.templateId || 'standard';
+    let html: string;
 
-    await page.setContent(html, {
-      waitUntil: 'networkidle0',
-      timeout: 10000,
-    });
+    if (templateId === 'executive') {
+      html = executiveTemplate(resumeData);
+    } else if (templateId === 'tech') {
+      html = techTemplate(resumeData);
+    } else if (templateId === 'corporate') {
+      html = standardTemplate(resumeData, '#1f2937');
+    } else if (templateId === 'creative') {
+      html = standardTemplate(resumeData, '#0f766e');
+    } else if (templateId === 'academic') {
+      html = standardTemplate(resumeData, '#0ea5e9');
+    } else {
+      html = standardTemplate(resumeData);
+    }
+
+    await page.setContent(html, { waitUntil: 'networkidle0', timeout: 10000 });
 
     const pdfBuffer = await page.pdf({
       format: 'A4',

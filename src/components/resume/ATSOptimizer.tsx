@@ -69,9 +69,26 @@ export default function ATSOptimizer({ resumeData }: ATSOptimizerProps) {
   };
 
   const getScoreLabel = (score: number) => {
-    if (score >= 80) return 'Excellent';
-    if (score >= 60) return 'Good';
-    return 'Needs Improvement';
+    if (score >= 90) return 'Exceptional - FAANG Ready';
+    if (score >= 80) return 'Excellent - Highly Competitive';
+    if (score >= 70) return 'Good - Solid Foundation';
+    if (score >= 60) return 'Average - Needs Work';
+    if (score >= 50) return 'Below Average - Significant Gaps';
+    return 'Poor - Major Overhaul Needed';
+  };
+
+  const getScoreDescription = (score: number) => {
+    if (score >= 90)
+      return 'Your resume will pass most ATS systems and catch recruiter attention.';
+    if (score >= 80)
+      return 'Strong resume that should perform well in ATS screening.';
+    if (score >= 70)
+      return 'Decent resume but could be more competitive with improvements.';
+    if (score >= 60)
+      return 'Your resume may pass basic ATS but needs enhancement for competitive roles.';
+    if (score >= 50)
+      return 'Likely to be filtered out by ATS. Significant improvements needed.';
+    return 'Will be rejected by most ATS systems. Requires complete restructuring.';
   };
 
   return (
@@ -110,41 +127,62 @@ export default function ATSOptimizer({ resumeData }: ATSOptimizerProps) {
         ) : (
           <div className="space-y-6">
             {/* ATS Score */}
-            <div className="text-center">
+            <div className="text-center p-6 bg-gradient-to-br from-blue-50 to-purple-50 rounded-lg border-2 border-blue-200">
               <div
-                className={`text-3xl font-bold ${getScoreColor(optimization.atsScore)}`}
+                className={`text-5xl font-bold mb-2 ${getScoreColor(optimization.atsScore)}`}
               >
                 {optimization.atsScore}/100
               </div>
-              <p className="text-sm text-gray-600 mb-2">
+              <p
+                className={`text-lg font-semibold mb-2 ${getScoreColor(optimization.atsScore)}`}
+              >
                 {getScoreLabel(optimization.atsScore)}
               </p>
-              <Progress value={optimization.atsScore} className="w-full h-2" />
+              <p className="text-sm text-gray-700 mb-3">
+                {getScoreDescription(optimization.atsScore)}
+              </p>
+              <Progress value={optimization.atsScore} className="w-full h-3" />
             </div>
 
             {/* Suggestions */}
-            <div>
-              <h4 className="font-semibold mb-3 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
-                Improvement Suggestions
+            <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+              <h4 className="font-semibold mb-3 flex items-center gap-2 text-yellow-900">
+                <TrendingUp className="h-5 w-5" />
+                Critical Improvements Needed
               </h4>
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {optimization.suggestions.map((suggestion, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm">
-                    <span className="text-blue-500 mt-1">•</span>
-                    <span>{suggestion}</span>
+                  <li
+                    key={index}
+                    className="flex items-start gap-3 text-sm bg-white p-3 rounded border border-yellow-200"
+                  >
+                    <span className="text-yellow-600 font-bold mt-0.5 text-lg">
+                      {index + 1}.
+                    </span>
+                    <span className="text-gray-800 leading-relaxed">
+                      {suggestion}
+                    </span>
                   </li>
                 ))}
               </ul>
             </div>
 
             {/* Keywords */}
-            <div>
-              <h4 className="font-semibold mb-3">Recommended Keywords</h4>
+            <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
+              <h4 className="font-semibold mb-2 text-green-900">
+                Missing Keywords to Add
+              </h4>
+              <p className="text-xs text-green-800 mb-3">
+                These industry-relevant keywords are missing or underutilized in
+                your resume. Adding them will improve ATS matching.
+              </p>
               <div className="flex flex-wrap gap-2">
                 {optimization.keywords.map((keyword) => (
-                  <Badge key={keyword} variant="secondary" className="text-xs">
-                    {keyword}
+                  <Badge
+                    key={keyword}
+                    className="text-xs bg-green-100 text-green-800 border border-green-300 hover:bg-green-200 cursor-pointer"
+                  >
+                    + {keyword}
                   </Badge>
                 ))}
               </div>

@@ -22,12 +22,26 @@ export async function GET(
       return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
     }
 
-    const pdfBuffer = await generatePDF(resume);
+    const urlTemplate = request.nextUrl.searchParams.get('templateId');
+    const resumeDoc = resume as {
+      templateId?: string;
+      toObject?: () => unknown;
+    };
+    const templateId = urlTemplate || resumeDoc.templateId || 'standard';
+
+    const resumeData = resumeDoc.toObject ? resumeDoc.toObject() : resume;
+    const pdfBuffer = await generatePDF({ ...resumeData, templateId });
+
+    const rawName =
+      (resumeData.personalInfo?.name as string | undefined) ||
+      (resumeData.title as string | undefined) ||
+      'resume';
+    const safeName = rawName.replace(/[^a-z0-9\- ]/gi, '').trim() || 'resume';
 
     return new NextResponse(pdfBuffer as BodyInit, {
       headers: {
         'Content-Type': 'application/pdf',
-        'Content-Disposition': `attachment; filename="${resume.title}.pdf"`,
+        'Content-Disposition': `attachment; filename="${safeName}.pdf"`,
       },
     });
   } catch (error) {
