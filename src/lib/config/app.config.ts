@@ -80,8 +80,8 @@ export const appConfig: AppConfig = {
 
   ai: {
     groqApiKey: validateEnv('GROQ_API_KEY'),
-    model: 'llama3-8b-8192',
-    maxTokens: 800,
+    model: 'llama-3.3-70b-versatile', // Latest powerful model for better analysis
+    maxTokens: 2000, // Increased for detailed feedback
     temperature: 0.7,
   },
 

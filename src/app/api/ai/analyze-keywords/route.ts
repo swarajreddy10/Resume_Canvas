@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import Groq from 'groq-sdk';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { aiRateLimit } from '@/lib/security/rateLimit';
@@ -6,17 +7,17 @@ import { sanitizeInput } from '@/lib/security/sanitize';
 import { logger } from '@/lib/utils/logger';
 import connectDB from '@/lib/db/connection';
 import { Resume } from '@/lib/db/models/Resume';
-// import Groq from 'groq-sdk';
+import { appConfig } from '@/lib/config/app.config';
 
-// const groq = new Groq({
-//   apiKey: process.env.GROQ_API_KEY,
-// });
+const groq = new Groq({
+  apiKey: appConfig.ai.groqApiKey,
+});
 
 export const POST = withRateLimit(aiRateLimit)(
   withAuth(async (request: NextRequest, { session }) => {
     try {
       const body = sanitizeInput(await request.json());
-      const { resumeId, resumeData, jobDescription, isFresher } = body;
+      const { resumeId, resumeData, jobDescription } = body;
 
       if (!jobDescription) {
         return NextResponse.json(
@@ -64,126 +65,124 @@ export const POST = withRateLimit(aiRateLimit)(
         resumeContent = resumeData;
       }
 
-      // Validate mandatory fields
-      const hasPersonalInfo =
-        resumeContent?.personalInfo?.name && resumeContent?.personalInfo?.email;
+      // Validate minimum content
       const hasExperience = (resumeContent?.experience?.length || 0) > 0;
       const hasSkills = (resumeContent?.skills?.length || 0) > 0;
       const hasEducation = (resumeContent?.education?.length || 0) > 0;
+      const hasSummary = Boolean(resumeContent?.personalInfo?.summary);
 
-      if (!hasPersonalInfo) {
+      const hasContent =
+        hasExperience || hasSkills || hasEducation || hasSummary;
+
+      if (!hasContent) {
         return NextResponse.json(
           {
             error:
-              'Please fill in your name and email in Personal Information section before analyzing keywords.',
+              'Please add some resume content (summary, skills, experience, or education) before analyzing keywords.',
           },
           { status: 400 }
         );
-      }
-
-      if (isFresher) {
-        // For freshers, require education and skills instead of experience
-        if (!hasEducation && !hasSkills) {
-          return NextResponse.json(
-            {
-              error:
-                'As a fresher, please add your education and skills before analyzing keywords.',
-            },
-            { status: 400 }
-          );
-        }
-      } else {
-        // For experienced candidates, require experience or skills
-        if (!hasExperience && !hasSkills) {
-          return NextResponse.json(
-            {
-              error:
-                'Please add at least your work experience or skills before analyzing keywords.',
-            },
-            { status: 400 }
-          );
-        }
       }
 
       const resumeText = `
     ${resumeContent?.personalInfo?.summary || ''}
     ${
-      resumeContent?.experience
-        ?.map(
-          (exp) =>
-            `${exp.position || ''} ${exp.company || ''} ${exp.description || ''} ${exp.bullets?.join(' ') || ''}`
-        )
-        .join(' ') || ''
+      Array.isArray(resumeContent?.experience)
+        ? resumeContent.experience
+            .map(
+              (exp) =>
+                `${exp.position || ''} ${exp.company || ''} ${exp.description || ''} ${Array.isArray(exp.bullets) ? exp.bullets.join(' ') : ''}`
+            )
+            .join(' ')
+        : ''
     }
     ${
-      resumeContent?.education
-        ?.map(
-          (edu) => `${edu.degree || ''} ${edu.field || ''} ${edu.school || ''}`
-        )
-        .join(' ') || ''
+      Array.isArray(resumeContent?.education)
+        ? resumeContent.education
+            .map(
+              (edu) =>
+                `${edu.degree || ''} ${edu.field || ''} ${edu.school || ''}`
+            )
+            .join(' ')
+        : ''
     }
-    ${resumeContent?.skills?.join(' ') || ''}
+    ${Array.isArray(resumeContent?.skills) ? resumeContent.skills.join(' ') : ''}
     ${
-      resumeContent?.projects
-        ?.map(
-          (proj) =>
-            `${proj.name || ''} ${proj.description || ''} ${proj.technologies || ''}`
-        )
-        .join(' ') || ''
+      Array.isArray(resumeContent?.projects)
+        ? resumeContent.projects
+            .map(
+              (proj) =>
+                `${proj.name || ''} ${proj.description || ''} ${proj.technologies || ''}`
+            )
+            .join(' ')
+        : ''
     }
     `.trim();
 
-      if (resumeText.length < 50) {
-        return NextResponse.json(
+      const prompt = `
+You are an ATS assistant. Compare the job description with the resume and return JSON only.
+Job Description:
+${jobDescription}
+
+Resume:
+${resumeText}
+
+Respond in this JSON shape:
+{
+  "matchScore": number (0-100),
+  "keywords": [
+    { "keyword": "string", "present": boolean, "importance": "high|medium|low" }
+  ]
+}
+
+Rules:
+- Focus on technical skills, tools, certifications, role-specific terms, and responsibilities.
+- importance = high if repeated or explicitly required; medium if important once; low otherwise.
+- Keep keywords to max 12 items.
+`;
+
+      let aiResponse: {
+        matchScore: number;
+        keywords: Array<{
+          keyword: string;
+          present: boolean;
+          importance: string;
+        }>;
+      } | null = null;
+
+      try {
+        const completion = await groq.chat.completions.create({
+          messages: [{ role: 'user', content: prompt }],
+          model: appConfig.ai.model,
+          temperature: 0.2,
+          max_tokens: appConfig.ai.maxTokens,
+        });
+
+        const content = completion.choices[0]?.message?.content || '';
+        const jsonMatch = content.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          aiResponse = JSON.parse(jsonMatch[0]);
+        }
+      } catch (err) {
+        logger.error(
+          'AI keyword analysis failed, falling back to basic keywords',
           {
-            error:
-              'Please add more content to your resume (experience details, skills, summary) for meaningful keyword analysis.',
-          },
-          { status: 400 }
+            error: err,
+          }
         );
       }
 
-      // const prompt = `
-      // Analyze the job description and compare it with the resume content to identify keyword matches.
-      //
-      // Job Description:
-      // ${jobDescription}
-      //
-      // Resume Content:
-      // ${resumeText}
-      //
-      // Provide response in this JSON format:
-      // {
-      //   "matchScore": number (0-100),
-      //   "keywords": [
-      //     {
-      //       "keyword": "specific keyword or phrase",
-      //       "present": boolean,
-      //       "importance": "high|medium|low"
-      //     }
-      //   ]
-      // }
-      //
-      // Focus on:
-      // - Technical skills and tools
-      // - Industry-specific terms
-      // - Job requirements and qualifications
-      // - Action verbs and competencies
-      // - Certifications and methodologies
-      //
-      // Mark importance as:
-      // - high: Critical requirements mentioned multiple times
-      // - medium: Important skills or qualifications
-      // - low: Nice-to-have or mentioned once
-      // `;
+      if (aiResponse) {
+        return NextResponse.json(aiResponse);
+      }
 
-      // Basic keyword analysis without AI
+      // Basic fallback keyword analysis
       const jobKeywords: string[] =
         jobDescription.toLowerCase().match(/\b\w{3,}\b/g) || [];
       const resumeKeywords: string[] =
         resumeText.toLowerCase().match(/\b\w{3,}\b/g) || [];
 
-      const stopWords = [
+      const stopWords = new Set([
         'the',
         'and',
         'for',
@@ -220,33 +219,31 @@ export const POST = withRateLimit(aiRateLimit)(
         'way',
         'will',
         'with',
-      ];
+      ]);
 
-      const commonKeywords = jobKeywords.filter(
-        (keyword: string) =>
-          resumeKeywords.includes(keyword) && !stopWords.includes(keyword)
+      const filteredJob = jobKeywords.filter((k) => !stopWords.has(k));
+      const filteredResume = resumeKeywords.filter((k) => !stopWords.has(k));
+
+      const commonKeywords = filteredJob.filter((keyword: string) =>
+        filteredResume.includes(keyword)
       );
 
       const matchScore = Math.min(
         Math.round(
-          (commonKeywords.length / Math.max(jobKeywords.length, 1)) * 100
+          (commonKeywords.length / Math.max(filteredJob.length, 1)) * 100
         ),
         100
       );
 
-      const uniqueKeywords: string[] = Array.from(new Set(jobKeywords));
-      const topKeywords = uniqueKeywords
-        .slice(0, 10)
-        .map((keyword: string) => ({
+      const uniqueKeywords: string[] = Array.from(new Set(filteredJob));
+      const topKeywords = uniqueKeywords.slice(0, 12).map((keyword: string) => {
+        const count = filteredJob.filter((k: string) => k === keyword).length;
+        return {
           keyword,
-          present: resumeKeywords.includes(keyword),
-          importance:
-            jobKeywords.filter((k: string) => k === keyword).length > 2
-              ? 'high'
-              : jobKeywords.filter((k: string) => k === keyword).length > 1
-                ? 'medium'
-                : 'low',
-        }));
+          present: filteredResume.includes(keyword),
+          importance: count > 2 ? 'high' : count > 1 ? 'medium' : 'low',
+        };
+      });
 
       return NextResponse.json({
         matchScore,

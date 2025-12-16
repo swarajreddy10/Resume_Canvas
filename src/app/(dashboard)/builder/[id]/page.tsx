@@ -429,7 +429,9 @@ export default function ResumeBuilderPage() {
 
     setDownloading(true);
     try {
-      const response = await fetch(`/api/resumes/${resumeId}/pdf`);
+      const response = await fetch(
+        `/api/resumes/${resumeId}/pdf?templateId=${encodeURIComponent(selectedTemplate)}`
+      );
       if (response.ok) {
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -558,32 +560,32 @@ export default function ResumeBuilderPage() {
                   <TabsTrigger value="personal" className="relative">
                     Personal
                     {validationErrors.personalInfo && (
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
                   <TabsTrigger value="experience" className="relative">
                     Experience
                     {validationErrors.experience && (
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
                   <TabsTrigger value="education" className="relative">
                     Education
                     {validationErrors.education && (
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
                   <TabsTrigger value="skills">Skills</TabsTrigger>
                   <TabsTrigger value="projects" className="relative">
                     Projects
                     {validationErrors.projects && (
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
                   <TabsTrigger value="certifications" className="relative">
                     Certs
                     {validationErrors.certifications && (
-                      <div className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full"></div>
+                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
                 </TabsList>
@@ -647,10 +649,9 @@ export default function ResumeBuilderPage() {
           </Card>
 
           {/* Template Selection */}
-          <Card className="border-blue-200">
-            <CardHeader className="bg-blue-50 border-b">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+          <Card className="glass-panel border border-white/60 shadow-none">
+            <CardHeader className="border-b border-white/60 bg-white/70">
+              <CardTitle className="text-lg font-semibold">
                 Choose Template
               </CardTitle>
             </CardHeader>
@@ -666,10 +667,7 @@ export default function ResumeBuilderPage() {
 
           {/* AI Tools Section */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
-              AI Tools
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900">AI Tools</h3>
             <div className="grid gap-4">
               <ATSOptimizer
                 resumeData={
@@ -695,8 +693,7 @@ export default function ResumeBuilderPage() {
           {/* Analytics */}
           {resumeId && (
             <div className="border-t pt-6">
-              <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2 mb-4">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <h3 className="mb-4 text-lg font-semibold text-gray-900">
                 Analytics
               </h3>
               <ResumeAnalytics viewCount={viewCount} isPublic={isPublic} />

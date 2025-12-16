@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardContent,
 } from '@/components/ui/card';
 import {
   Dialog,
@@ -16,7 +17,52 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Sparkles, Zap, Shield, Chrome, ArrowRight, Check } from 'lucide-react';
+import TemplateGallery from '@/components/resume/TemplateGallery';
+import {
+  Sparkles,
+  Shield,
+  Chrome,
+  ArrowRight,
+  Check,
+  Wand2,
+  LayoutPanelTop,
+  Gauge,
+} from 'lucide-react';
+
+const features = [
+  {
+    title: 'AI Writer',
+    description: 'Tailor bullet points to every job in seconds.',
+    icon: Wand2,
+  },
+  {
+    title: 'ATS Check',
+    description:
+      'Pass screening with keywords and structure recruiters expect.',
+    icon: Gauge,
+  },
+  {
+    title: 'One-click styling',
+    description: 'Swap templates and spacing without reformatting.',
+    icon: LayoutPanelTop,
+  },
+];
+
+const trustPoints = [
+  'Free forever',
+  'No credit card',
+  'ATS-ready templates',
+  'Instant PDF',
+];
+
+const steps = [
+  { label: 'Pick a template', text: 'Choose a modern, ATS-friendly layout.' },
+  {
+    label: 'Add your details',
+    text: 'AI assists with bullets, summaries, and keywords.',
+  },
+  { label: 'Publish & share', text: 'Export, share, or download instantly.' },
+];
 
 export default function HomePage() {
   const [showSignIn, setShowSignIn] = useState(false);
@@ -30,156 +76,336 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="border-b border-gray-100 bg-white sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <span className="text-2xl font-black bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 bg-clip-text text-transparent tracking-tight">
-            CareerCanvas
-          </span>
-          <Button
-            onClick={() => setShowSignIn(true)}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-6"
-          >
-            Sign In
-          </Button>
+    <div className="min-h-screen text-foreground">
+      <div className="relative overflow-hidden">
+        <div className="pointer-events-none absolute inset-0">
+          <div className="absolute left-[-10%] top-[-20%] h-[320px] w-[320px] rounded-full bg-primary/15 blur-3xl" />
+          <div className="absolute right-[-10%] bottom-[-10%] h-[280px] w-[280px] rounded-full bg-blue-300/25 blur-[120px]" />
+          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white via-white/70 to-transparent" />
         </div>
-      </nav>
 
-      {/* Hero Section */}
-      <section className="max-w-7xl mx-auto px-6 py-24 text-center">
-        <div className="max-w-4xl mx-auto">
-          <div className="inline-flex items-center px-4 py-2 bg-blue-50 text-blue-700 rounded-full text-sm font-medium mb-8">
-            <Sparkles className="w-4 h-4 mr-2" />
-            AI-Powered Resume Builder
-          </div>
-          <h1 className="text-5xl md:text-7xl font-bold text-gray-900 mb-8 leading-tight">
-            Build Your Dream
-            <span className="text-blue-600 block">Career</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-12 max-w-2xl mx-auto">
-            Create professional resumes with AI assistance. Get hired faster
-            with ATS-optimized templates.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mb-16">
-            <Button
-              onClick={() => setShowSignIn(true)}
-              size="lg"
-              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 text-lg"
-            >
-              Start Building Free
-              <ArrowRight className="w-5 h-5 ml-2" />
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="px-8 py-4 text-lg border-gray-300"
-              onClick={() => setShowSignIn(true)}
-            >
-              View Templates
-            </Button>
-          </div>
-          <div className="flex items-center justify-center space-x-12 text-sm text-gray-500">
-            <div className="flex items-center">
-              <Check className="w-4 h-4 text-green-600 mr-2" />
-              Free Forever
+        {/* Navigation */}
+        <nav className="sticky top-0 z-50 border-b border-white/40 bg-white/70 backdrop-blur-xl">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-black text-gradient-primary tracking-tight">
+                CareerCanvas
+              </span>
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                AI
+              </span>
             </div>
-            <div className="flex items-center">
-              <Check className="w-4 h-4 text-green-600 mr-2" />
-              No Credit Card
+            <div className="hidden items-center gap-6 text-sm font-semibold text-foreground/80 md:flex">
+              <a className="hover:text-foreground transition" href="#features">
+                Resume
+              </a>
+              <a className="hover:text-foreground transition" href="#features">
+                Cover Letters
+              </a>
+              <a className="hover:text-foreground transition" href="#pricing">
+                Pricing
+              </a>
+              <a className="hover:text-foreground transition" href="#templates">
+                For Teams
+              </a>
             </div>
-            <div className="flex items-center">
-              <Check className="w-4 h-4 text-green-600 mr-2" />
-              ATS Optimized
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="px-4"
+                onClick={() => setShowSignIn(true)}
+              >
+                Sign in
+              </Button>
+              <Button
+                size="sm"
+                onClick={() => setShowSignIn(true)}
+                className="hidden md:inline-flex"
+              >
+                My documents
+              </Button>
             </div>
           </div>
+        </nav>
+
+        {/* Hero */}
+        <section className="relative mx-auto max-w-7xl px-6 pb-20 pt-14 md:pt-20">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div className="space-y-8">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/70 px-4 py-2 text-sm font-semibold text-primary shadow-sm backdrop-blur">
+                <Sparkles className="h-4 w-4" />
+                AI resume builder for modern professionals
+              </div>
+              <div className="space-y-4">
+                <h1 className="text-4xl leading-tight font-black text-slate-900 md:text-5xl lg:text-6xl">
+                  Land more interviews with
+                  <span className="block text-gradient-primary">
+                    CareerCanvas
+                  </span>
+                  Resume Builder
+                </h1>
+                <p className="text-lg text-foreground/70 md:text-xl">
+                  ATS check, AI writer, and one-click tailoring to stand out to
+                  recruiters. Design once, adapt to every role in seconds.
+                </p>
+              </div>
+              <div className="flex flex-col gap-3 sm:flex-row">
+                <Button size="lg" className="px-7" onClick={handleSignIn}>
+                  Build your resume
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="px-7"
+                  onClick={() => setShowSignIn(true)}
+                >
+                  Get your resume score
+                </Button>
+              </div>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-foreground/70">
+                {trustPoints.map((point) => (
+                  <div
+                    key={point}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-2 shadow-sm backdrop-blur"
+                  >
+                    <Check className="h-4 w-4 text-primary" />
+                    <span>{point}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute -left-10 -top-8 h-24 w-24 rounded-full bg-primary/15 blur-3xl" />
+              <div className="absolute right-0 top-12 h-16 w-16 rounded-full bg-blue-400/30 blur-xl" />
+              <div className="glass-panel relative mx-auto w-full max-w-lg rounded-3xl p-6">
+                <div className="flex items-center justify-between">
+                  <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                    Hired-ready
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-foreground/60">
+                    <Shield className="h-4 w-4 text-primary" />
+                    Secure cloud save
+                  </div>
+                </div>
+                <div className="mt-6 space-y-4 rounded-2xl bg-white/70 p-4 shadow-inner">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.08em] text-foreground/60">
+                        Resume preview
+                      </p>
+                      <p className="text-sm font-semibold text-foreground/80">
+                        Annie Levy
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-primary">
+                      <Sparkles className="h-4 w-4" />
+                      AI tailored
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="rounded-xl border border-white/60 bg-gradient-to-br from-white via-white/80 to-blue-50/60 p-3 shadow-sm">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-foreground/70">
+                        <span>Page margin</span>
+                        <span className="text-primary">1.0</span>
+                      </div>
+                      <div className="mt-2 h-2 rounded-full bg-blue-100">
+                        <div className="h-2 w-3/4 rounded-full bg-primary" />
+                      </div>
+                      <p className="mt-3 text-[11px] text-foreground/60">
+                        Compact, ATS friendly
+                      </p>
+                    </div>
+                    <div className="rounded-xl border border-white/60 bg-gradient-to-br from-white via-white/80 to-blue-50/60 p-3 shadow-sm">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-foreground/70">
+                        <span>ATS score</span>
+                        <span className="text-primary">92</span>
+                      </div>
+                      <div className="mt-2 flex items-center gap-2 text-[11px] text-foreground/60">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary/30 bg-white text-primary font-bold">
+                          92
+                        </div>
+                        Optimized keywords
+                      </div>
+                      <p className="mt-3 text-[11px] text-foreground/60">
+                        Matching role: Product Designer
+                      </p>
+                    </div>
+                  </div>
+                  <div className="rounded-xl border border-white/70 bg-white/90 p-4 shadow-sm">
+                    <p className="text-xs font-semibold text-foreground/70">
+                      Layout options
+                    </p>
+                    <div className="mt-3 grid grid-cols-3 gap-3 text-[11px] font-semibold text-foreground/70">
+                      <div className="rounded-full bg-blue-50 px-3 py-2 text-primary shadow-sm">
+                        Modern
+                      </div>
+                      <div className="rounded-full border border-white/60 bg-white px-3 py-2">
+                        Executive
+                      </div>
+                      <div className="rounded-full border border-white/60 bg-white px-3 py-2">
+                        Creative
+                      </div>
+                    </div>
+                    <div className="mt-4 flex items-center justify-between text-[11px] text-foreground/60">
+                      <span>Share link</span>
+                      <span className="font-semibold text-primary">
+                        careercanvas.dev/annie
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Trust + features */}
+      <section id="features" className="mx-auto max-w-7xl px-6 pb-16 sm:pb-24">
+        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
+          <Card className="p-8">
+            <CardHeader className="p-0">
+              <CardTitle className="text-2xl">Why CareerCanvas?</CardTitle>
+              <CardDescription className="text-base">
+                Everything you need to create professional resumes that get
+                results.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="mt-6 grid gap-4 md:grid-cols-3">
+              {features.map((feature) => (
+                <div
+                  key={feature.title}
+                  className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur"
+                >
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <feature.icon className="h-5 w-5" />
+                  </div>
+                  <p className="mt-4 text-base font-semibold text-foreground">
+                    {feature.title}
+                  </p>
+                  <p className="text-sm text-foreground/65">
+                    {feature.description}
+                  </p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+
+          <Card className="p-7">
+            <CardHeader className="p-0">
+              <CardTitle className="text-xl">How it works</CardTitle>
+              <CardDescription className="text-base">
+                Three simple steps to publish your resume.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="mt-6 space-y-5">
+              {steps.map((step, idx) => (
+                <div key={step.label} className="relative pl-12">
+                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
+                    {idx + 1}
+                  </div>
+                  <p className="text-base font-semibold text-foreground">
+                    {step.label}
+                  </p>
+                  <p className="text-sm text-foreground/65">{step.text}</p>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-24 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
-              Why Choose CareerCanvas?
+      {/* Templates */}
+      <section
+        id="templates"
+        className="mx-auto max-w-7xl px-6 pb-16 sm:pb-24 space-y-8"
+      >
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">
+              Templates
+            </p>
+            <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
+              Choose a layout that fits your story
             </h2>
-            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Everything you need to create professional resumes that get
-              results
+            <p className="text-base text-foreground/65">
+              All templates are ATS-friendly, editable, and ready to share.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
-            <Card className="border-0 bg-white p-8 text-center hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Sparkles className="w-8 h-8 text-blue-600" />
-              </div>
-              <CardHeader className="p-0">
-                <CardTitle className="text-xl mb-3">
-                  AI-Powered Content
-                </CardTitle>
-                <CardDescription className="text-gray-600">
-                  Generate professional bullet points and descriptions with
-                  advanced AI
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="border-0 bg-white p-8 text-center hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Zap className="w-8 h-8 text-green-600" />
-              </div>
-              <CardHeader className="p-0">
-                <CardTitle className="text-xl mb-3">ATS Optimized</CardTitle>
-                <CardDescription className="text-gray-600">
-                  Pass applicant tracking systems with keyword optimization
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            <Card className="border-0 bg-white p-8 text-center hover:shadow-lg transition-shadow">
-              <div className="w-16 h-16 bg-purple-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                <Shield className="w-8 h-8 text-purple-600" />
-              </div>
-              <CardHeader className="p-0">
-                <CardTitle className="text-xl mb-3">Secure & Private</CardTitle>
-                <CardDescription className="text-gray-600">
-                  Your data is protected with enterprise-grade security
-                </CardDescription>
-              </CardHeader>
-            </Card>
-          </div>
+          <Button variant="outline" onClick={() => setShowSignIn(true)}>
+            Preview my resume
+          </Button>
         </div>
+        <TemplateGallery
+          selectedTemplate="tech"
+          onTemplateSelect={() => setShowSignIn(true)}
+        />
       </section>
 
-      {/* CTA Section */}
-      <section className="py-24 bg-blue-600">
-        <div className="max-w-4xl mx-auto px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
-            Ready to Get Started?
-          </h2>
-          <p className="text-xl text-blue-100 mb-10">
-            Join thousands of professionals building better careers
-          </p>
-          <Button
-            onClick={() => setShowSignIn(true)}
-            size="lg"
-            variant="secondary"
-            className="bg-white text-blue-600 hover:bg-gray-50 px-8 py-4 text-lg"
-          >
-            Start Building Free
-            <ArrowRight className="w-5 h-5 ml-2" />
-          </Button>
+      {/* CTA */}
+      <section
+        id="pricing"
+        className="mx-6 mb-16 rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 px-8 py-12 shadow-[0_24px_70px_-35px_rgba(37,99,235,0.6)] sm:mx-auto sm:max-w-6xl"
+      >
+        <div className="flex flex-col items-start gap-6 text-white lg:flex-row lg:items-center lg:justify-between">
+          <div className="space-y-2">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/80">
+              Ready when you are
+            </p>
+            <h3 className="text-3xl font-bold sm:text-4xl">
+              Start free, publish in minutes
+            </h3>
+            <p className="text-white/80">
+              AI assistance, live preview, and instant sharing built in.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              size="lg"
+              variant="secondary"
+              className="bg-white text-primary hover:bg-white/90"
+              onClick={handleSignIn}
+            >
+              Build your resume
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              onClick={() => setShowSignIn(true)}
+            >
+              Talk to us
+            </Button>
+          </div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-white border-t border-gray-100 py-12">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent tracking-tight mb-4 md:mb-0">
+      <footer className="border-t border-white/60 bg-white/70 backdrop-blur py-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-sm text-foreground/70 sm:flex-row">
+          <div className="flex items-center gap-3">
+            <span className="text-lg font-black text-gradient-primary tracking-tight">
               CareerCanvas
             </span>
-            <p className="text-sm text-gray-500">
-              © 2024 CareerCanvas. All rights reserved.
-            </p>
+            <span className="rounded-full bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary">
+              © 2025
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <a href="#" className="hover:text-foreground">
+              Product
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Support
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Terms
+            </a>
           </div>
         </div>
       </footer>
@@ -187,28 +413,41 @@ export default function HomePage() {
       {/* Sign In Dialog */}
       <Dialog open={showSignIn} onOpenChange={setShowSignIn}>
         <DialogContent className="sm:max-w-md">
-          <DialogHeader className="text-center">
-            <DialogTitle className="text-3xl font-black bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+          <DialogHeader className="space-y-2 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-xs font-semibold text-primary">
+              <Sparkles className="h-4 w-4" />
               CareerCanvas
+            </div>
+            <DialogTitle className="text-3xl font-black text-gradient-primary">
+              Welcome back
             </DialogTitle>
-            <DialogDescription className="text-lg font-medium text-gray-900">
-              Welcome Back
-            </DialogDescription>
-            <DialogDescription className="text-gray-600">
-              Sign in to start building your professional resume
+            <DialogDescription className="text-base text-foreground/80">
+              Continue to build, tailor, and publish your resumes.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 pt-4">
+          <div className="space-y-4 pt-2">
             <Button
               onClick={handleSignIn}
-              className="w-full bg-white hover:bg-gray-50 text-gray-900 border-2 border-gray-200 hover:border-gray-300"
+              className="w-full bg-white text-foreground shadow-sm"
+              variant="outline"
               size="lg"
             >
-              <Chrome className="w-5 h-5 mr-3" />
+              <Chrome className="h-5 w-5" />
               Continue with Google
             </Button>
-            <div className="text-center text-sm text-gray-500">
-              Free forever • No credit card required
+            <div className="grid gap-2 rounded-2xl border border-white/60 bg-white/70 p-3 text-sm text-foreground/70 shadow-sm">
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-primary" />
+                Free forever — no credit card
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-primary" />
+                ATS optimized templates
+              </div>
+              <div className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-primary" />
+                Instant PDF and share links
+              </div>
             </div>
           </div>
         </DialogContent>
