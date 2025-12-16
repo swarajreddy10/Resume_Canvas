@@ -17,6 +17,7 @@
         "name": "next"
       }
     ],
+    "types": ["bun-types", "node", "@testing-library/jest-dom"],
     "baseUrl": ".",
     "paths": {
       "@/*": ["./src/*"]
