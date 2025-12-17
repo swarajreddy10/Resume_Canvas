@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { generateBulletPoints } from '@/services/ai.service';
+import { aiService } from '@/server/services/ai.service';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { aiRateLimit } from '@/lib/security/rateLimit';
@@ -18,7 +18,7 @@ export const POST = withRateLimit(aiRateLimit)(
         );
       }
 
-      const bulletPoints = await generateBulletPoints({
+      const bulletPoints = await aiService.generateBulletPoints({
         jobTitle,
         company,
         description,
@@ -27,7 +27,9 @@ export const POST = withRateLimit(aiRateLimit)(
 
       return NextResponse.json({ bulletPoints });
     } catch (error) {
-      console.error('Error in AI generation:', error);
+      console.error(
+        JSON.stringify({ level: 'error', msg: 'AI generation failed', error })
+      );
       return NextResponse.json(
         { error: 'Failed to generate bullet points' },
         { status: 500 }

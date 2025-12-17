@@ -31,7 +31,7 @@ interface OnboardingStep {
 const steps: OnboardingStep[] = [
   {
     id: 1,
-    title: 'Welcome to CareerCanvas',
+    title: 'Welcome to ResumeCanvas',
     description: "Let's get you set up with a professional resume in minutes",
     icon: <Sparkles className="w-6 h-6" />,
   },

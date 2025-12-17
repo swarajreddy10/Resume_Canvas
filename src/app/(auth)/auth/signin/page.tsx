@@ -34,7 +34,7 @@ export default function SignInPage() {
               <FileText className="w-5 h-5 text-white" />
             </div>
             <span className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              CareerCanvas
+              ResumeCanvas
             </span>
           </div>
         </div>
@@ -49,7 +49,7 @@ export default function SignInPage() {
                 <FileText className="w-8 h-8 text-white" />
               </div>
               <CardTitle className="text-2xl font-bold text-gray-900">
-                Welcome to CareerCanvas
+                Welcome to ResumeCanvas
               </CardTitle>
               <CardDescription className="text-gray-600 text-base">
                 Sign in to start building your professional resume with

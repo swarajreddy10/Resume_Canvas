@@ -190,7 +190,7 @@ export default function IntegrationsPage() {
         <CardHeader>
           <CardTitle>API Access</CardTitle>
           <CardDescription>
-            Integrate CareerCanvas with your own applications using our REST API
+            Integrate ResumeCanvas with your own applications using our REST API
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
