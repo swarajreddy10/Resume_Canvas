@@ -70,7 +70,13 @@ export default function PerformanceAnalytics() {
     );
   }
 
-  if (!analytics) return null;
+  if (!analytics) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-gray-500">No analytics data available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -128,35 +134,37 @@ export default function PerformanceAnalytics() {
         </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <TrendingUp className="h-5 w-5" />
-            Top Performing Resume
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold">
-                {analytics.topPerformingResume.title}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {analytics.topPerformingResume.views} views
-              </p>
+      {analytics.topPerformingResume && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <TrendingUp className="h-5 w-5" />
+              Top Performing Resume
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold">
+                  {analytics.topPerformingResume.title}
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {analytics.topPerformingResume.views} views
+                </p>
+              </div>
+              <Badge
+                variant={
+                  analytics.topPerformingResume.atsScore >= 80
+                    ? 'default'
+                    : 'secondary'
+                }
+              >
+                ATS: {analytics.topPerformingResume.atsScore}/100
+              </Badge>
             </div>
-            <Badge
-              variant={
-                analytics.topPerformingResume.atsScore >= 80
-                  ? 'default'
-                  : 'secondary'
-              }
-            >
-              ATS: {analytics.topPerformingResume.atsScore}/100
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
