@@ -4,6 +4,12 @@
     size: A4;
   }
 
+  header,
+  nav,
+  .print\:hidden {
+    display: none !important;
+  }
+
   body {
     -webkit-print-color-adjust: exact !important;
     color-adjust: exact !important;
@@ -36,5 +42,14 @@
 
   .page-break-inside-avoid {
     page-break-inside: avoid;
+  }
+
+  /* Remove backgrounds and borders for print */
+  body {
+    background: white !important;
+  }
+
+  .bg-gray-50 {
+    background: white !important;
   }
 }

@@ -79,11 +79,16 @@ export default function ProjectsForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4 sm:space-y-6"
+      >
         {fields.map((field, index) => (
           <Card key={field.id}>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">Project {index + 1}</CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between py-3 sm:py-6">
+              <CardTitle className="text-base sm:text-lg">
+                Project {index + 1}
+              </CardTitle>
               {fields.length > 1 && (
                 <Button
                   type="button"
@@ -95,8 +100,8 @@ export default function ProjectsForm({
                 </Button>
               )}
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <FormField
                   control={form.control}
                   name={`projects.${index}.name`}
@@ -167,21 +172,14 @@ export default function ProjectsForm({
                 control={form.control}
                 name={`projects.${index}.technologies`}
                 render={({ field }) => {
-                  const charCount = field.value?.length || 0;
-                  const hasError = charCount > 0 && charCount < 5;
+                  const hasError =
+                    !!form.formState.errors.projects?.[index]?.technologies;
                   return (
                     <FormItem>
-                      <FormLabel className="flex items-center justify-between">
-                        <span>Technologies Used *</span>
-                        {hasError && (
-                          <span className="text-xs text-red-500">
-                            {charCount}/5 min
-                          </span>
-                        )}
-                      </FormLabel>
+                      <FormLabel>Technologies Used *</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="React, Node.js, MongoDB, Express.js (comma-separated, minimum 5 characters)"
+                          placeholder="React, Node.js, MongoDB, Express.js"
                           {...field}
                           value={
                             Array.isArray(field.value)
@@ -192,7 +190,9 @@ export default function ProjectsForm({
                           className={
                             hasError
                               ? 'border-red-500 focus:border-red-500'
-                              : ''
+                              : field.value && field.value.length >= 5
+                                ? 'border-green-500 focus:border-green-500'
+                                : ''
                           }
                         />
                       </FormControl>

@@ -103,8 +103,8 @@ export default function SkillsForm({ initialData, onSubmit }: SkillsFormProps) {
 
   return (
     <Form {...form}>
-      <div className="space-y-6">
-        <div className="space-y-4">
+      <div className="space-y-4 sm:space-y-6">
+        <div className="space-y-3 sm:space-y-4">
           <FormField
             control={form.control}
             name="newSkill"

@@ -34,7 +34,13 @@ export default function PublicResumePage() {
   useEffect(() => {
     const fetchResume = async () => {
       try {
-        const response = await fetch(`/api/resume/public/${params.id}`);
+        const id = params.id as string;
+        const isSlug = !id.match(/^[0-9a-fA-F]{24}$/);
+        const endpoint = isSlug
+          ? `/api/resume/public/slug/${id}`
+          : `/api/resume/public/${id}`;
+
+        const response = await fetch(endpoint);
         if (!response.ok) {
           throw new Error('Resume not found or not public');
         }
@@ -89,8 +95,8 @@ export default function PublicResumePage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+      <div className="bg-white shadow-sm border-b print:hidden">
+        <div className="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center print:hidden">
           <div>
             <h1 className="text-xl font-semibold">{resume.title}</h1>
             <div className="flex items-center gap-4 text-sm text-gray-600">
@@ -108,8 +114,8 @@ export default function PublicResumePage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto p-4">
-        <div className="transform scale-90 origin-top">
+      <div className="max-w-4xl mx-auto p-4 print:p-0">
+        <div className="transform scale-90 origin-top print:scale-100">
           <TemplateRenderer template={resume.templateId} data={resumeData} />
         </div>
       </div>

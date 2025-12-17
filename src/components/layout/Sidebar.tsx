@@ -101,38 +101,43 @@ export default function Sidebar({
       aria-label="Sidebar navigation"
     >
       <div className="flex h-full flex-col">
-        <div className="flex h-16 items-center border-b px-3">
-          <button
-            onClick={() => useSidebar.getState().toggle()}
-            className="flex items-center justify-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 transition-colors"
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            <svg
-              className="h-5 w-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+        {!mobile && (
+          <div className="flex h-16 items-center border-b px-3 pr-16">
+            <button
+              onClick={() => useSidebar.getState().toggle()}
+              className="flex items-center justify-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 transition-colors"
+              aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
-              {collapsed ? (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 5l7 7-7 7M5 5l7 7-7 7"
-                />
-              ) : (
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
-                />
-              )}
-            </svg>
-          </button>
-        </div>
+              <svg
+                className="h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                {collapsed ? (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 5l7 7-7 7M5 5l7 7-7 7"
+                  />
+                ) : (
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+                  />
+                )}
+              </svg>
+            </button>
+          </div>
+        )}
 
-        <nav className="flex-1 space-y-1 p-3" aria-label="Main navigation">
+        <nav
+          className={cn('flex-1 space-y-1 p-3', mobile && 'pt-16')}
+          aria-label="Main navigation"
+        >
           {navigationConfig.map((group, idx) => (
             <div key={idx}>
               {group.items.map((item) => (
