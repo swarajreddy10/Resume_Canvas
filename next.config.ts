@@ -1,16 +1,13 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  // Turbopack configuration (empty to silence warning)
-  turbopack: {},
+  // Turbopack configuration
+  turbopack: {
+    root: process.cwd(),
+  },
 
   // Conditional standalone output for Docker
   ...(process.env.DOCKER_BUILD === 'true' && { output: 'standalone' }),
-
-  // Performance optimizations
-  experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
-  },
 
   // Image optimization
   images: {

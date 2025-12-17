@@ -17,6 +17,10 @@ const userSchema = new mongoose.Schema(
       minlength: 1,
       maxlength: 100,
     },
+    password: {
+      type: String,
+      select: false,
+    },
     image: { type: String, trim: true, maxlength: 500 },
     subscriptionTier: {
       type: String,
