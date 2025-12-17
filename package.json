@@ -1,5 +1,5 @@
 {
-  "name": "career_canvas1",
+  "name": "ResumeCanvas",
   "version": "0.1.0",
   "private": true,
   "license": "MIT",
@@ -83,15 +83,5 @@
     "tailwindcss": "^4.1.18",
     "tw-animate-css": "^1.4.0",
     "typescript": "^5.9.3"
-  },
-  "overrides": {
-    "@tanstack/react-query": {
-      "react": "$react"
-    },
-    "@testing-library/react": {
-      "react": "$react",
-      "react-dom": "$react-dom",
-      "@testing-library/dom": "^10.4.0"
-    }
   }
 }
