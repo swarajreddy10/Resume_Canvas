@@ -1,4 +1,4 @@
-const CACHE_NAME = 'careercanvas-v1';
+const CACHE_NAME = 'ResumeCanvas-v1';
 const urlsToCache = ['/', '/dashboard', '/builder/new', '/manifest.json'];
 
 self.addEventListener('install', (event) => {

@@ -1,6 +1,6 @@
 {
-  "name": "CareerCanvas - AI Resume Builder",
-  "short_name": "CareerCanvas",
+  "name": "ResumeCanvas - AI Resume Builder",
+  "short_name": "ResumeCanvas",
   "description": "Create professional resumes with AI-powered content generation",
   "start_url": "/",
   "display": "standalone",

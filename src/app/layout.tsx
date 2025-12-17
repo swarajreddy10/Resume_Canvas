@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'CareerCanvas - Resume Builder',
+  title: 'ResumeCanvas - Resume Builder',
   description: 'Professional resume builder with AI assistance',
 };
 
