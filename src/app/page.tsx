@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { signIn } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -10,18 +9,10 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import TemplateGallery from '@/components/resume/TemplateGallery';
 import {
   Sparkles,
   Shield,
-  Chrome,
   ArrowRight,
   Check,
   Wand2,
@@ -65,14 +56,10 @@ const steps = [
 ];
 
 export default function HomePage() {
-  const [showSignIn, setShowSignIn] = useState(false);
+  const router = useRouter();
 
-  const handleSignIn = async () => {
-    try {
-      await signIn('google', { callbackUrl: '/dashboard' });
-    } catch (error) {
-      console.error('Sign-in failed:', error);
-    }
+  const handleSignIn = () => {
+    router.push('/auth/signin');
   };
 
   return (
@@ -86,7 +73,7 @@ export default function HomePage() {
 
         {/* Navigation */}
         <nav className="sticky top-0 z-50 border-b border-white/40 bg-white/70 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-16 py-4">
             <div className="flex items-center gap-2">
               <span className="text-2xl font-black text-gradient-primary tracking-tight">
                 ResumeCanvas
@@ -95,37 +82,9 @@ export default function HomePage() {
                 AI
               </span>
             </div>
-            <div className="hidden items-center gap-6 text-sm font-semibold text-foreground/80 md:flex">
-              <a className="hover:text-foreground transition" href="#features">
-                Resume
-              </a>
-              <a className="hover:text-foreground transition" href="#features">
-                Cover Letters
-              </a>
-              <a className="hover:text-foreground transition" href="#pricing">
-                Pricing
-              </a>
-              <a className="hover:text-foreground transition" href="#templates">
-                For Teams
-              </a>
-            </div>
-            <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="sm"
-                className="px-4"
-                onClick={() => setShowSignIn(true)}
-              >
-                Sign in
-              </Button>
-              <Button
-                size="sm"
-                onClick={() => setShowSignIn(true)}
-                className="hidden md:inline-flex"
-              >
-                My documents
-              </Button>
-            </div>
+            <Button variant="default" size="sm" onClick={handleSignIn}>
+              Sign in
+            </Button>
           </div>
         </nav>
 
@@ -150,27 +109,18 @@ export default function HomePage() {
                   recruiters. Design once, adapt to every role in seconds.
                 </p>
               </div>
-              <div className="flex flex-col gap-3 sm:flex-row">
-                <Button size="lg" className="px-7" onClick={handleSignIn}>
-                  Build your resume
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="lg"
-                  className="px-7"
-                  onClick={() => setShowSignIn(true)}
-                >
-                  Get your resume score
-                </Button>
-              </div>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-foreground/70">
+              <Button
+                size="lg"
+                className="px-8 py-6 text-base"
+                onClick={handleSignIn}
+              >
+                Build Your Resume Free
+                <ArrowRight className="h-5 w-5" />
+              </Button>
+              <div className="flex flex-wrap items-center gap-3 text-sm text-foreground/60">
                 {trustPoints.map((point) => (
-                  <div
-                    key={point}
-                    className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-2 shadow-sm backdrop-blur"
-                  >
-                    <Check className="h-4 w-4 text-primary" />
+                  <div key={point} className="inline-flex items-center gap-1.5">
+                    <Check className="h-3.5 w-3.5 text-primary" />
                     <span>{point}</span>
                   </div>
                 ))}
@@ -323,25 +273,20 @@ export default function HomePage() {
         id="templates"
         className="mx-auto max-w-7xl px-6 pb-16 sm:pb-24 space-y-8"
       >
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">
-              Templates
-            </p>
-            <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-              Choose a layout that fits your story
-            </h2>
-            <p className="text-base text-foreground/65">
-              All templates are ATS-friendly, editable, and ready to share.
-            </p>
-          </div>
-          <Button variant="outline" onClick={() => setShowSignIn(true)}>
-            Preview my resume
-          </Button>
+        <div>
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">
+            Templates
+          </p>
+          <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
+            Choose a layout that fits your story
+          </h2>
+          <p className="text-base text-foreground/65">
+            All templates are ATS-friendly, editable, and ready to share.
+          </p>
         </div>
         <TemplateGallery
           selectedTemplate="tech"
-          onTemplateSelect={() => setShowSignIn(true)}
+          onTemplateSelect={() => router.push('/auth/signin')}
         />
       </section>
 
@@ -362,23 +307,15 @@ export default function HomePage() {
               AI assistance, live preview, and instant sharing built in.
             </p>
           </div>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              size="lg"
-              variant="secondary"
-              className="bg-white text-primary hover:bg-white/90"
-              onClick={handleSignIn}
-            >
-              Build your resume
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              onClick={() => setShowSignIn(true)}
-            >
-              Talk to us
-            </Button>
-          </div>
+          <Button
+            size="lg"
+            variant="secondary"
+            className="bg-white text-primary hover:bg-white/90 px-8"
+            onClick={handleSignIn}
+          >
+            Get Started Free
+            <ArrowRight className="h-4 w-4" />
+          </Button>
         </div>
       </section>
 
@@ -409,49 +346,6 @@ export default function HomePage() {
           </div>
         </div>
       </footer>
-
-      {/* Sign In Dialog */}
-      <Dialog open={showSignIn} onOpenChange={setShowSignIn}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader className="space-y-2 text-center">
-            <div className="inline-flex items-center gap-2 rounded-full bg-primary/10 px-4 py-2 text-xs font-semibold text-primary">
-              <Sparkles className="h-4 w-4" />
-              ResumeCanvas
-            </div>
-            <DialogTitle className="text-3xl font-black text-gradient-primary">
-              Welcome back
-            </DialogTitle>
-            <DialogDescription className="text-base text-foreground/80">
-              Continue to build, tailor, and publish your resumes.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 pt-2">
-            <Button
-              onClick={handleSignIn}
-              className="w-full bg-white text-foreground shadow-sm"
-              variant="outline"
-              size="lg"
-            >
-              <Chrome className="h-5 w-5" />
-              Continue with Google
-            </Button>
-            <div className="grid gap-2 rounded-2xl border border-white/60 bg-white/70 p-3 text-sm text-foreground/70 shadow-sm">
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" />
-                Free forever — no credit card
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" />
-                ATS optimized templates
-              </div>
-              <div className="flex items-center gap-2">
-                <Check className="h-4 w-4 text-primary" />
-                Instant PDF and share links
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }

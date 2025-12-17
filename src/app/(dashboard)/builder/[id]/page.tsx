@@ -493,10 +493,10 @@ export default function ResumeBuilderPage() {
     <div className="min-h-screen">
       {/* Builder Mode */}
       {!showPreview && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold">Resume Builder</h1>
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-0">
+            <div className="flex items-center gap-2 sm:gap-4">
+              <h1 className="text-xl sm:text-2xl font-bold">Resume Builder</h1>
               <Button
                 variant="outline"
                 size="sm"
@@ -507,10 +507,11 @@ export default function ResumeBuilderPage() {
                 Preview Only
               </Button>
             </div>
-            <div className="space-x-2">
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <Button
                 onClick={() => saveResume(false)}
                 disabled={saving || hasValidationErrors}
+                className="text-xs sm:text-sm px-4 py-2 h-9 font-medium"
               >
                 {saving
                   ? 'Publishing...'
@@ -530,95 +531,139 @@ export default function ResumeBuilderPage() {
                   onTogglePublic={setIsPublic}
                 />
               )}
-              <Button onClick={downloadPDF} disabled={downloading}>
+              <Button
+                onClick={downloadPDF}
+                disabled={downloading}
+                variant="outline"
+                className="text-xs sm:text-sm px-4 py-2 h-9 font-medium"
+              >
                 {downloading ? 'Generating...' : 'Download PDF'}
               </Button>
-              {lastSaved && (
-                <span className="text-xs text-gray-500">
-                  Last saved: {lastSaved.toLocaleTimeString()}
-                </span>
-              )}
-              {hasUnsavedChanges && (
-                <span className="text-xs text-orange-600 font-medium">
-                  Unsaved changes
-                </span>
-              )}
+              <div className="flex items-center gap-2 w-full sm:w-auto">
+                {lastSaved && (
+                  <span className="text-xs text-gray-500">
+                    Last saved: {lastSaved.toLocaleTimeString()}
+                  </span>
+                )}
+                {hasUnsavedChanges && (
+                  <span className="text-xs text-orange-600 font-medium">
+                    Unsaved changes
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Build Your Resume</CardTitle>
+            <CardHeader className="pb-3 sm:pb-6">
+              <CardTitle className="text-lg sm:text-xl">
+                Build Your Resume
+              </CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pt-3 sm:pt-6">
               <Tabs
                 value={activeTab}
                 onValueChange={setActiveTab}
                 id="resume-builder-tabs"
               >
-                <TabsList className="grid w-full grid-cols-6">
-                  <TabsTrigger value="personal" className="relative">
+                <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-2 h-auto p-1 bg-gray-100">
+                  <TabsTrigger
+                    value="personal"
+                    className="relative text-xs sm:text-sm px-3 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+                  >
                     Personal
                     {validationErrors.personalInfo && (
-                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                      <div className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="experience" className="relative">
+                  <TabsTrigger
+                    value="experience"
+                    className="relative text-xs sm:text-sm px-3 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+                  >
                     Experience
                     {validationErrors.experience && (
-                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                      <div className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="education" className="relative">
+                  <TabsTrigger
+                    value="education"
+                    className="relative text-xs sm:text-sm px-3 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+                  >
                     Education
                     {validationErrors.education && (
-                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                      <div className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="skills">Skills</TabsTrigger>
-                  <TabsTrigger value="projects" className="relative">
+                  <TabsTrigger
+                    value="skills"
+                    className="text-xs sm:text-sm px-3 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+                  >
+                    Skills
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="projects"
+                    className="relative text-xs sm:text-sm px-3 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+                  >
                     Projects
                     {validationErrors.projects && (
-                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                      <div className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="certifications" className="relative">
-                    Certs
+                  <TabsTrigger
+                    value="certifications"
+                    className="relative text-xs sm:text-sm px-3 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
+                  >
+                    Certifications
                     {validationErrors.certifications && (
-                      <div className="absolute -top-1 -right-1 h-1.5 w-1.5 rounded-full bg-red-500" />
+                      <div className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500" />
                     )}
                   </TabsTrigger>
                 </TabsList>
 
-                <TabsContent value="personal" className="space-y-4">
+                <TabsContent
+                  value="personal"
+                  className="space-y-3 sm:space-y-4 mt-3 sm:mt-4"
+                >
                   <PersonalInfoForm
                     initialData={resumeData.personalInfo || undefined}
                     onSubmit={handlePersonalInfoSubmit}
                   />
                 </TabsContent>
 
-                <TabsContent value="experience" className="space-y-4">
+                <TabsContent
+                  value="experience"
+                  className="space-y-3 sm:space-y-4 mt-3 sm:mt-4"
+                >
                   <ExperienceForm
                     initialData={resumeData.experience || undefined}
                     onSubmit={handleExperienceSubmit}
                   />
                 </TabsContent>
 
-                <TabsContent value="education" className="space-y-4">
+                <TabsContent
+                  value="education"
+                  className="space-y-3 sm:space-y-4 mt-3 sm:mt-4"
+                >
                   <EducationForm
                     initialData={resumeData.education || undefined}
                     onSubmit={handleEducationSubmit}
                   />
                 </TabsContent>
 
-                <TabsContent value="skills" className="space-y-4">
+                <TabsContent
+                  value="skills"
+                  className="space-y-3 sm:space-y-4 mt-3 sm:mt-4"
+                >
                   <SkillsForm
                     initialData={resumeData.skills || undefined}
                     onSubmit={handleSkillsSubmit}
                   />
                 </TabsContent>
 
-                <TabsContent value="projects" className="space-y-4">
+                <TabsContent
+                  value="projects"
+                  className="space-y-3 sm:space-y-4 mt-3 sm:mt-4"
+                >
                   <ProjectsForm
                     initialData={
                       resumeData.projects?.projects
@@ -631,7 +676,10 @@ export default function ResumeBuilderPage() {
                   />
                 </TabsContent>
 
-                <TabsContent value="certifications" className="space-y-4">
+                <TabsContent
+                  value="certifications"
+                  className="space-y-3 sm:space-y-4 mt-3 sm:mt-4"
+                >
                   <CertificationsForm
                     initialData={
                       resumeData.certifications?.certifications
@@ -650,12 +698,12 @@ export default function ResumeBuilderPage() {
 
           {/* Template Selection */}
           <Card className="glass-panel border border-white/60 shadow-none">
-            <CardHeader className="border-b border-white/60 bg-white/70">
-              <CardTitle className="text-lg font-semibold">
+            <CardHeader className="border-b border-white/60 bg-white/70 py-3 sm:py-6">
+              <CardTitle className="text-base sm:text-lg font-semibold">
                 Choose Template
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-4">
+            <CardContent className="p-3 sm:p-4">
               <TemplateGallery
                 selectedTemplate={selectedTemplate}
                 onTemplateSelect={(templateId: string) =>
@@ -666,9 +714,11 @@ export default function ResumeBuilderPage() {
           </Card>
 
           {/* AI Tools Section */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">AI Tools</h3>
-            <div className="grid gap-4">
+          <div className="space-y-3 sm:space-y-4">
+            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+              AI Tools
+            </h3>
+            <div className="grid gap-3 sm:gap-4">
               <ATSOptimizer
                 resumeData={
                   {
@@ -692,8 +742,8 @@ export default function ResumeBuilderPage() {
 
           {/* Analytics */}
           {resumeId && (
-            <div className="border-t pt-6">
-              <h3 className="mb-4 text-lg font-semibold text-gray-900">
+            <div className="border-t pt-4 sm:pt-6">
+              <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-gray-900">
                 Analytics
               </h3>
               <ResumeAnalytics viewCount={viewCount} isPublic={isPublic} />
@@ -704,22 +754,25 @@ export default function ResumeBuilderPage() {
 
       {/* Preview Only Mode */}
       {showPreview && (
-        <div className="space-y-6">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold">Resume Preview</h1>
+        <div className="space-y-4 sm:space-y-6">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold">Resume Preview</h1>
             <Button
               variant="outline"
               size="sm"
               onClick={() => setShowPreview(false)}
-              className="flex items-center gap-2"
+              className="flex items-center gap-2 w-full sm:w-auto"
             >
               <EyeOff className="h-4 w-4" />
               Back to Builder
             </Button>
           </div>
-          <div className="flex justify-center">
-            <div className="bg-white shadow-lg border rounded-lg overflow-hidden max-w-4xl w-full">
-              <div ref={resumeRef} className="w-full">
+          <div className="flex justify-center -mx-4 sm:mx-0">
+            <div className="bg-white shadow-lg border rounded-none sm:rounded-lg overflow-hidden max-w-4xl w-full">
+              <div
+                ref={resumeRef}
+                className="w-full scale-[0.85] sm:scale-100 origin-top"
+              >
                 <TemplateRenderer
                   template={selectedTemplate}
                   data={

@@ -158,11 +158,14 @@ export default function ExperienceForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4 sm:space-y-6"
+      >
         {fields.map((field, experienceIndex) => (
           <Card key={field.id}>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">
+            <CardHeader className="flex flex-row items-center justify-between py-3 sm:py-6">
+              <CardTitle className="text-base sm:text-lg">
                 Experience {experienceIndex + 1}
               </CardTitle>
               {fields.length > 1 && (
@@ -176,8 +179,8 @@ export default function ExperienceForm({
                 </Button>
               )}
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <FormField
                   control={form.control}
                   name={`experiences.${experienceIndex}.company`}
@@ -303,16 +306,16 @@ export default function ExperienceForm({
               />
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                   <FormLabel>Key Achievements (min 20 chars each)</FormLabel>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button
                       type="button"
                       variant="outline"
                       size="sm"
                       onClick={() => generateAIBullets(experienceIndex)}
                       disabled={generatingAI === experienceIndex}
-                      className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0 hover:from-purple-600 hover:to-blue-600 disabled:opacity-50"
+                      className="bg-gradient-to-r from-purple-500 to-blue-500 text-white border-0 hover:from-purple-600 hover:to-blue-600 disabled:opacity-50 text-xs sm:text-sm"
                     >
                       {generatingAI === experienceIndex ? (
                         <Loader2 className="h-4 w-4 mr-1 animate-spin" />
@@ -335,6 +338,7 @@ export default function ExperienceForm({
                           ) || []
                         ).length >= 5
                       }
+                      className="text-xs sm:text-sm"
                     >
                       <Plus className="h-4 w-4 mr-1" />
                       Add Bullet (

@@ -66,7 +66,7 @@ export default function PremiumPage() {
         {plans.map((plan) => (
           <Card
             key={plan.name}
-            className={`relative ${plan.popular ? 'border-blue-500 shadow-lg scale-105' : ''}`}
+            className={`relative flex flex-col ${plan.popular ? 'border-blue-500 shadow-lg scale-105' : ''}`}
           >
             {plan.popular && (
               <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-blue-500">
@@ -94,7 +94,7 @@ export default function PremiumPage() {
                 </span>
               </div>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex flex-col flex-grow">
               <ul className="space-y-3 mb-6">
                 {plan.features.map((feature) => (
                   <li key={feature} className="flex items-center gap-3">
@@ -103,12 +103,18 @@ export default function PremiumPage() {
                   </li>
                 ))}
               </ul>
-              <Button
-                className={`w-full ${plan.current ? 'bg-gray-400' : plan.popular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-gray-800'}`}
-                disabled={plan.current}
-              >
-                {plan.current ? 'Current Plan' : `Upgrade to ${plan.name}`}
-              </Button>
+              <div className="mt-auto">
+                <Button
+                  className={`w-full ${plan.current ? 'bg-gray-400' : plan.popular ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-gray-800'}`}
+                  disabled={plan.current || plan.name !== 'Free'}
+                >
+                  {plan.current
+                    ? 'Current Plan'
+                    : plan.name !== 'Free'
+                      ? 'Coming Soon'
+                      : `Upgrade to ${plan.name}`}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         ))}
