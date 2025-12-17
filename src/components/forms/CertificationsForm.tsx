@@ -73,11 +73,14 @@ export default function CertificationsForm({
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form
+        onSubmit={form.handleSubmit(onSubmit)}
+        className="space-y-4 sm:space-y-6"
+      >
         {fields.map((field, index) => (
           <Card key={field.id}>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <CardTitle className="text-lg">
+            <CardHeader className="flex flex-row items-center justify-between py-3 sm:py-6">
+              <CardTitle className="text-base sm:text-lg">
                 Certification {index + 1}
               </CardTitle>
               {fields.length > 1 && (
@@ -91,8 +94,8 @@ export default function CertificationsForm({
                 </Button>
               )}
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="space-y-3 sm:space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 <FormField
                   control={form.control}
                   name={`certifications.${index}.name`}

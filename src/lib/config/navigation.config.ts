@@ -1,10 +1,10 @@
 import {
   LayoutDashboard,
-  Briefcase,
   Sparkles,
   BarChart3,
   Crown,
   Settings,
+  ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -42,9 +42,9 @@ export const navigationConfig: NavGroup[] = [
     label: 'Career',
     items: [
       {
-        label: 'Jobs',
-        href: '/jobs',
-        icon: Briefcase,
+        label: 'Applications',
+        href: '/applications',
+        icon: ClipboardList,
       },
       {
         label: 'Analytics',
