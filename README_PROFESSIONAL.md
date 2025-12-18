@@ -343,7 +343,7 @@ const completion = await groq.chat.completions.create({
 - Industry-specific suggestions
 - Optimization recommendations
 
-**🔍 Keyword Analysis**
+---
 
 ## 🎨 Templates
 
