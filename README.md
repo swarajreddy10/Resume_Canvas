@@ -1,4 +1,4 @@
-# 🎨 ResumeCanvas
+# ResumeCanvas
 
 > AI-powered resume builder with real-time ATS optimization and professional templates
 
@@ -29,9 +29,11 @@ ResumeCanvas helps you create professional, ATS-optimized resumes using AI. Buil
 
 **🎨 Professional Templates**
 
-- Executive Template (dark sidebar with gradient design)
-- Tech Template (clean, modern layout)
-- Corporate Template (traditional professional)
+- Executive Template (dark sidebar, leadership-focused)
+- Tech Template (modern sans layout, skills-forward)
+- Corporate Template (conservative, bullet-driven)
+- Creative Template (clean grid with accents)
+- Academic Template (structured CV for research)
 - Real-time template switching
 - Print-optimized layouts
 
@@ -134,7 +136,7 @@ src/
 │   │   └── CertificationsForm.tsx # Certifications
 │   │
 │   ├── resume/                    # Resume components
-│   │   ├── templates/             # 3 templates
+│   │   ├── templates/             # 5 templates
 │   │   ├── TemplateRenderer.tsx   # Template engine
 │   │   ├── TemplateGallery.tsx    # Template selector
 │   │   ├── ATSOptimizer.tsx       # ATS analysis
@@ -341,30 +343,44 @@ const completion = await groq.chat.completions.create({
 - Industry-specific suggestions
 - Optimization recommendations
 
----
+**🔍 Keyword Analysis**
 
 ## 🎨 Templates
 
 ### Executive Template
 
 - Dark sidebar with white main content
-- Professional color scheme
+- Professional serif structure
 - Two-column layout
-- Best for: Senior roles, leadership positions
+- Best for: Directors, VPs, C-level roles
 
 ### Tech Template
 
-- Clean, modern layout
-- Monochrome design
-- Skills-focused sections
-- Best for: Developers, engineers, tech roles
+- Modern sans layout
+- Skills-forward blocks
+- Project highlights
+- Best for: Software engineers, data roles
 
 ### Corporate Template
 
-- Traditional professional
-- Conservative styling
-- Structured sections
-- Best for: Business, finance, legal
+- Conservative bullet-driven layout
+- Traditional professional styling
+- Impact-focused sections
+- Best for: Consulting, finance, operations
+
+### Creative Template
+
+- Clean grid with restrained accents
+- Modern, portfolio-friendly
+- Case study ready
+- Best for: Product managers, designers
+
+### Academic Template
+
+- Structured CV format
+- Multi-page support
+- Publication and grant focus
+- Best for: Researchers, professors, PhD candidates
 
 **Features**:
 
@@ -540,7 +556,7 @@ API Endpoints:     25 routes
 React Components:  80+ components
 Database Models:   3 models
 Test Coverage:     89.58%
-Templates:         3 professional designs
+Templates:         5 professional designs
 AI Features:       7 AI-powered tools
 ```
 
@@ -682,6 +698,4 @@ Built with these amazing open-source technologies:
 
 ---
 
-**Built by an entry-level full-stack developer as a learning project and portfolio piece.**
-
-**Status**: Production-ready, actively maintained
+**Production-ready application** with comprehensive testing, security measures, and performance optimizations. Actively maintained and deployed at [resumecanvas.live](https://www.resumecanvas.live/).
