@@ -3,10 +3,13 @@
 # dependencies
 /node_modules
 /.pnp
-.pnp.*
+.pnp.js
+.yarn/install-state.gz
 
 # testing
 /coverage
+*.lcov
+test-results.xml
 
 # next.js
 /.next/
@@ -23,14 +26,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
 
-# bun
-bun.lockb
-.bun
-
-# env files (can opt-in for committing if needed)
-.env*
+# local env files
+.env*.local
+.env
 
 # vercel
 .vercel
@@ -38,12 +37,6 @@ bun.lockb
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-# Git line ending normalization
-*.txt text
-*.js text
-*.ts text
-*.tsx text
-*.jsx text
-*.json text
-*.css text
-*.md text
+
+# bun
+bun.lockb
