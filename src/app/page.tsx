@@ -73,16 +73,21 @@ export default function HomePage() {
 
         {/* Navigation */}
         <nav className="sticky top-0 z-50 border-b border-white/40 bg-white/70 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-16 py-4">
-            <div className="flex items-center gap-2">
-              <span className="text-2xl font-black text-gradient-primary tracking-tight">
+          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 md:px-8 lg:px-16 py-3 sm:py-4">
+            <div className="flex items-center gap-1.5 sm:gap-2">
+              <span className="text-lg sm:text-xl md:text-2xl font-black text-gradient-primary tracking-tight">
                 ResumeCanvas
               </span>
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+              <span className="rounded-full bg-primary/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold text-primary">
                 AI
               </span>
             </div>
-            <Button variant="default" size="sm" onClick={handleSignIn}>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={handleSignIn}
+              className="text-xs sm:text-sm px-3 sm:px-4"
+            >
               Sign in
             </Button>
           </div>
