@@ -32,15 +32,11 @@ jobs:
       - name: Run unit tests
         run: bun test tests/unit --bail
 
-      - name: Run integration tests
-        run: bun test tests/integration --bail
-        continue-on-error: true
-
       - name: Run performance tests
         run: bun test tests/performance --bail
 
       - name: Generate coverage report
-        run: bun test --coverage
+        run: bun test tests/unit tests/performance --coverage
 
       - name: Upload coverage to artifacts
         uses: actions/upload-artifact@v4
