@@ -1,25 +1,18 @@
 /**
- * Secure Slug Generation Utility
- * Generates unique, unpredictable slugs
+ * Sequential Slug Generation
+ * Format: firstname/number
  */
 
-import { randomBytes } from 'crypto';
-
-export function generateSlug(title: string): string {
-  const sanitized = title
+export function generateUserSlug(name: string): string {
+  const words = name
     .toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .slice(0, 30);
+    .replace(/[^a-z0-9\s]/g, '')
+    .split(/\s+/)
+    .filter(Boolean);
 
-  const random = randomBytes(4).toString('hex');
-  const timestamp = Date.now().toString(36).slice(-4);
-
-  return sanitized
-    ? `${sanitized}-${timestamp}-${random}`
-    : `resume-${timestamp}-${random}`;
+  return words[0] || 'user';
 }
 
 export function isValidSlug(slug: string): boolean {
-  return /^[a-z0-9-]+$/.test(slug) && slug.length >= 10 && slug.length <= 100;
+  return /^[a-z0-9-/]+$/.test(slug) && slug.length >= 3 && slug.length <= 50;
 }
