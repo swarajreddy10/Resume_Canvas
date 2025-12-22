@@ -398,9 +398,11 @@ const completion = await groq.chat.completions.create({
 ```typescript
 // NextAuth.js with JWT
 - Credentials provider (email/password)
-- Google OAuth 2.0
+- Google OAuth 2.0 (PKCE, state validation)
 - bcryptjs password hashing (10 rounds)
-- 30-day session expiry
+- 1-day session expiry (auto-refresh every hour)
+- Secure cookies (HttpOnly, SameSite=Lax)
+- Account linking support
 ```
 
 ### Input Validation
@@ -525,7 +527,7 @@ bun dev
 
 ```env
 MONGODB_URI=mongodb+srv://...
-NEXTAUTH_SECRET=<32-char-secret>
+NEXTAUTH_SECRET=<32-char-secret>  # Generate: openssl rand -base64 32
 NEXTAUTH_URL=http://localhost:3000
 GOOGLE_CLIENT_ID=<google-oauth-id>
 GOOGLE_CLIENT_SECRET=<google-oauth-secret>

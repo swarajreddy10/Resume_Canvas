@@ -1,32 +1,59 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { auth } from '@/lib/auth/config';
 
-export default function proxy(request: NextRequest) {
-  const sessionToken =
-    request.cookies.get('authjs.session-token') ||
-    request.cookies.get('__Secure-authjs.session-token');
+const publicPaths = [
+  '/',
+  '/auth/signin',
+  '/auth/signup',
+  '/auth/forgot-password',
+  '/api/auth',
+  '/api/user/register',
+  '/api/test-db',
+];
 
-  if (!sessionToken) {
-    const url = new URL('/auth/signin', request.url);
-    url.searchParams.set('callbackUrl', request.url);
-    return NextResponse.redirect(url);
+const publicPatterns = [
+  /^\/resume\/[^/]+$/,
+  /^\/api\/resume\/public\/.+$/,
+  /^\/api\/resumes\/slug\/.+$/,
+  /^\/_next\/.+$/,
+  /^\/favicon\.ico$/,
+  /^\/manifest\.json$/,
+  /^\/sw\.js$/,
+];
+
+function isPublicPath(pathname: string): boolean {
+  if (publicPaths.some((path) => pathname.startsWith(path))) {
+    return true;
   }
 
-  return NextResponse.next();
+  return publicPatterns.some((pattern) => pattern.test(pathname));
+}
+
+export default async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  if (isPublicPath(pathname)) {
+    return NextResponse.next();
+  }
+
+  const session = await auth();
+
+  if (!session?.user) {
+    const signInUrl = new URL('/auth/signin', request.url);
+    signInUrl.searchParams.set('callbackUrl', pathname);
+    return NextResponse.redirect(signInUrl);
+  }
+
+  const response = NextResponse.next();
+
+  response.headers.set('x-user-email', session.user.email || '');
+
+  return response;
 }
 
 export const config = {
   matcher: [
-    '/dashboard/:path*',
-    '/builder/:path*',
-    '/profile/:path*',
-    '/settings/:path*',
-    '/applications/:path*',
-    '/jobs/:path*',
-    '/analytics/:path*',
-    '/career/:path*',
-    '/teams/:path*',
-    '/integrations/:path*',
-    '/premium/:path*',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 };

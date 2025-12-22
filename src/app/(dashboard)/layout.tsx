@@ -74,9 +74,14 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   <Sidebar mobile onNavigate={() => setMobileMenuOpen(false)} />
                 </SheetContent>
               </Sheet>
-              <span className="text-2xl font-black bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-600 bg-clip-text text-transparent tracking-tight">
-                ResumeCanvas
-              </span>
+              <Link href="/dashboard" className="flex items-center gap-1.5">
+                <span className="text-xl md:text-2xl font-black text-gradient-primary tracking-tight">
+                  ResumeCanvas
+                </span>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                  AI
+                </span>
+              </Link>
             </div>
 
             {session && (

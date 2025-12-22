@@ -33,6 +33,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Google({
       clientId: appConfig.auth.google.clientId,
       clientSecret: appConfig.auth.google.clientSecret,
+      authorization: {
+        params: {
+          prompt: 'consent',
+          access_type: 'offline',
+          response_type: 'code',
+          scope: 'openid email profile',
+        },
+      },
+      allowDangerousEmailAccountLinking: true,
     }),
     Credentials({
       credentials: {
@@ -85,19 +94,98 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ],
   pages: {
     signIn: '/auth/signin',
+    error: '/auth/signin',
   },
   session: {
     strategy: 'jwt',
-    maxAge: 30 * 24 * 60 * 60,
+    maxAge: 24 * 60 * 60, // 1 day
+    updateAge: 60 * 60, // Refresh every 1 hour
   },
-
+  cookies: {
+    sessionToken: {
+      name:
+        process.env.NODE_ENV === 'production'
+          ? '__Secure-next-auth.session-token'
+          : 'next-auth.session-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        domain:
+          process.env.NODE_ENV === 'production'
+            ? process.env.COOKIE_DOMAIN
+            : undefined,
+      },
+    },
+    callbackUrl: {
+      name:
+        process.env.NODE_ENV === 'production'
+          ? '__Secure-next-auth.callback-url'
+          : 'next-auth.callback-url',
+      options: {
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+    csrfToken: {
+      name:
+        process.env.NODE_ENV === 'production'
+          ? '__Host-next-auth.csrf-token'
+          : 'next-auth.csrf-token',
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+      },
+    },
+  },
   callbacks: {
-    async jwt({ token, user }) {
+    async signIn({ user, account }) {
+      try {
+        // Always allow sign in - handle errors gracefully
+        if (account?.provider === 'google') {
+          const client = await clientPromise;
+          const db = client.db();
+
+          const existingUser = await db
+            .collection('users')
+            .findOne({ email: user.email?.toLowerCase() });
+
+          if (existingUser && !existingUser.emailVerified) {
+            await db
+              .collection('users')
+              .updateOne(
+                { email: user.email?.toLowerCase() },
+                { $set: { emailVerified: new Date() } }
+              );
+          }
+        }
+        return true;
+      } catch (error) {
+        console.error('SignIn callback error:', error);
+        // Still allow sign in even if DB update fails
+        return true;
+      }
+    },
+    async jwt({ token, user, account, trigger, session }) {
       if (user) {
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
       }
+
+      if (account) {
+        token.accessToken = account.access_token;
+        token.provider = account.provider;
+      }
+
+      if (trigger === 'update' && session) {
+        token.name = session.name;
+      }
+
       return token;
     },
     async session({ session, token }) {
@@ -109,10 +197,32 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async redirect({ url, baseUrl }) {
+      // Handle relative URLs
       if (url.startsWith('/')) return `${baseUrl}${url}`;
-      else if (new URL(url).origin === baseUrl) return url;
+
+      // Handle same-origin URLs
+      try {
+        const urlObj = new URL(url);
+        if (urlObj.origin === baseUrl) return url;
+      } catch {
+        // Invalid URL, fallback to dashboard
+        return `${baseUrl}/dashboard`;
+      }
+
+      // Default to dashboard for external URLs
       return `${baseUrl}/dashboard`;
     },
   },
+  events: {
+    async signIn({ user, account, isNewUser }) {
+      console.log(
+        `User signed in: ${user.email} via ${account?.provider}${isNewUser ? ' (new user)' : ''}`
+      );
+    },
+    async signOut() {
+      console.log('User signed out');
+    },
+  },
+  debug: process.env.NODE_ENV === 'development',
   trustHost: true,
 });
