@@ -25,20 +25,26 @@ async function connectDB() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose
-      .connect(appConfig.mongodb.uri, {
-        bufferCommands: false,
-        maxPoolSize: appConfig.mongodb.options.maxPoolSize,
-        minPoolSize: appConfig.mongodb.options.minPoolSize,
-        serverSelectionTimeoutMS:
-          appConfig.mongodb.options.serverSelectionTimeoutMS,
-        socketTimeoutMS: appConfig.mongodb.options.socketTimeoutMS,
-      })
-      .catch((err) => {
-        cached.promise = null;
-        console.error('MongoDB connection failed:', err);
-        throw new Error('Database connection failed');
-      });
+    const options = {
+      bufferCommands: false,
+      maxPoolSize: appConfig.mongodb.options.maxPoolSize,
+      minPoolSize: appConfig.mongodb.options.minPoolSize,
+      serverSelectionTimeoutMS:
+        appConfig.mongodb.options.serverSelectionTimeoutMS,
+      socketTimeoutMS: appConfig.mongodb.options.socketTimeoutMS,
+      maxIdleTimeMS: 60000,
+    };
+
+    cached.promise = Promise.race([
+      mongoose.connect(appConfig.mongodb.uri, options),
+      new Promise<typeof mongoose>((_, reject) =>
+        setTimeout(() => reject(new Error('Connection timeout')), 10000)
+      ),
+    ]).catch((err) => {
+      cached.promise = null;
+      console.error('MongoDB connection failed:', err);
+      throw new Error('Database connection failed');
+    });
   }
 
   try {
