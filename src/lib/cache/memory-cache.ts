@@ -12,10 +12,21 @@ export class MemoryCache<T> {
   private cache = new Map<string, CacheEntry<T>>();
   private maxSize: number;
   private ttl: number;
+  private cleanupInterval: NodeJS.Timeout;
 
   constructor(maxSize = 100, ttlMs = 5 * 60 * 1000) {
     this.maxSize = maxSize;
     this.ttl = ttlMs;
+    this.cleanupInterval = setInterval(() => this.cleanup(), 60000);
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    for (const [key, entry] of this.cache.entries()) {
+      if (now > entry.expiry) {
+        this.cache.delete(key);
+      }
+    }
   }
 
   set(key: string, value: T, ttl?: number): void {
@@ -61,6 +72,11 @@ export class MemoryCache<T> {
     }
 
     return true;
+  }
+
+  destroy(): void {
+    clearInterval(this.cleanupInterval);
+    this.cache.clear();
   }
 }
 
