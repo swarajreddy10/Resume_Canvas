@@ -4,6 +4,7 @@ import connectDB from '@/lib/db/connection';
 import { generateUserSlug } from '@/lib/utils/slug';
 import { sanitizeResumeData } from '@/lib/security/sanitize';
 import { resumeService } from '@/server/services/resume.service';
+import { UserCounter } from '@/lib/db/models/UserCounter';
 
 export async function GET() {
   try {
@@ -36,11 +37,15 @@ export async function POST(request: NextRequest) {
     const body = sanitizeResumeData(await request.json());
     await connectDB();
 
-    // Get user's resume count for sequential numbering
-    const userResumes = await resumeService.getUserResumes(session.user.email);
     const userName = generateUserSlug(session.user.name || session.user.email);
-    const resumeNumber = userResumes.length + 1;
-    const slug = `${userName}/${resumeNumber}`;
+
+    const counter = await UserCounter.findOneAndUpdate(
+      { userEmail: session.user.email },
+      { $inc: { resumeCount: 1 } },
+      { upsert: true, new: true }
+    );
+
+    const slug = `${userName}/${counter.resumeCount}`;
 
     const resume = await resumeService.createResume({
       ...body,
