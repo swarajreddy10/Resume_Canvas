@@ -12,37 +12,43 @@ declare global {
 
 if (!global._mongoClientPromise) {
   const client = new MongoClient(appConfig.mongodb.uri, {
-    maxPoolSize: appConfig.mongodb.options.maxPoolSize,
-    minPoolSize: appConfig.mongodb.options.minPoolSize,
-    serverSelectionTimeoutMS:
-      appConfig.mongodb.options.serverSelectionTimeoutMS,
-    socketTimeoutMS: appConfig.mongodb.options.socketTimeoutMS,
+    maxPoolSize: 5,
+    minPoolSize: 1,
   });
-
-  global._mongoClientPromise = client.connect().catch((err) => {
-    console.error('MongoDB Auth connection failed:', err);
-    throw new Error('Auth database connection failed');
-  });
+  global._mongoClientPromise = client.connect();
 }
 
 const clientPromise = global._mongoClientPromise as Promise<MongoClient>;
 
+const hasGoogleConfig =
+  appConfig.auth.google.clientId &&
+  appConfig.auth.google.clientSecret &&
+  appConfig.auth.google.clientId !== 'your-google-client-id';
+
+if (!hasGoogleConfig) {
+  console.warn('Google OAuth not configured - provider will be disabled');
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: MongoDBAdapter(clientPromise),
   providers: [
-    Google({
-      clientId: appConfig.auth.google.clientId,
-      clientSecret: appConfig.auth.google.clientSecret,
-      authorization: {
-        params: {
-          prompt: 'consent',
-          access_type: 'offline',
-          response_type: 'code',
-          scope: 'openid email profile',
-        },
-      },
-      allowDangerousEmailAccountLinking: true,
-    }),
+    ...(hasGoogleConfig
+      ? [
+          Google({
+            clientId: appConfig.auth.google.clientId,
+            clientSecret: appConfig.auth.google.clientSecret,
+            authorization: {
+              params: {
+                prompt: 'consent',
+                access_type: 'offline',
+                response_type: 'code',
+                scope: 'openid email profile',
+              },
+            },
+            allowDangerousEmailAccountLinking: true,
+          }),
+        ]
+      : []),
     Credentials({
       credentials: {
         email: { label: 'Email', type: 'email' },
@@ -55,12 +61,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             throw new Error('Email and password required');
           }
 
+          if (
+            typeof credentials.email !== 'string' ||
+            typeof credentials.password !== 'string'
+          ) {
+            throw new Error('Invalid credentials format');
+          }
+
+          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+          if (
+            !emailRegex.test(credentials.email) ||
+            credentials.email.length > 255
+          ) {
+            throw new Error('Invalid email format');
+          }
+
+          if (
+            credentials.password.length < 8 ||
+            credentials.password.length > 128
+          ) {
+            throw new Error('Invalid password length');
+          }
+
           const client = await clientPromise;
           const db = client.db();
           const user = await db
             .collection('users')
             .findOne(
-              { email: (credentials.email as string).toLowerCase() },
+              { email: credentials.email.toLowerCase() },
               { projection: { _id: 1, email: 1, name: 1, password: 1 } }
             );
 

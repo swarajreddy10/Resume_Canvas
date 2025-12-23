@@ -8,17 +8,30 @@ export class ResumeRepository {
     const cached = await safeKvGet<unknown[]>(cacheKey);
     if (cached) return cached;
 
-    const resumes = await Resume.find({ userEmail: email })
-      .sort({ updatedAt: -1 })
-      .lean()
-      .exec();
+    const resumes = await Promise.race([
+      Resume.find({ userEmail: email })
+        .select(
+          '_id title slug templateId isPublic atsScore viewCount updatedAt createdAt'
+        )
+        .sort({ updatedAt: -1 })
+        .lean()
+        .exec(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Query timeout')), 5000)
+      ),
+    ]);
 
     await safeKvSet(cacheKey, resumes, 300);
     return resumes;
   }
 
   async findById(id: string) {
-    return Resume.findById(id).lean().exec() as Promise<{
+    return Promise.race([
+      Resume.findById(id).lean().exec(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Query timeout')), 5000)
+      ),
+    ]) as Promise<{
       userEmail: string;
       [key: string]: unknown;
     } | null>;
@@ -44,10 +57,14 @@ export class ResumeRepository {
   }
 
   async update(id: string, data: Partial<ResumeData>) {
-    const resume = await Resume.findByIdAndUpdate(id, data, { new: true })
-      .lean()
-      .exec();
-    if (resume && 'userEmail' in resume) {
+    const resume = (await Promise.race([
+      Resume.findByIdAndUpdate(id, data, { new: true }).lean().exec(),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Query timeout')), 5000)
+      ),
+    ])) as { userEmail?: string; [key: string]: unknown } | null;
+
+    if (resume?.userEmail) {
       await safeKvDel(`resumes:${resume.userEmail}`);
     }
     return resume;
