@@ -442,7 +442,8 @@ function standardTemplate(data: ResumeDataForPDF, accent = '#1d4ed8'): string {
 export async function generatePDF(
   resumeData: ResumeDataForPDF
 ): Promise<Buffer> {
-  let browser;
+  let browser = null;
+  let page = null;
 
   try {
     const launchArgs = [
@@ -461,7 +462,7 @@ export async function generatePDF(
       protocolTimeout: appConfig.security.puppeteer.protocolTimeout,
     });
 
-    const page = await browser.newPage();
+    page = await browser.newPage();
     const templateId = resumeData.templateId || 'standard';
     let html: string;
 
@@ -498,8 +499,17 @@ export async function generatePDF(
     logger.error('Error generating PDF', { error });
     throw new Error('Failed to generate PDF');
   } finally {
+    if (page) {
+      await page
+        .close()
+        .catch((err) => logger.error('Failed to close page', { error: err }));
+    }
     if (browser) {
-      await browser.close();
+      await browser
+        .close()
+        .catch((err) =>
+          logger.error('Failed to close browser', { error: err })
+        );
     }
   }
 }
