@@ -3,7 +3,7 @@ import { auth } from '@/lib/auth/config';
 import connectDB from '@/lib/db/connection';
 import { generateUserSlug } from '@/lib/utils/slug';
 import { sanitizeResumeData } from '@/lib/security/sanitize';
-import { resumeService } from '@/server/services/resume.service';
+import { Resume } from '@/lib/db/models/Resume';
 
 export async function GET() {
   try {
@@ -13,7 +13,9 @@ export async function GET() {
     }
 
     await connectDB();
-    const resumes = await resumeService.getUserResumes(session.user.email);
+    const resumes = await Resume.find({ userEmail: session.user.email })
+      .sort({ updatedAt: -1 })
+      .lean();
     return NextResponse.json({ resumes });
   } catch (error) {
     console.error(
@@ -37,18 +39,21 @@ export async function POST(request: NextRequest) {
     await connectDB();
 
     // Get user's resume count for sequential numbering
-    const userResumes = await resumeService.getUserResumes(session.user.email);
+    const userResumes = await Resume.find({
+      userEmail: session.user.email,
+    }).lean();
     const userName = generateUserSlug(session.user.name || session.user.email);
     const resumeNumber = userResumes.length + 1;
     const slug = `${userName}/${resumeNumber}`;
 
-    const resume = await resumeService.createResume({
+    const resume = new Resume({
       ...body,
       slug,
       userEmail: session.user.email,
     });
+    const saved = await resume.save();
 
-    return NextResponse.json({ resume });
+    return NextResponse.json({ resume: saved });
   } catch (error) {
     console.error(
       JSON.stringify({ level: 'error', msg: 'Failed to create resume', error })

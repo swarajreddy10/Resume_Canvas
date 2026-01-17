@@ -55,21 +55,22 @@ export default function ExperienceForm({
     name: 'experiences',
   });
 
+  // Reset form when initialData changes
+  React.useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    }
+  }, [initialData, form]);
+
   // Update parent state when form values change (debounced for performance)
   React.useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    const subscription = form.watch((value) => {
-      clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => {
-        if (form.formState.isDirty && form.formState.isValid) {
-          onSubmit(value as ExperienceArrayData);
-        }
-      }, 300);
-    });
-    return () => {
-      clearTimeout(timeoutId);
-      subscription.unsubscribe();
-    };
+    const timeoutId = setTimeout(() => {
+      if (form.formState.isDirty && form.formState.isValid) {
+        const values = form.getValues();
+        onSubmit(values as ExperienceArrayData);
+      }
+    }, 300);
+    return () => clearTimeout(timeoutId);
   }, [form, onSubmit]);
 
   const addExperience = () => {

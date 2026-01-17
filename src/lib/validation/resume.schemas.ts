@@ -8,6 +8,17 @@ export const VALIDATION_LIMITS = {
   bullet: { min: 25, max: 200 },
 } as const;
 
+// Enhanced regex patterns
+const URL_REGEX =
+  /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/;
+const PHONE_REGEX =
+  /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/;
+const NAME_REGEX = /^[a-zA-Z\s\-\.,']+$/;
+const COMPANY_REGEX = /^[a-zA-Z0-9\s\-\.,&()]+$/;
+const LOCATION_REGEX = /^[a-zA-Z0-9\s\-\.,]+$/;
+const DATE_REGEX =
+  /^(0[1-9]|1[0-2])[\/\-]\d{4}$|^\d{4}$|^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}$|^Present$/i;
+
 // Helper for optional URL validation
 const optionalUrl = z
   .string()
@@ -16,29 +27,18 @@ const optionalUrl = z
   .refine(
     (val) => {
       if (!val || val === '') return true;
-      try {
-        new URL(val);
-        return val.startsWith('http://') || val.startsWith('https://');
-      } catch {
-        return false;
-      }
+      return URL_REGEX.test(val);
     },
     { message: 'Must be a valid URL starting with http:// or https://' }
   );
 
-// Helper for phone validation
-const phoneRegex = /^[\+]?[1-9][\d]{0,3}[\s\-\(\)]?[\d\s\-\(\)]{7,15}$/;
-
 // Helper for date validation
 const dateString = z.string().refine(
   (val) => {
-    if (!val || val === '' || val.toLowerCase() === 'present') return true;
-    // Accept various date formats: MM/YYYY, YYYY, MM-YYYY, Mon YYYY, Month YYYY
-    return /^(0[1-9]|1[0-2])[\/\-]\d{4}$|^\d{4}$|^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s\d{4}$|^(January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}$/i.test(
-      val
-    );
+    if (!val || val === '') return true;
+    return DATE_REGEX.test(val);
   },
-  { message: 'Date must be in MM/YYYY, YYYY, or Mon YYYY format, or "Present"' }
+  { message: 'Date must be in MM/YYYY, YYYY, Mon YYYY, or "Present" format' }
 );
 
 export const PersonalInfoSchema = z.object({
@@ -53,8 +53,8 @@ export const PersonalInfoSchema = z.object({
       'Name must be less than 100 characters'
     )
     .regex(
-      /^[a-zA-Z\s\-\.]+$/,
-      'Name can only contain letters, spaces, hyphens, and periods'
+      NAME_REGEX,
+      'Name can only contain letters, spaces, hyphens, periods, commas, and apostrophes'
     ),
   email: z
     .string()
@@ -66,8 +66,15 @@ export const PersonalInfoSchema = z.object({
     ),
   phone: z
     .string()
-    .min(1, 'Phone number is required')
-    .regex(phoneRegex, 'Please enter a valid phone number'),
+    .optional()
+    .or(z.literal(''))
+    .refine(
+      (val) => {
+        if (!val || val === '') return true;
+        return PHONE_REGEX.test(val);
+      },
+      { message: 'Please enter a valid phone number' }
+    ),
   address: z
     .string()
     .max(200, 'Address must be less than 200 characters')
@@ -93,7 +100,7 @@ export const EducationSchema = z.object({
     .string()
     .min(1, 'School name is required')
     .max(100, 'School name must be less than 100 characters')
-    .regex(/^[a-zA-Z0-9\s\-\.,&]+$/, 'School name contains invalid characters'),
+    .regex(COMPANY_REGEX, 'School name contains invalid characters'),
   degree: z
     .string()
     .min(1, 'Degree is required')
@@ -123,7 +130,8 @@ export const EducationSchema = z.object({
   location: z
     .string()
     .min(1, 'Location is required')
-    .max(100, 'Location must be less than 100 characters'),
+    .max(100, 'Location must be less than 100 characters')
+    .regex(LOCATION_REGEX, 'Location contains invalid characters'),
 });
 
 export const ExperienceSchema = z.object({
@@ -131,10 +139,7 @@ export const ExperienceSchema = z.object({
     .string()
     .min(1, 'Company name is required')
     .max(100, 'Company name must be less than 100 characters')
-    .regex(
-      /^[a-zA-Z0-9\s\-\.,&]+$/,
-      'Company name contains invalid characters'
-    ),
+    .regex(COMPANY_REGEX, 'Company name contains invalid characters'),
   position: z
     .string()
     .min(1, 'Position is required')
@@ -142,7 +147,8 @@ export const ExperienceSchema = z.object({
   location: z
     .string()
     .min(1, 'Location is required')
-    .max(100, 'Location must be less than 100 characters'),
+    .max(100, 'Location must be less than 100 characters')
+    .regex(LOCATION_REGEX, 'Location contains invalid characters'),
   startDate: dateString.refine((val) => val !== '', {
     message: 'Start date is required',
   }),
@@ -197,12 +203,8 @@ export const ProjectSchema = z.object({
     .min(5, 'At least one technology required')
     .max(200, 'Technologies must be less than 200 characters'),
   url: optionalUrl,
-  startDate: dateString.refine((val) => val !== '', {
-    message: 'Start date is required',
-  }),
-  endDate: dateString.refine((val) => val !== '', {
-    message: 'End date is required',
-  }),
+  startDate: z.string().optional().or(z.literal('')),
+  endDate: z.string().optional().or(z.literal('')),
 });
 
 export const CertificationSchema = z.object({
@@ -214,9 +216,7 @@ export const CertificationSchema = z.object({
     .string()
     .min(1, 'Issuing organization is required')
     .max(100, 'Issuing organization must be less than 100 characters'),
-  date: dateString.refine((val) => val !== '', {
-    message: 'Issue date is required',
-  }),
+  date: z.string().optional().or(z.literal('')),
   url: optionalUrl,
 });
 

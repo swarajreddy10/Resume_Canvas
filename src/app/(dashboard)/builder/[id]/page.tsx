@@ -308,10 +308,12 @@ export default function ResumeBuilderPage() {
           }
         }
 
-        // Show saving indicator
+        // Show saving indicator with unique ID
         showInfo(isDraft ? 'Saving draft...' : 'Saving your resume...', {
-          duration: 2000,
+          duration: 10000,
+          id: 'resume-save',
         });
+
         const payload = {
           title: resumeData.personalInfo?.name
             ? `${resumeData.personalInfo.name}'s Resume`
@@ -338,10 +340,12 @@ export default function ResumeBuilderPage() {
             await response.json();
             setLastSaved(new Date());
             setHasUnsavedChanges(false);
+            // Update the same toast to show success
             showSuccess(
               isDraft
                 ? 'Draft saved successfully!'
-                : 'Resume saved successfully!'
+                : 'Resume saved successfully!',
+              { id: 'resume-save', duration: 3000 }
             );
             // Calculate ATS score only for final saves
             if (!isDraft) {
@@ -364,10 +368,12 @@ export default function ResumeBuilderPage() {
             setResumeId(data.resume._id);
             setLastSaved(new Date());
             setHasUnsavedChanges(false);
+            // Update the same toast to show success
             showSuccess(
               isDraft
                 ? 'Draft created successfully!'
-                : 'Resume created successfully!'
+                : 'Resume created successfully!',
+              { id: 'resume-save', duration: 3000 }
             );
             // Calculate ATS score only for final saves
             if (!isDraft) {
@@ -386,7 +392,7 @@ export default function ResumeBuilderPage() {
           error instanceof Error
             ? error.message
             : 'Failed to save resume. Please try again.';
-        showError(errorMessage);
+        showError(errorMessage, { id: 'resume-save' });
       } finally {
         setSaving(false);
       }

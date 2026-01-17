@@ -54,6 +54,13 @@ export default function ProjectsForm({
     name: 'projects',
   });
 
+  // Reset form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    }
+  }, [initialData, form]);
+
   const watchedValues = useWatch({ control: form.control });
 
   // Update parent state when form values change (debounced for performance)

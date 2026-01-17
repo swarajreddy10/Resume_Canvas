@@ -35,7 +35,7 @@ export default function SkillsForm({ initialData, onSubmit }: SkillsFormProps) {
   const form = useForm<SkillsData>({
     resolver: zodResolver(SkillsSchema),
     defaultValues: {
-      skills: skills,
+      skills: initialData?.skills || [],
       newSkill: '',
     },
   });
