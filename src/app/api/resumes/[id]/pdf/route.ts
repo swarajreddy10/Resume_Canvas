@@ -30,7 +30,26 @@ export async function GET(
     const templateId = urlTemplate || resumeDoc.templateId || 'standard';
 
     const resumeData = resumeDoc.toObject ? resumeDoc.toObject() : resume;
-    const pdfBuffer = await generatePDF({ ...resumeData, templateId });
+
+    // Ensure all required fields have default values
+    const sanitizedData = {
+      ...resumeData,
+      templateId,
+      personalInfo: resumeData.personalInfo || {},
+      experience: Array.isArray(resumeData.experience)
+        ? resumeData.experience
+        : [],
+      education: Array.isArray(resumeData.education)
+        ? resumeData.education
+        : [],
+      skills: Array.isArray(resumeData.skills) ? resumeData.skills : [],
+      projects: Array.isArray(resumeData.projects) ? resumeData.projects : [],
+      certifications: Array.isArray(resumeData.certifications)
+        ? resumeData.certifications
+        : [],
+    };
+
+    const pdfBuffer = await generatePDF(sanitizedData);
 
     const rawName =
       (resumeData.personalInfo?.name as string | undefined) ||
@@ -47,7 +66,10 @@ export async function GET(
   } catch (error) {
     console.error('Error generating PDF:', error);
     return NextResponse.json(
-      { error: 'Failed to generate PDF' },
+      {
+        error: 'Failed to generate PDF',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

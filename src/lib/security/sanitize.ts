@@ -29,9 +29,20 @@ export function sanitizeString(
 
   if (!opts.allowHtml) {
     sanitized = sanitized
-      .replace(/[<>]/g, '')
+      .replace(/[<>"'&]/g, (match) => {
+        const htmlEntities: Record<string, string> = {
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#x27;',
+          '&': '&amp;',
+        };
+        return htmlEntities[match] || match;
+      })
       .replace(/javascript:/gi, '')
-      .replace(/on\w+=/gi, '');
+      .replace(/on\w+=/gi, '')
+      .replace(/data:/gi, '')
+      .replace(/vbscript:/gi, '');
   }
 
   return sanitized.slice(0, opts.maxLength);
