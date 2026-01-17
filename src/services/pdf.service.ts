@@ -1,7 +1,7 @@
-import puppeteer from 'puppeteer';
 import { appConfig } from '@/lib/config/app.config';
-import { logger } from '@/lib/utils/logger';
 import { sanitizeString } from '@/lib/security/sanitize';
+import { logger } from '@/lib/utils/logger';
+import puppeteer from 'puppeteer';
 
 interface ResumeDataForPDF {
   title?: string;
@@ -443,7 +443,8 @@ function standardTemplate(data: ResumeDataForPDF, accent = '#1d4ed8'): string {
 export async function generatePDF(
   resumeData: ResumeDataForPDF
 ): Promise<Buffer> {
-  let browser;
+  let browser = null;
+  let page = null;
 
   try {
     // Validate that we have at least minimal data
@@ -472,7 +473,7 @@ export async function generatePDF(
       protocolTimeout: appConfig.security.puppeteer.protocolTimeout,
     });
 
-    const page = await browser.newPage();
+    page = await browser.newPage();
     const templateId = resumeData.templateId || 'standard';
     let html: string;
 
@@ -515,12 +516,17 @@ export async function generatePDF(
       `Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
     );
   } finally {
+    if (page) {
+      await page
+        .close()
+        .catch((err) => logger.error('Failed to close page', { error: err }));
+    }
     if (browser) {
-      try {
-        await browser.close();
-      } catch (closeError) {
-        logger.error('Error closing browser', { error: closeError });
-      }
+      await browser
+        .close()
+        .catch((err) =>
+          logger.error('Failed to close browser', { error: err })
+        );
     }
   }
 }

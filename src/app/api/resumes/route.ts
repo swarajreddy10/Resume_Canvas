@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import connectDB from '@/lib/db/connection';
-import { generateUserSlug } from '@/lib/utils/slug';
+import { UserCounter } from '@/lib/db/models/UserCounter';
 import { sanitizeResumeData } from '@/lib/security/sanitize';
-import { Resume } from '@/lib/db/models/Resume';
+import { generateUserSlug } from '@/lib/utils/slug';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
   try {
@@ -38,13 +38,15 @@ export async function POST(request: NextRequest) {
     const body = sanitizeResumeData(await request.json());
     await connectDB();
 
-    // Get user's resume count for sequential numbering
-    const userResumes = await Resume.find({
-      userEmail: session.user.email,
-    }).lean();
     const userName = generateUserSlug(session.user.name || session.user.email);
-    const resumeNumber = userResumes.length + 1;
-    const slug = `${userName}/${resumeNumber}`;
+
+    const counter = await UserCounter.findOneAndUpdate(
+      { userEmail: session.user.email },
+      { $inc: { resumeCount: 1 } },
+      { upsert: true, new: true }
+    );
+
+    const slug = `${userName}/${counter.resumeCount}`;
 
     const resume = new Resume({
       ...body,
