@@ -81,7 +81,8 @@
   --sidebar-ring: oklch(0.68 0.15 255);
   --glass-border: color(srgb 1 1 1 / 0.6);
   --glass-bg: color(srgb 1 1 1 / 0.72);
-  --shadow-soft: 0 20px 50px -30px rgba(15, 23, 42, 0.45),
+  --shadow-soft:
+    0 20px 50px -30px rgba(15, 23, 42, 0.45),
     0 12px 24px -18px rgba(12, 74, 110, 0.3);
 }
 
@@ -119,7 +120,8 @@
   --sidebar-ring: oklch(0.75 0.13 255);
   --glass-border: color(srgb 0.6 0.7 0.9 / 0.35);
   --glass-bg: color(srgb 0.12 0.16 0.25 / 0.7);
-  --shadow-soft: 0 20px 50px -30px rgba(0, 0, 0, 0.7),
+  --shadow-soft:
+    0 20px 50px -30px rgba(0, 0, 0, 0.7),
     0 12px 24px -18px rgba(59, 130, 246, 0.35);
 }
 
@@ -129,7 +131,8 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: radial-gradient(
+    background-image:
+      radial-gradient(
         circle at 20% 20%,
         color-mix(in srgb, var(--primary) 8%, transparent),
         transparent 35%
