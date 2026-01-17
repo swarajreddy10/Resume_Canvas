@@ -22,7 +22,7 @@ const resumeSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: /^[a-z0-9-]+$/,
+      match: /^[a-z0-9-/]+$/,
     },
     personalInfo: {
       name: { type: String, trim: true, maxlength: 100 },
@@ -96,6 +96,7 @@ const resumeSchema = new mongoose.Schema(
 resumeSchema.index({ slug: 1 }, { unique: true });
 resumeSchema.index({ userEmail: 1, updatedAt: -1 });
 resumeSchema.index({ userEmail: 1, isPublic: 1 });
+resumeSchema.index({ userEmail: 1, templateId: 1, isPublic: 1 });
 resumeSchema.index({ createdAt: 1 });
 resumeSchema.index({ atsScore: -1 });
 resumeSchema.index({ userEmail: 1, templateId: 1 });

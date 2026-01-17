@@ -12,10 +12,32 @@ interface RateLimitStore {
 
 export class RateLimiter {
   private store: RateLimitStore = {};
+  private maxStoreSize = 10000;
   public readonly config: RateLimitConfig;
+  private cleanupInterval: NodeJS.Timeout;
 
   constructor(config: RateLimitConfig) {
     this.config = config;
+    this.cleanupInterval = setInterval(() => this.cleanup(), 60000);
+  }
+
+  private cleanup(): void {
+    const now = Date.now();
+    const keys = Object.keys(this.store);
+
+    for (const key of keys) {
+      if (this.store[key].resetTime < now) {
+        delete this.store[key];
+      }
+    }
+
+    if (keys.length > this.maxStoreSize) {
+      const sortedKeys = keys.sort(
+        (a, b) => this.store[a].resetTime - this.store[b].resetTime
+      );
+      const toDelete = sortedKeys.slice(0, keys.length - this.maxStoreSize);
+      toDelete.forEach((key) => delete this.store[key]);
+    }
   }
 
   private getIdentifier(request: Request): string {
@@ -63,6 +85,11 @@ export class RateLimiter {
       remaining: this.config.maxRequests - entry.count,
       resetTime: entry.resetTime,
     };
+  }
+
+  destroy(): void {
+    clearInterval(this.cleanupInterval);
+    this.store = {};
   }
 }
 
