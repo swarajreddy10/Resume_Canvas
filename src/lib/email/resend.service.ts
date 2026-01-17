@@ -66,24 +66,27 @@ export async function sendResetEmail(email: string, resetToken: string) {
           
           .logo-icon {
             display: inline-block;
-            width: 64px;
-            height: 64px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 16px;
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            border-radius: 12px;
             margin-bottom: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
-            backdrop-filter: blur(10px);
+            font-size: 24px;
+            font-weight: 900;
+            color: white;
+            letter-spacing: -0.05em;
           }
           
           .logo-text {
             color: #ffffff;
-            font-size: 28px;
-            font-weight: 700;
+            font-size: 32px;
+            font-weight: 900;
             letter-spacing: -0.025em;
             margin: 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
           }
           
           .tagline {
@@ -118,21 +121,23 @@ export async function sendResetEmail(email: string, resetToken: string) {
           
           .cta-button {
             display: inline-block;
-            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-            color: #ffffff;
+            background: #ffffff;
+            color: #2563eb;
             text-decoration: none;
             padding: 16px 32px;
             border-radius: 12px;
             font-weight: 600;
             font-size: 16px;
             letter-spacing: -0.025em;
-            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            border: 2px solid #2563eb;
             transition: all 0.2s ease;
           }
           
           .cta-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 35px -5px rgba(37, 99, 235, 0.5);
+            background: #f8fafc;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
           }
           
           .security-notice {
@@ -269,7 +274,6 @@ export async function sendResetEmail(email: string, resetToken: string) {
         <div class="container">
           <div class="header">
             <div class="logo">
-              <div class="logo-icon">🎨</div>
               <h1 class="logo-text">ResumeCanvas</h1>
               <p class="tagline">Paint Your Professional Masterpiece</p>
             </div>
@@ -284,7 +288,7 @@ export async function sendResetEmail(email: string, resetToken: string) {
             
             <div class="cta-container">
               <a href="${resetUrl}" class="cta-button">
-                Reset My Password
+                Reset Password
               </a>
             </div>
             
@@ -313,13 +317,13 @@ export async function sendResetEmail(email: string, resetToken: string) {
           <div class="footer">
             <p class="footer-text">
               This email was sent by ResumeCanvas. If you have any questions, 
-              please contact our support team.
+              please contact our support team at <a href="mailto:support@resumecanvas.live" style="color: #2563eb; text-decoration: none;">support@resumecanvas.live</a>
             </p>
             
             <div class="divider"></div>
             
             <p style="font-size: 12px; color: #9ca3af;">
-              © 2024 ResumeCanvas. All rights reserved.<br>
+              © 2026 ResumeCanvas. All rights reserved.<br>
               Professional Resume Builder | AI-Powered ATS Optimization
             </p>
           </div>

@@ -124,12 +124,12 @@ export default function DashboardPage() {
         {resumes.map((resume) => (
           <Card key={resume._id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <div className="flex items-start justify-between min-w-0">
-                <div className="flex items-center gap-2 min-w-0 flex-1">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                   <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
-                  <CardTitle className="text-lg truncate min-w-0">
+                  <CardTitle className="text-lg truncate">
                     {resume.personalInfo?.name
-                      ? `${resume.personalInfo.name.split(' ')[0]}'s Resume`
+                      ? `${resume.personalInfo.name}'s Resume`
                       : resume.title}
                   </CardTitle>
                 </div>
@@ -161,9 +161,9 @@ export default function DashboardPage() {
             </CardHeader>
 
             <CardContent className="pt-0">
-              <div className="flex items-center justify-between min-w-0 mb-4">
+              <div className="flex items-center justify-between mb-4">
                 {resume.personalInfo?.name && (
-                  <p className="text-sm text-gray-600 truncate min-w-0 flex-1">
+                  <p className="text-sm text-gray-600 truncate flex-1 mr-2">
                     {resume.personalInfo.name}
                   </p>
                 )}
