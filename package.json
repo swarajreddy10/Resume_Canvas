@@ -18,7 +18,7 @@
     "test:unit": "bun test tests/unit",
     "test:integration": "bun test tests/integration",
     "test:performance": "bun test tests/performance",
-    "test:e2e": "bun test tests/e2e",
+    "test:e2e": "playwright test",
     "test:ci": "bun test --bail --reporter=junit --reporter-outfile=./test-results.xml",
     "prepare": "husky",
     "verify": "bun run format && bun run lint && bun run type-check"
