@@ -1,6 +1,7 @@
 import puppeteer from 'puppeteer';
 import { appConfig } from '@/lib/config/app.config';
 import { logger } from '@/lib/utils/logger';
+import { sanitizeString } from '@/lib/security/sanitize';
 
 interface ResumeDataForPDF {
   title?: string;
@@ -51,12 +52,12 @@ interface ResumeDataForPDF {
   }>;
 }
 
-const safe = (val?: string) => val || '';
+const safe = (val?: string) => sanitizeString(val || '', { allowHtml: false });
 const renderList = (items?: string[], className = '') =>
   items?.length
     ? `<ul class="${className}">${items
         .filter(Boolean)
-        .map((item) => `<li>${item}</li>`)
+        .map((item) => `<li>${safe(item)}</li>`)
         .join('')}</ul>`
     : '';
 
@@ -445,11 +446,21 @@ export async function generatePDF(
   let browser;
 
   try {
+    // Validate that we have at least minimal data
+    if (!resumeData) {
+      throw new Error('Resume data is required');
+    }
+
+    // Secure Puppeteer launch arguments
     const launchArgs = [
       '--disable-dev-shm-usage',
       '--disable-gpu',
       '--disable-software-rasterizer',
+      '--disable-web-security',
+      '--disable-features=VizDisplayCompositor',
     ];
+
+    // Only disable sandbox in production if explicitly configured
     if (!appConfig.security.puppeteer.sandbox) {
       launchArgs.push('--no-sandbox', '--disable-setuid-sandbox');
     }
@@ -495,11 +506,21 @@ export async function generatePDF(
 
     return Buffer.from(pdfBuffer);
   } catch (error) {
-    logger.error('Error generating PDF', { error });
-    throw new Error('Failed to generate PDF');
+    logger.error('Error generating PDF', {
+      error,
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+    });
+    throw new Error(
+      `Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`
+    );
   } finally {
     if (browser) {
-      await browser.close();
+      try {
+        await browser.close();
+      } catch (closeError) {
+        logger.error('Error closing browser', { error: closeError });
+      }
     }
   }
 }

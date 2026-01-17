@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     image: { type: String, trim: true, maxlength: 500 },
+    resetToken: { type: String, select: false },
+    resetExpiry: { type: Date, select: false },
     subscriptionTier: {
       type: String,
       enum: ['free', 'pro', 'enterprise'],

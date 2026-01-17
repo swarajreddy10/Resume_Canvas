@@ -57,6 +57,13 @@ export default function EducationForm({
     name: 'education',
   });
 
+  // Reset form when initialData changes
+  useEffect(() => {
+    if (initialData) {
+      form.reset(initialData);
+    }
+  }, [initialData, form]);
+
   const watchedValues = useWatch({ control: form.control });
 
   // Update parent state when form values change (debounced for performance)
@@ -221,7 +228,7 @@ export default function EducationForm({
                       <FormLabel>GPA (Optional)</FormLabel>
                       <FormControl>
                         <Input
-                          placeholder="3.8/4.0"
+                          placeholder="8.5/10 or 3.8/4.0"
                           {...field}
                           className={
                             form.formState.errors.education?.[index]?.gpa
