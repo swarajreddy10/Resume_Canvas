@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { aiService } from '@/server/services/ai.service';
+import { aiService } from '@/services/ai.service';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { aiRateLimit } from '@/lib/security/rateLimit';

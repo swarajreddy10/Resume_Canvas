@@ -18,22 +18,52 @@ interface LogEntry {
 class Logger {
   private isDevelopment = process.env.NODE_ENV === 'development';
 
+  private sanitizeForLog(input: string): string {
+    return input
+      .replace(/[\r\n]/g, ' ') // Remove newlines
+      .replace(/[\x00-\x1f\x7f-\x9f]/g, '') // Remove control characters
+      .substring(0, 1000); // Limit length
+  }
+
+  private sanitizeMeta(meta?: LogMeta): LogMeta | undefined {
+    if (!meta) return meta;
+
+    const sanitized: LogMeta = {};
+    for (const [key, value] of Object.entries(meta)) {
+      if (typeof value === 'string') {
+        sanitized[key] = this.sanitizeForLog(value);
+      } else if (value instanceof Error) {
+        sanitized[key] = {
+          name: value.name,
+          message: this.sanitizeForLog(value.message),
+          stack: value.stack ? this.sanitizeForLog(value.stack) : undefined,
+        };
+      } else {
+        sanitized[key] = value;
+      }
+    }
+    return sanitized;
+  }
+
   private log(level: LogLevel, message: string, meta?: LogMeta) {
+    const sanitizedMessage = this.sanitizeForLog(message);
+    const sanitizedMeta = this.sanitizeMeta(meta);
+
     const entry: LogEntry = {
       level,
-      message,
+      message: sanitizedMessage,
       timestamp: new Date().toISOString(),
-      meta,
+      meta: sanitizedMeta,
     };
 
-    if (level === 'error' && meta?.error instanceof Error) {
-      entry.stack = meta.error.stack;
+    if (level === 'error' && sanitizedMeta?.error instanceof Error) {
+      entry.stack = sanitizedMeta.error.stack;
     }
 
     const logFn = console[level] || console.log;
 
     if (this.isDevelopment) {
-      logFn(`[${level.toUpperCase()}]`, message, meta || '');
+      logFn(`[${level.toUpperCase()}]`, sanitizedMessage, sanitizedMeta || '');
     } else {
       logFn(JSON.stringify(entry));
     }

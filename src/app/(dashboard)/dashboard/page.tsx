@@ -18,6 +18,7 @@ import { FileText, Calendar, Trash2, Eye } from 'lucide-react';
 import PDFDownloader from '@/components/resume/PDFDownloader';
 import ShareButton from '@/components/resume/ShareButton';
 import ResumeCloner from '@/components/resume/ResumeCloner';
+import CoverLetterGenerator from '@/components/ai/CoverLetterGenerator';
 import UsageLimits from '@/components/dashboard/UsageLimits';
 
 interface Resume {
@@ -123,7 +124,7 @@ export default function DashboardPage() {
         {resumes.map((resume) => (
           <Card key={resume._id} className="hover:shadow-md transition-shadow">
             <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between min-w-0">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
                   <FileText className="h-5 w-5 text-blue-600 flex-shrink-0" />
                   <CardTitle className="text-lg truncate min-w-0">
@@ -160,9 +161,9 @@ export default function DashboardPage() {
             </CardHeader>
 
             <CardContent className="pt-0">
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between min-w-0 mb-4">
                 {resume.personalInfo?.name && (
-                  <p className="text-sm text-gray-600 truncate">
+                  <p className="text-sm text-gray-600 truncate min-w-0 flex-1">
                     {resume.personalInfo.name}
                   </p>
                 )}
@@ -224,6 +225,13 @@ export default function DashboardPage() {
           <Button asChild>
             <Link href="/builder/new">Create Your First Resume</Link>
           </Button>
+        </div>
+      )}
+
+      {/* AI Cover Letter Generator */}
+      {resumes.length > 0 && (
+        <div className="mt-8">
+          <CoverLetterGenerator resumeData={resumes[0]} />
         </div>
       )}
 

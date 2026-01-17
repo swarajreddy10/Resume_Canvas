@@ -7,6 +7,7 @@ export type ToastType = 'success' | 'error' | 'warning' | 'info';
 export interface ToastOptions {
   duration?: number;
   position?: 'top-right' | 'top-left' | 'bottom-right' | 'bottom-left';
+  id?: string;
 }
 
 const DEFAULT_DURATION = 5000;
@@ -19,9 +20,17 @@ export function showToast(
   message: string,
   type: ToastType = 'info',
   options: ToastOptions = {}
-): void {
+): HTMLElement {
   const duration = options.duration || DEFAULT_DURATION;
   const position = options.position || DEFAULT_POSITION;
+  const toastId = options.id || `toast-${Date.now()}`;
+
+  // If toast with same ID exists, update it instead
+  const existingToast = document.querySelector(`[data-toast-id="${toastId}"]`);
+  if (existingToast) {
+    updateToast(existingToast as HTMLElement, message, type);
+    return existingToast as HTMLElement;
+  }
 
   // Remove existing toasts of the same type if needed
   const existingToasts = document.querySelectorAll(
@@ -33,6 +42,7 @@ export function showToast(
 
   const toast = document.createElement('div');
   toast.setAttribute('data-toast-type', type);
+  toast.setAttribute('data-toast-id', toastId);
   toast.className = `fixed ${getPositionClasses(position)} z-50 max-w-md animate-in slide-in-from-top-5`;
 
   const bgColor = getBackgroundColor(type);
@@ -65,6 +75,39 @@ export function showToast(
       setTimeout(() => toast.remove(), 300);
     }
   }, duration);
+
+  return toast;
+}
+
+/**
+ * Updates an existing toast with new message and type
+ */
+function updateToast(
+  toast: HTMLElement,
+  message: string,
+  type: ToastType
+): void {
+  const bgColor = getBackgroundColor(type);
+  const icon = getIcon(type);
+
+  toast.setAttribute('data-toast-type', type);
+  toast.innerHTML = `
+    <div class="${bgColor} text-white px-4 py-3 rounded-lg shadow-lg flex items-start gap-3">
+      <div class="flex-shrink-0 mt-0.5">${icon}</div>
+      <div class="flex-1">
+        <div class="font-medium text-sm">${escapeHtml(message)}</div>
+      </div>
+      <button 
+        onclick="this.closest('[data-toast-type]').remove()" 
+        class="flex-shrink-0 text-white/80 hover:text-white transition-colors"
+        aria-label="Close"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  `;
 }
 
 /**

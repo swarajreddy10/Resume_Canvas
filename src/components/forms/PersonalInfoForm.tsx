@@ -33,7 +33,7 @@ export default function PersonalInfoForm({
   const form = useForm<PersonalInfoFormData>({
     resolver: zodResolver(PersonalInfoSchema),
     mode: 'onChange',
-    defaultValues: {
+    defaultValues: initialData || {
       name: '',
       email: '',
       phone: '',

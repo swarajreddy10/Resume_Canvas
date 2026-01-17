@@ -2,8 +2,6 @@ import {
   LayoutDashboard,
   Sparkles,
   BarChart3,
-  Crown,
-  Settings,
   ClipboardList,
   type LucideIcon,
 } from 'lucide-react';
@@ -34,12 +32,12 @@ export const navigationConfig: NavGroup[] = [
         label: 'AI Builder',
         href: '/builder/new',
         icon: Sparkles,
-        badge: 'New',
+        badge: 'AI',
       },
     ],
   },
   {
-    label: 'Career',
+    label: 'Tools',
     items: [
       {
         label: 'Applications',
@@ -50,24 +48,6 @@ export const navigationConfig: NavGroup[] = [
         label: 'Analytics',
         href: '/analytics',
         icon: BarChart3,
-      },
-    ],
-  },
-  {
-    items: [
-      {
-        label: 'Premium',
-        href: '/premium',
-        icon: Crown,
-      },
-    ],
-  },
-  {
-    items: [
-      {
-        label: 'Settings',
-        href: '/settings',
-        icon: Settings,
       },
     ],
   },

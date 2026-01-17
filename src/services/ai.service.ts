@@ -234,3 +234,73 @@ Be direct, honest, and constructive. Don't sugarcoat issues.
     };
   }
 }
+
+export async function generateCoverLetter({
+  resumeData,
+  jobTitle,
+  companyName,
+  jobDescription,
+}: {
+  resumeData: unknown;
+  jobTitle: string;
+  companyName: string;
+  jobDescription?: string;
+}): Promise<string> {
+  try {
+    const prompt = `
+You are an expert career coach and professional cover letter writer.
+
+Generate a compelling, personalized cover letter for:
+
+Job Title: ${jobTitle}
+Company: ${companyName}
+${jobDescription ? `Job Description: ${jobDescription}` : ''}
+
+Candidate's Resume Data:
+${JSON.stringify(resumeData, null, 2)}
+
+Requirements:
+1. Professional tone, 3-4 paragraphs
+2. Opening: Express enthusiasm and mention specific role
+3. Body: Highlight 2-3 relevant achievements from resume with metrics
+4. Closing: Call to action and availability
+5. Use candidate's actual experience and skills
+6. Match keywords from job description if provided
+7. Keep under 400 words
+
+Return ONLY the cover letter text, no additional formatting or explanations.
+`;
+
+    const completion = await groq.chat.completions.create({
+      messages: [{ role: 'user', content: prompt }],
+      model: appConfig.ai.model,
+      temperature: 0.7,
+      max_tokens: 1000,
+    });
+
+    return (
+      completion.choices[0]?.message?.content ||
+      'Failed to generate cover letter'
+    );
+  } catch (error) {
+    logger.error('Error generating cover letter', { error });
+    throw error;
+  }
+}
+
+// Export as class for backward compatibility
+export class AIService {
+  async generateBulletPoints(request: BulletPointRequest): Promise<string[]> {
+    return generateBulletPoints(request);
+  }
+
+  async analyzeResume(resumeData: unknown) {
+    return analyzeResumeComprehensively(resumeData);
+  }
+
+  async optimizeResume(resumeContent: string) {
+    return optimizeResume(resumeContent);
+  }
+}
+
+export const aiService = new AIService();

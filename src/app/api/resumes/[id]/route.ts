@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/config';
 import connectDB from '@/lib/db/connection';
 import { sanitizeResumeData } from '@/lib/security/sanitize';
-import { resumeService } from '@/server/services/resume.service';
+import { Resume } from '@/lib/db/models/Resume';
 
 export async function GET(
   request: NextRequest,
@@ -16,9 +16,13 @@ export async function GET(
 
     await connectDB();
     const { id } = await params;
-    const resume = await resumeService.getResumeById(id);
+    const resume = await Resume.findById(id).lean();
 
-    if (!resume || resume.userEmail !== session.user.email) {
+    if (
+      !resume ||
+      (resume as unknown as { userEmail: string }).userEmail !==
+        session.user.email
+    ) {
       return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
     }
 
@@ -48,12 +52,20 @@ export async function PUT(
     await connectDB();
 
     const { id } = await params;
-    const existing = await resumeService.getResumeById(id);
-    if (!existing || existing.userEmail !== session.user.email) {
+    const existing = await Resume.findById(id).lean();
+    if (
+      !existing ||
+      (existing as unknown as { userEmail: string }).userEmail !==
+        session.user.email
+    ) {
       return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
     }
 
-    const resume = await resumeService.updateResume(id, body);
+    const resume = await Resume.findByIdAndUpdate(
+      id,
+      { ...body, updatedAt: new Date() },
+      { new: true }
+    ).lean();
     return NextResponse.json({ resume });
   } catch (error) {
     console.error(
@@ -78,12 +90,16 @@ export async function DELETE(
 
     await connectDB();
     const { id } = await params;
-    const existing = await resumeService.getResumeById(id);
-    if (!existing || existing.userEmail !== session.user.email) {
+    const existing = await Resume.findById(id).lean();
+    if (
+      !existing ||
+      (existing as unknown as { userEmail: string }).userEmail !==
+        session.user.email
+    ) {
       return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
     }
 
-    await resumeService.deleteResume(id);
+    await Resume.findByIdAndDelete(id);
     return NextResponse.json({ message: 'Resume deleted successfully' });
   } catch (error) {
     console.error(
