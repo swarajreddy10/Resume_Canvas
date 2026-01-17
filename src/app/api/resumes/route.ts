@@ -1,5 +1,6 @@
 import { auth } from '@/lib/auth/config';
 import connectDB from '@/lib/db/connection';
+import { Resume } from '@/lib/db/models/Resume';
 import { UserCounter } from '@/lib/db/models/UserCounter';
 import { sanitizeResumeData } from '@/lib/security/sanitize';
 import { generateUserSlug } from '@/lib/utils/slug';

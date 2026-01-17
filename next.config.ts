@@ -1,6 +1,9 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
+  // Server external packages to fix react-email warnings
+  serverExternalPackages: ['@react-email/render'],
+
   // Turbopack configuration
   turbopack: {
     root: process.cwd(),
