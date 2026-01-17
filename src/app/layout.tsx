@@ -29,6 +29,10 @@ export const metadata: Metadata = {
   description:
     'AI-powered resume builder with real-time ATS optimization and professional templates',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/favicon.svg',
+    apple: '/icon-512.svg',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'default',
@@ -46,7 +50,7 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#2563eb" />
-        <link rel="apple-touch-icon" href="/icon-192.png" />
+        <link rel="apple-touch-icon" href="/icon-512.svg" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
