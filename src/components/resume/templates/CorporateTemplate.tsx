@@ -8,165 +8,133 @@ export default function CorporateTemplate({ data }: CorporateTemplateProps) {
   const { personalInfo, experience, education, skills, certifications } = data;
 
   return (
-    <div className="mx-auto w-full max-w-[850px] bg-white px-8 py-8 font-sans text-slate-900">
-      <Header personalInfo={personalInfo} />
+    <div className="w-[210mm] mx-auto bg-white p-10 font-sans text-gray-800 min-h-[297mm]">
+      {/* Header */}
+      <div className="text-center mb-8 pb-6 border-b border-gray-300">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">
+          {personalInfo?.name || 'YOUR NAME'}
+        </h1>
+        <div className="flex justify-center flex-wrap gap-4 text-xs text-gray-600">
+          {personalInfo?.email && <span>{personalInfo.email}</span>}
+          {personalInfo?.phone && <span>|</span>}
+          {personalInfo?.phone && <span>{personalInfo.phone}</span>}
+          {personalInfo?.address && <span>|</span>}
+          {personalInfo?.address && <span>{personalInfo.address}</span>}
+        </div>
+        {personalInfo?.linkedin && (
+          <div className="text-xs text-blue-600 mt-1">
+            {personalInfo.linkedin}
+          </div>
+        )}
+      </div>
 
+      {/* Professional Summary */}
       {personalInfo?.summary && (
-        <Section title="Professional Summary">
-          <p className="text-sm leading-relaxed text-slate-800">
+        <div className="mb-6">
+          <h2 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-widest border-b border-gray-200 pb-1">
+            Professional Summary
+          </h2>
+          <p className="text-xs text-gray-700 leading-relaxed">
             {personalInfo.summary}
           </p>
-        </Section>
-      )}
-
-      {skills && skills.length > 0 && (
-        <Section title="Core Skills">
-          <div className="flex flex-wrap gap-2 text-sm text-slate-800">
-            {skills.map((skill, idx) => (
-              <span
-                key={idx}
-                className="rounded-md border border-slate-200 px-3 py-1"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {experience && experience.length > 0 && (
-        <Section title="Experience">
-          <div className="space-y-4">
-            {experience.map((exp, idx) => (
-              <div key={idx} className="space-y-1">
-                <Row
-                  left={exp.position}
-                  right={`${exp.startDate} — ${exp.endDate}`}
-                />
-                <div className="text-sm font-semibold text-slate-800">
-                  {exp.company}
-                  {exp.location && (
-                    <span className="text-slate-600"> • {exp.location}</span>
-                  )}
-                </div>
-                {exp.description && (
-                  <p className="text-sm text-slate-700">{exp.description}</p>
-                )}
-                {exp.bullets && (
-                  <ul className="ml-4 list-disc space-y-1 text-sm text-slate-800">
-                    {exp.bullets.map((b, i) => (
-                      <li key={i}>{b}</li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {education && education.length > 0 && (
-        <Section title="Education">
-          <div className="space-y-3">
-            {education.map((edu, idx) => (
-              <div key={idx} className="space-y-1">
-                <Row
-                  left={`${edu.degree} in ${edu.field}`}
-                  right={`${edu.startDate} — ${edu.endDate}`}
-                />
-                <div className="text-sm font-semibold text-slate-800">
-                  {edu.school}
-                  {edu.location && (
-                    <span className="text-slate-600"> • {edu.location}</span>
-                  )}
-                </div>
-                {edu.gpa && (
-                  <div className="text-sm text-slate-700">GPA: {edu.gpa}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {certifications && certifications.length > 0 && (
-        <Section title="Certifications">
-          <div className="space-y-2">
-            {certifications.map((cert, idx) => (
-              <Row
-                key={idx}
-                left={`${cert.name}${cert.issuer ? ` • ${cert.issuer}` : ''}`}
-                right={cert.date}
-              />
-            ))}
-          </div>
-        </Section>
-      )}
-    </div>
-  );
-}
-
-function Header({
-  personalInfo,
-}: {
-  personalInfo: ResumeData['personalInfo'];
-}) {
-  return (
-    <div className="flex flex-col gap-2 border-b border-slate-200 pb-4">
-      <h1 className="text-4xl font-black tracking-tight">
-        {personalInfo?.name || 'YOUR NAME'}
-      </h1>
-      <div className="flex flex-wrap items-center gap-2 text-sm text-slate-700">
-        {personalInfo?.email && <span>{personalInfo.email}</span>}
-        {personalInfo?.phone && <span>• {personalInfo.phone}</span>}
-        {personalInfo?.address && <span>• {personalInfo.address}</span>}
-      </div>
-      {(personalInfo?.linkedin ||
-        personalInfo?.github ||
-        personalInfo?.website) && (
-        <div className="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-800">
-          {personalInfo?.linkedin && <span>{personalInfo.linkedin}</span>}
-          {personalInfo?.github && <span>• {personalInfo.github}</span>}
-          {personalInfo?.website && <span>• {personalInfo.website}</span>}
         </div>
       )}
-    </div>
-  );
-}
 
-function Section({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="mt-6 space-y-3">
-      <div className="flex items-center gap-2">
-        <h2 className="text-sm font-bold uppercase tracking-[0.18em] text-slate-700">
-          {title}
-        </h2>
-        <div className="h-px flex-1 bg-slate-200" />
-      </div>
-      {children}
-    </section>
-  );
-}
+      {/* Core Competencies */}
+      {skills && skills.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-widest border-b border-gray-200 pb-1">
+            Core Competencies
+          </h2>
+          <div className="grid grid-cols-3 gap-2">
+            {skills.map((skill, idx) => (
+              <div key={idx} className="text-xs text-gray-700">
+                • {skill}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
-function Row({
-  left,
-  right,
-  rightClass = 'text-xs font-semibold uppercase tracking-wide text-slate-600',
-}: {
-  left: string | undefined;
-  right?: string;
-  rightClass?: string;
-}) {
-  return (
-    <div className="flex flex-wrap items-baseline justify-between gap-2">
-      <div className="text-base font-semibold text-slate-900">{left}</div>
-      {right && <div className={rightClass}>{right}</div>}
+      {/* Professional Experience */}
+      {experience && experience.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-widest border-b border-gray-200 pb-1">
+            Professional Experience
+          </h2>
+          {experience.map((exp, idx) => (
+            <div key={idx} className="mb-4">
+              <div className="flex justify-between items-baseline mb-1">
+                <h3 className="text-sm font-bold text-gray-900">
+                  {exp.position}
+                </h3>
+                <span className="text-xs text-gray-600 italic">
+                  {exp.startDate} – {exp.endDate}
+                </span>
+              </div>
+              <div className="text-xs font-semibold text-gray-700 mb-2">
+                {exp.company} | {exp.location}
+              </div>
+              {exp.bullets && (
+                <ul className="space-y-1">
+                  {exp.bullets.map((bullet, i) => (
+                    <li
+                      key={i}
+                      className="text-xs text-gray-700 pl-4 relative before:content-['◆'] before:absolute before:left-0 before:text-gray-400"
+                    >
+                      {bullet}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Education */}
+      {education && education.length > 0 && (
+        <div className="mb-6">
+          <h2 className="text-sm font-bold text-gray-900 mb-3 uppercase tracking-widest border-b border-gray-200 pb-1">
+            Education
+          </h2>
+          {education.map((edu, idx) => (
+            <div key={idx} className="mb-2">
+              <div className="flex justify-between items-baseline">
+                <h3 className="text-sm font-bold text-gray-900">
+                  {edu.degree}, {edu.field}
+                </h3>
+                <span className="text-xs text-gray-600 italic">
+                  {edu.startDate} – {edu.endDate}
+                </span>
+              </div>
+              <div className="text-xs text-gray-700">
+                {edu.school} | {edu.location}
+              </div>
+              {edu.gpa && (
+                <p className="text-xs text-gray-600">GPA: {edu.gpa}</p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Certifications */}
+      {certifications && certifications.length > 0 && (
+        <div>
+          <h2 className="text-sm font-bold text-gray-900 mb-2 uppercase tracking-widest border-b border-gray-200 pb-1">
+            Certifications
+          </h2>
+          <div className="grid grid-cols-2 gap-2">
+            {certifications.map((cert, idx) => (
+              <div key={idx} className="text-xs text-gray-700">
+                <span className="font-semibold">{cert.name}</span> |{' '}
+                {cert.issuer} ({cert.date})
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
