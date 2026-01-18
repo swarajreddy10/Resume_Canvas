@@ -388,6 +388,18 @@ const templateData: Record<string, ResumeData> = {
           'Published 8 papers including first-author publication in Nature with 500+ citations',
         ],
       },
+      {
+        company: 'National Institutes of Health',
+        position: 'Visiting Research Scientist',
+        location: 'Bethesda, MD',
+        startDate: 'Jan 2015',
+        endDate: 'Jun 2017',
+        bullets: [
+          'Directed NIH-funded consortium on single-cell genomics, coordinating data from 12 labs across the U.S.',
+          'Built reproducible Snakemake pipelines for processing petabytes of sequencing data and released them via Bioconda',
+          'Presented findings at ASHG and NeurIPS, aiding pharmaceutical partners in validating novel biomarkers',
+        ],
+      },
     ],
     education: [
       {
@@ -421,9 +433,42 @@ const templateData: Record<string, ResumeData> = {
       'Scientific Writing',
       'Grant Writing',
       'Mentorship',
+      'Nextflow',
+      'High-Performance Computing',
+      'Scientific Computing',
     ],
-    projects: [],
-    certifications: [],
+    projects: [
+      {
+        name: 'OpenGRAVITY Cancer Atlas',
+        description:
+          'Built a federated learning atlas combining multi-omics datasets from 10 cancer centers, improving biomarker discovery speed by 6x',
+        technologies: ['Python', 'Snakemake', 'Docker'],
+      },
+      {
+        name: 'Genomic Machine Learning Curriculum',
+        description:
+          'Authored an open-source curriculum and Jupyter micro-credential for teaching ML-driven biology to graduate students and industry researchers',
+        technologies: ['Jupyter', 'TensorFlow', 'Streamlit'],
+      },
+      {
+        name: 'Next-Gen Drug Response Portal',
+        description:
+          'Led a cross-functional team to deliver an interactive dashboard that surfaces interpretable insights from CRISPR screening data',
+        technologies: ['React', 'TypeScript', 'Node.js', 'PostgreSQL'],
+      },
+    ],
+    certifications: [
+      {
+        name: 'NIH IRACU Bioinformatics Workshop',
+        issuer: 'National Institutes of Health',
+        date: '2021',
+      },
+      {
+        name: 'Data Carpentry: Genomics',
+        issuer: 'Data Carpentry',
+        date: '2019',
+      },
+    ],
   },
 };
 
@@ -504,51 +549,57 @@ export default function TemplateSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid lg:grid-cols-2 gap-16 items-stretch">
           {/* Left: Resume Preview */}
-          <div className="relative flex justify-center items-center h-full">
-            <AnimatePresence mode="wait">
-              <motion.div
-                key={current}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ duration: 0.4, ease: 'easeInOut' }}
-                className="relative flex justify-center items-center w-full h-full"
-              >
-                {/* Glow Effect */}
-                <div
-                  className={`absolute -inset-12 bg-gradient-to-br ${templates[current].color} opacity-20 blur-[80px] rounded-full`}
-                />
-
-                {/* Resume Container */}
-                <div className="relative w-full max-w-[520px] mx-auto">
-                  <div className="flex items-center justify-center px-6 py-6 md:px-8 md:py-8">
-                    <div className="w-[calc(210mm*0.44)] h-[calc(297mm*0.44)]">
-                      <div className="transform scale-[0.44] origin-top-left">
-                        <CurrentTemplate data={currentData} />
+          <div className="relative flex flex-col justify-between items-center h-full overflow-hidden px-2 sm:px-4 pt-6 pb-10 min-w-0">
+            <div className="flex-1 w-full flex items-start justify-center pt-4 sm:pt-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={current}
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  transition={{ duration: 0.4, ease: 'easeInOut' }}
+                  className="relative flex justify-center items-center w-full h-full"
+                >
+                  {/* Resume Container */}
+                  <div className="relative w-full max-w-[520px] mx-auto rounded-[28px] border border-slate-200 bg-white shadow-[0_35px_40px_rgba(15,23,42,0.15)] overflow-hidden">
+                    <div className="flex items-center justify-center px-4 py-4 sm:px-6 sm:py-6 md:px-8 md:py-8">
+                      <div className="w-[calc(210mm*0.32)] h-[calc(297mm*0.32)] sm:w-[calc(210mm*0.38)] sm:h-[calc(297mm*0.38)] md:w-[calc(210mm*0.44)] md:h-[calc(297mm*0.44)]">
+                        <div className="transform scale-[0.32] sm:scale-[0.38] md:scale-[0.44] origin-top-left">
+                          <CurrentTemplate data={currentData} />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </motion.div>
-            </AnimatePresence>
+                </motion.div>
+              </AnimatePresence>
+            </div>
 
-            {/* Navigation Buttons */}
-            <button
-              onClick={() =>
-                setCurrent((current - 1 + templates.length) % templates.length)
-              }
-              className="absolute left-6 md:left-10 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-white shadow-xl flex items-center justify-center hover:scale-110 hover:shadow-2xl transition-all duration-200 z-10 border border-slate-200"
-              aria-label="Previous template"
-            >
-              <ChevronLeft className="h-6 w-6 text-gray-700" />
-            </button>
-            <button
-              onClick={() => setCurrent((current + 1) % templates.length)}
-              className="absolute right-6 md:right-10 top-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-white shadow-xl flex items-center justify-center hover:scale-110 hover:shadow-2xl transition-all duration-200 z-10 border border-slate-200"
-              aria-label="Next template"
-            >
-              <ChevronRight className="h-6 w-6 text-gray-700" />
-            </button>
+            <div className="mt-6 flex w-full flex-col gap-3 sm:flex-row sm:justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-[calc(50%-0.5rem)] flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold border-slate-200 hover:border-slate-400"
+                onClick={() =>
+                  setCurrent(
+                    (current - 1 + templates.length) % templates.length
+                  )
+                }
+                aria-label="Previous template"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                Previous Template
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full sm:w-[calc(50%-0.5rem)] flex items-center justify-center gap-2 px-4 py-3 text-sm font-semibold border-slate-200 hover:border-slate-400"
+                onClick={() => setCurrent((current + 1) % templates.length)}
+                aria-label="Next template"
+              >
+                Next Template
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
 
           {/* Right: Info */}
@@ -559,75 +610,78 @@ export default function TemplateSection() {
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
               transition={{ duration: 0.4 }}
-              className="space-y-8 h-full"
+              className="flex h-full flex-col gap-6 min-w-0"
             >
-              <div>
-                <Badge
-                  className={`bg-gradient-to-r ${templates[current].color} text-white border-0 px-4 py-2 text-sm mb-6`}
-                >
-                  {templates[current].name}
-                </Badge>
-                <h3 className="text-4xl md:text-5xl font-black mb-4 leading-tight">
-                  Perfect for
-                  <br />
-                  <span
-                    className={`bg-gradient-to-r ${templates[current].color} bg-clip-text text-transparent`}
+              <div className="flex-1 rounded-[32px] bg-white/90 border border-slate-100 shadow-2xl shadow-blue-100/40 p-6 md:p-8 flex flex-col gap-8 backdrop-blur-xl">
+                <div>
+                  <Badge
+                    className={`bg-gradient-to-r ${templates[current].color} text-white border-0 px-4 py-2 text-sm mb-6`}
                   >
                     {templates[current].name}
-                  </span>{' '}
-                  Roles
-                </h3>
-                <p className="text-lg text-gray-600 leading-relaxed">
-                  {templates[current].description}
-                </p>
-              </div>
-
-              {/* Role Tags */}
-              <div className="flex flex-wrap gap-2">
-                {templates[current].roles.map((role) => (
-                  <Badge
-                    key={role}
-                    variant="secondary"
-                    className="px-3 py-1.5 text-sm"
-                  >
-                    {role}
                   </Badge>
-                ))}
-              </div>
-
-              {/* Features */}
-              <div className="space-y-3">
-                {[
-                  { icon: Check, text: 'ATS-Optimized Format' },
-                  { icon: Check, text: 'Print-Ready A4 Layout' },
-                  { icon: Check, text: 'Recruiter-Approved Design' },
-                ].map((feature) => (
-                  <div
-                    key={feature.text}
-                    className="flex items-center gap-3 text-gray-700"
-                  >
-                    <div
-                      className={`h-6 w-6 rounded-full bg-gradient-to-r ${templates[current].color} flex items-center justify-center`}
+                  <h3 className="text-4xl md:text-5xl font-black mb-4 leading-tight">
+                    Perfect for
+                    <br />
+                    <span
+                      className={`bg-gradient-to-r ${templates[current].color} bg-clip-text text-transparent`}
                     >
-                      <feature.icon className="h-3.5 w-3.5 text-white" />
+                      {templates[current].name}
+                    </span>{' '}
+                    Roles
+                  </h3>
+                  <p className="text-lg text-gray-600 leading-relaxed">
+                    {templates[current].description}
+                  </p>
+                </div>
+
+                {/* Role Tags */}
+                <div className="flex flex-wrap gap-2">
+                  {templates[current].roles.map((role) => (
+                    <Badge
+                      key={role}
+                      variant="secondary"
+                      className="px-3 py-1.5 text-sm"
+                    >
+                      {role}
+                    </Badge>
+                  ))}
+                </div>
+
+                {/* Features */}
+                <div className="space-y-3">
+                  {[
+                    { icon: Check, text: 'ATS-Optimized Format' },
+                    { icon: Check, text: 'Print-Ready A4 Layout' },
+                    { icon: Check, text: 'Recruiter-Approved Design' },
+                  ].map((feature) => (
+                    <div
+                      key={feature.text}
+                      className="flex items-center gap-3 text-gray-700"
+                    >
+                      <div
+                        className={`h-6 w-6 rounded-full bg-gradient-to-r ${templates[current].color} flex items-center justify-center`}
+                      >
+                        <feature.icon className="h-3.5 w-3.5 text-white" />
+                      </div>
+                      <span className="font-medium">{feature.text}</span>
                     </div>
-                    <span className="font-medium">{feature.text}</span>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
 
-              {/* CTA Button */}
-              <Button
-                size="sm"
-                className={`w-full sm:w-auto px-8 py-4 text-base font-semibold bg-gradient-to-r ${templates[current].color} hover:opacity-90 transition-opacity shadow-lg`}
-                onClick={() => router.push('/auth/signin')}
-              >
-                Use This Template
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <Button
+                  size="sm"
+                  className={`w-full sm:w-auto px-8 py-4 text-base font-semibold bg-gradient-to-r ${templates[current].color} hover:opacity-90 transition-opacity shadow-lg`}
+                  onClick={() => router.push('/auth/signin')}
+                >
+                  Use This Template
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </div>
 
               {/* Dots Navigation */}
-              <div className="flex items-center gap-3 pt-2">
+              <div className="flex items-center gap-3 justify-center sm:justify-start pt-2">
                 {templates.map((_, idx) => (
                   <button
                     key={idx}
