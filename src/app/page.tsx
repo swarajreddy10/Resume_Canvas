@@ -1,352 +1,366 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { motion, useScroll, useTransform } from 'motion/react';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card';
-import TemplateGallery from '@/components/resume/TemplateGallery';
+import { Badge } from '@/components/ui/badge';
+import TemplateSection from '@/components/resume/TemplateSection';
 import {
   Sparkles,
-  Shield,
+  Zap,
   ArrowRight,
   Check,
-  Wand2,
-  LayoutPanelTop,
-  Gauge,
+  Target,
+  Rocket,
+  Star,
+  Brain,
+  Shield,
 } from 'lucide-react';
+import { fadeInUp, scaleIn, staggerContainer } from '@/lib/motion/variants';
+
+const stats = [
+  { value: '50K+', label: 'Resumes Created' },
+  { value: '95%', label: 'ATS Pass Rate' },
+  { value: '4.9/5', label: 'User Rating' },
+];
 
 const features = [
   {
-    title: 'AI Writer',
-    description: 'Tailor bullet points to every job in seconds.',
-    icon: Wand2,
-  },
-  {
-    title: 'ATS Check',
+    icon: Brain,
+    title: 'AI-Powered Writing',
     description:
-      'Pass screening with keywords and structure recruiters expect.',
-    icon: Gauge,
+      'Generate professional bullet points tailored to any job in seconds',
   },
   {
-    title: 'One-click styling',
-    description: 'Swap templates and spacing without reformatting.',
-    icon: LayoutPanelTop,
+    icon: Target,
+    title: 'ATS Optimization',
+    description: 'Score 90+ on ATS systems with keyword-optimized content',
+  },
+  {
+    icon: Zap,
+    title: 'Instant Templates',
+    description: 'Switch between 5 professional templates with one click',
+  },
+  {
+    icon: Shield,
+    title: 'Secure & Private',
+    description: 'Your data is encrypted and never shared with third parties',
   },
 ];
 
-const trustPoints = [
-  'Free forever',
-  'No credit card',
-  'ATS-ready templates',
-  'Instant PDF',
-];
-
-const steps = [
-  { label: 'Pick a template', text: 'Choose a modern, ATS-friendly layout.' },
+const testimonials = [
   {
-    label: 'Add your details',
-    text: 'AI assists with bullets, summaries, and keywords.',
+    name: 'Sarah Chen',
+    role: 'Software Engineer',
+    company: 'Google',
+    content:
+      'Landed 3 interviews in my first week. The ATS optimization is incredible!',
+    rating: 5,
   },
-  { label: 'Publish & share', text: 'Export, share, or download instantly.' },
+  {
+    name: 'Michael Rodriguez',
+    role: 'Product Manager',
+    company: 'Amazon',
+    content:
+      "Best resume builder I've used. The AI suggestions saved me hours.",
+    rating: 5,
+  },
+  {
+    name: 'Emily Watson',
+    role: 'Data Scientist',
+    company: 'Microsoft',
+    content: 'Professional templates and easy customization. Got my dream job!',
+    rating: 5,
+  },
 ];
 
 export default function HomePage() {
   const router = useRouter();
-
-  const handleSignIn = () => {
-    router.push('/auth/signin');
-  };
+  const { scrollY } = useScroll();
+  const navOpacity = useTransform(scrollY, [0, 100], [1, 0]);
+  const navY = useTransform(scrollY, [0, 100], [0, -100]);
 
   return (
-    <div className="min-h-screen text-foreground">
-      <div className="relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute left-[-10%] top-[-20%] h-[320px] w-[320px] rounded-full bg-primary/15 blur-3xl" />
-          <div className="absolute right-[-10%] bottom-[-10%] h-[280px] w-[280px] rounded-full bg-blue-300/25 blur-[120px]" />
-          <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-white via-white/70 to-transparent" />
+    <div className="min-h-screen bg-gradient-to-b from-white via-blue-50/30 to-white overflow-x-hidden">
+      {/* Floating Nav */}
+      <motion.nav
+        className="fixed top-4 left-1/2 -translate-x-1/2 z-50 px-6 py-3 bg-white/80 backdrop-blur-xl rounded-full border shadow-lg"
+        style={{ opacity: navOpacity, y: navY }}
+      >
+        <div className="flex items-center gap-8">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+              ResumeCanvas
+            </span>
+            <Badge variant="secondary" className="text-xs">
+              AI
+            </Badge>
+          </div>
+          <div className="hidden md:flex items-center gap-6 text-sm">
+            <a href="#features" className="hover:text-blue-600 transition">
+              Features
+            </a>
+            <a href="#templates" className="hover:text-blue-600 transition">
+              Templates
+            </a>
+            <a href="#testimonials" className="hover:text-blue-600 transition">
+              Reviews
+            </a>
+          </div>
+          <Button size="sm" onClick={() => router.push('/auth/signin')}>
+            Get Started
+          </Button>
+        </div>
+      </motion.nav>
+
+      {/* Hero Section */}
+      <section className="relative pt-32 pb-20 px-6 overflow-hidden">
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute top-20 left-10 w-72 h-72 bg-blue-400/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-purple-400/20 rounded-full blur-3xl" />
         </div>
 
-        {/* Navigation */}
-        <nav className="sticky top-0 z-50 border-b border-white/40 bg-white/70 backdrop-blur-xl">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 sm:px-6 md:px-8 lg:px-16 py-3 sm:py-4">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <span className="text-lg sm:text-xl md:text-2xl font-black text-gradient-primary tracking-tight">
-                ResumeCanvas
-              </span>
-              <span className="rounded-full bg-primary/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs font-semibold text-primary">
-                AI
-              </span>
-            </div>
+        <motion.div
+          className="max-w-7xl mx-auto text-center"
+          initial="hidden"
+          animate="visible"
+          variants={staggerContainer}
+        >
+          <motion.div variants={fadeInUp}>
+            <Badge className="mb-6 px-4 py-2 text-sm">
+              <Sparkles className="h-4 w-4 mr-2" />
+              Trusted by 50,000+ professionals
+            </Badge>
+          </motion.div>
+
+          <motion.h1
+            className="text-5xl md:text-7xl font-black mb-6 bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 bg-clip-text text-transparent leading-tight"
+            variants={fadeInUp}
+          >
+            Land Your Dream Job
+            <br />
+            With AI-Powered Resumes
+          </motion.h1>
+
+          <motion.p
+            className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto"
+            variants={fadeInUp}
+          >
+            Create ATS-optimized resumes in minutes. AI writes, you customize.
+            Get hired faster with professional templates trusted by recruiters.
+          </motion.p>
+
+          <motion.div
+            className="flex flex-col sm:flex-row gap-4 justify-center items-center"
+            variants={fadeInUp}
+          >
             <Button
-              variant="default"
-              size="sm"
-              onClick={handleSignIn}
-              className="text-xs sm:text-sm px-3 sm:px-4"
+              size="lg"
+              className="px-8 py-6 text-lg group"
+              onClick={() => router.push('/auth/signin')}
             >
-              Sign in
+              Start Building Free
+              <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition" />
             </Button>
-          </div>
-        </nav>
+            <Button
+              size="lg"
+              variant="outline"
+              className="px-8 py-6 text-lg"
+              onClick={() => router.push('/resume/demo')}
+            >
+              View Sample
+            </Button>
+          </motion.div>
 
-        {/* Hero */}
-        <section className="relative mx-auto max-w-7xl px-6 pb-20 pt-14 md:pt-20">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
-            <div className="space-y-8">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/50 bg-white/70 px-4 py-2 text-sm font-semibold text-primary shadow-sm backdrop-blur">
-                <Sparkles className="h-4 w-4" />
-                AI resume builder for modern professionals
+          <motion.div
+            className="flex flex-wrap justify-center gap-6 mt-12 text-sm text-gray-600"
+            variants={fadeInUp}
+          >
+            {[
+              'No credit card required',
+              'Free forever',
+              'Export to PDF',
+              'ATS-optimized',
+            ].map((item) => (
+              <div key={item} className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-green-600" />
+                <span>{item}</span>
               </div>
-              <div className="space-y-4">
-                <h1 className="text-4xl leading-tight font-black text-slate-900 md:text-5xl lg:text-6xl">
-                  Land more interviews with
-                  <span className="block text-gradient-primary">
-                    ResumeCanvas
-                  </span>
-                  Resume Builder
-                </h1>
-                <p className="text-lg text-foreground/70 md:text-xl">
-                  ATS check, AI writer, and one-click tailoring to stand out to
-                  recruiters. Design once, adapt to every role in seconds.
-                </p>
-              </div>
-              <Button
-                size="lg"
-                className="px-8 py-6 text-base"
-                onClick={handleSignIn}
-              >
-                Build Your Resume Free
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-              <div className="flex flex-wrap items-center gap-3 text-sm text-foreground/60">
-                {trustPoints.map((point) => (
-                  <div key={point} className="inline-flex items-center gap-1.5">
-                    <Check className="h-3.5 w-3.5 text-primary" />
-                    <span>{point}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
+          </motion.div>
+        </motion.div>
 
-            <div className="relative">
-              <div className="absolute -left-10 -top-8 h-24 w-24 rounded-full bg-primary/15 blur-3xl" />
-              <div className="absolute right-0 top-12 h-16 w-16 rounded-full bg-blue-400/30 blur-xl" />
-              <div className="glass-panel relative mx-auto w-full max-w-lg rounded-3xl p-6">
-                <div className="flex items-center justify-between">
-                  <div className="rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                    Hired-ready
-                  </div>
-                  <div className="flex items-center gap-2 text-xs text-foreground/60">
-                    <Shield className="h-4 w-4 text-primary" />
-                    Secure cloud save
-                  </div>
-                </div>
-                <div className="mt-6 space-y-4 rounded-2xl bg-white/70 p-4 shadow-inner">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-xs uppercase tracking-[0.08em] text-foreground/60">
-                        Resume preview
-                      </p>
-                      <p className="text-sm font-semibold text-foreground/80">
-                        Annie Levy
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-primary">
-                      <Sparkles className="h-4 w-4" />
-                      AI tailored
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="rounded-xl border border-white/60 bg-gradient-to-br from-white via-white/80 to-blue-50/60 p-3 shadow-sm">
-                      <div className="flex items-center justify-between text-[11px] font-semibold text-foreground/70">
-                        <span>Page margin</span>
-                        <span className="text-primary">1.0</span>
-                      </div>
-                      <div className="mt-2 h-2 rounded-full bg-blue-100">
-                        <div className="h-2 w-3/4 rounded-full bg-primary" />
-                      </div>
-                      <p className="mt-3 text-[11px] text-foreground/60">
-                        Compact, ATS friendly
-                      </p>
-                    </div>
-                    <div className="rounded-xl border border-white/60 bg-gradient-to-br from-white via-white/80 to-blue-50/60 p-3 shadow-sm">
-                      <div className="flex items-center justify-between text-[11px] font-semibold text-foreground/70">
-                        <span>ATS score</span>
-                        <span className="text-primary">92</span>
-                      </div>
-                      <div className="mt-2 flex items-center gap-2 text-[11px] text-foreground/60">
-                        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary/30 bg-white text-primary font-bold">
-                          92
-                        </div>
-                        Optimized keywords
-                      </div>
-                      <p className="mt-3 text-[11px] text-foreground/60">
-                        Matching role: Product Designer
-                      </p>
-                    </div>
-                  </div>
-                  <div className="rounded-xl border border-white/70 bg-white/90 p-4 shadow-sm">
-                    <p className="text-xs font-semibold text-foreground/70">
-                      Layout options
-                    </p>
-                    <div className="mt-3 grid grid-cols-3 gap-3 text-[11px] font-semibold text-foreground/70">
-                      <div className="rounded-full bg-blue-50 px-3 py-2 text-primary shadow-sm">
-                        Modern
-                      </div>
-                      <div className="rounded-full border border-white/60 bg-white px-3 py-2">
-                        Executive
-                      </div>
-                      <div className="rounded-full border border-white/60 bg-white px-3 py-2">
-                        Creative
-                      </div>
-                    </div>
-                    <div className="mt-4 flex items-center justify-between text-[11px] text-foreground/60">
-                      <span>Share link</span>
-                      <span className="font-semibold text-primary">
-                        ResumeCanvas.dev/annie
-                      </span>
-                    </div>
-                  </div>
-                </div>
+        {/* Stats */}
+        <motion.div
+          className="max-w-5xl mx-auto mt-20 grid grid-cols-1 md:grid-cols-3 gap-8"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+        >
+          {stats.map((stat) => (
+            <motion.div
+              key={stat.label}
+              className="text-center p-6 rounded-2xl bg-white/60 backdrop-blur border"
+              variants={scaleIn}
+              whileHover={{ scale: 1.05, y: -4 }}
+            >
+              <div className="text-4xl font-black text-blue-600 mb-2">
+                {stat.value}
               </div>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* Trust + features */}
-      <section id="features" className="mx-auto max-w-7xl px-6 pb-16 sm:pb-24">
-        <div className="grid gap-8 lg:grid-cols-[1.2fr_1fr]">
-          <Card className="p-8">
-            <CardHeader className="p-0">
-              <CardTitle className="text-2xl">Why ResumeCanvas?</CardTitle>
-              <CardDescription className="text-base">
-                Everything you need to create professional resumes that get
-                results.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="mt-6 grid gap-4 md:grid-cols-3">
-              {features.map((feature) => (
-                <div
-                  key={feature.title}
-                  className="rounded-2xl border border-white/60 bg-white/70 p-4 shadow-sm backdrop-blur"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary">
-                    <feature.icon className="h-5 w-5" />
-                  </div>
-                  <p className="mt-4 text-base font-semibold text-foreground">
-                    {feature.title}
-                  </p>
-                  <p className="text-sm text-foreground/65">
-                    {feature.description}
-                  </p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-
-          <Card className="p-7">
-            <CardHeader className="p-0">
-              <CardTitle className="text-xl">How it works</CardTitle>
-              <CardDescription className="text-base">
-                Three simple steps to publish your resume.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="mt-6 space-y-5">
-              {steps.map((step, idx) => (
-                <div key={step.label} className="relative pl-12">
-                  <div className="absolute left-0 top-0 flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-sm font-bold text-primary">
-                    {idx + 1}
-                  </div>
-                  <p className="text-base font-semibold text-foreground">
-                    {step.label}
-                  </p>
-                  <p className="text-sm text-foreground/65">{step.text}</p>
-                </div>
-              ))}
-            </CardContent>
-          </Card>
-        </div>
+              <div className="text-gray-600">{stat.label}</div>
+            </motion.div>
+          ))}
+        </motion.div>
       </section>
 
-      {/* Templates */}
-      <section
-        id="templates"
-        className="mx-auto max-w-7xl px-6 pb-16 sm:pb-24 space-y-8"
-      >
-        <div>
-          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-primary">
-            Templates
-          </p>
-          <h2 className="text-3xl font-bold text-foreground sm:text-4xl">
-            Choose a layout that fits your story
-          </h2>
-          <p className="text-base text-foreground/65">
-            All templates are ATS-friendly, editable, and ready to share.
-          </p>
-        </div>
-        <TemplateGallery
-          selectedTemplate="tech"
-          onTemplateSelect={() => router.push('/auth/signin')}
-        />
+      {/* Features */}
+      <section id="features" className="py-20 px-6">
+        <motion.div
+          className="max-w-7xl mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-100px' }}
+          variants={staggerContainer}
+        >
+          <motion.div className="text-center mb-16" variants={fadeInUp}>
+            <Badge className="mb-4">Features</Badge>
+            <h2 className="text-4xl md:text-5xl font-black mb-4">
+              Everything You Need to Get Hired
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Powerful AI tools and professional templates designed to help you
+              stand out
+            </p>
+          </motion.div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {features.map((feature, i) => (
+              <motion.div
+                key={feature.title}
+                className="p-6 rounded-2xl bg-white border hover:shadow-xl transition group"
+                variants={scaleIn}
+                whileHover={{ scale: 1.05, y: -8 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <div className="h-12 w-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4 group-hover:bg-blue-600 transition">
+                  <feature.icon className="h-6 w-6 text-blue-600 group-hover:text-white transition" />
+                </div>
+                <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
+                <p className="text-gray-600 text-sm">{feature.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
+      </section>
+
+      <TemplateSection />
+
+      {/* Testimonials */}
+      <section id="testimonials" className="py-20 px-6">
+        <motion.div
+          className="max-w-7xl mx-auto"
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+        >
+          <motion.div className="text-center mb-16" variants={fadeInUp}>
+            <Badge className="mb-4">Testimonials</Badge>
+            <h2 className="text-4xl md:text-5xl font-black mb-4">
+              Loved by Job Seekers Worldwide
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {testimonials.map((testimonial, i) => (
+              <motion.div
+                key={testimonial.name}
+                className="p-6 rounded-2xl bg-white border"
+                variants={scaleIn}
+                whileHover={{ scale: 1.02, y: -4 }}
+                transition={{ delay: i * 0.1 }}
+              >
+                <div className="flex gap-1 mb-4">
+                  {[...Array(testimonial.rating)].map((_, i) => (
+                    <Star
+                      key={i}
+                      className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                    />
+                  ))}
+                </div>
+                <p className="text-gray-700 mb-4">{testimonial.content}</p>
+                <div>
+                  <div className="font-bold">{testimonial.name}</div>
+                  <div className="text-sm text-gray-600">
+                    {testimonial.role} at {testimonial.company}
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </motion.div>
       </section>
 
       {/* CTA */}
-      <section
-        id="pricing"
-        className="mx-6 mb-16 rounded-3xl bg-gradient-to-r from-blue-600 via-blue-500 to-sky-400 px-8 py-12 shadow-[0_24px_70px_-35px_rgba(37,99,235,0.6)] sm:mx-auto sm:max-w-6xl"
-      >
-        <div className="flex flex-col items-start gap-6 text-white lg:flex-row lg:items-center lg:justify-between">
-          <div className="space-y-2">
-            <p className="text-xs uppercase tracking-[0.2em] text-white/80">
-              Ready when you are
-            </p>
-            <h3 className="text-3xl font-bold sm:text-4xl">
-              Start free, publish in minutes
-            </h3>
-            <p className="text-white/80">
-              AI assistance, live preview, and instant sharing built in.
-            </p>
+      <section className="py-20 px-6 bg-gradient-to-b from-white to-blue-50">
+        <motion.div
+          className="max-w-4xl mx-auto text-center p-12 rounded-3xl bg-white border-2 border-blue-100 shadow-xl"
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          whileHover={{ scale: 1.02 }}
+        >
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-blue-100 mb-6">
+            <Rocket className="h-8 w-8 text-blue-600" />
           </div>
+          <h2 className="text-4xl md:text-5xl font-black mb-4 bg-gradient-to-r from-gray-900 via-blue-800 to-gray-900 bg-clip-text text-transparent">
+            Ready to Land Your Dream Job?
+          </h2>
+          <p className="text-xl mb-8 text-gray-600 max-w-2xl mx-auto">
+            Join 50,000+ professionals who got hired faster with AI-powered
+            resumes
+          </p>
           <Button
             size="lg"
-            variant="secondary"
-            className="bg-white text-primary hover:bg-white/90 px-8"
-            onClick={handleSignIn}
+            className="px-10 py-7 text-lg font-semibold bg-blue-600 hover:bg-blue-700"
+            onClick={() => router.push('/auth/signin')}
           >
-            Get Started Free
-            <ArrowRight className="h-4 w-4" />
+            Start Building Free
+            <ArrowRight className="ml-2 h-5 w-5" />
           </Button>
-        </div>
+          <div className="flex justify-center gap-8 mt-8 text-sm text-gray-600">
+            {['No credit card', 'Free forever', 'Export to PDF'].map((item) => (
+              <div key={item} className="flex items-center gap-2">
+                <Check className="h-4 w-4 text-blue-600" />
+                <span>{item}</span>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/60 bg-white/70 backdrop-blur py-10">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-sm text-foreground/70 sm:flex-row">
-          <div className="flex items-center gap-3">
-            <span className="text-lg font-black text-gradient-primary tracking-tight">
+      <footer className="border-t py-12 px-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
               ResumeCanvas
             </span>
-            <span className="rounded-full bg-primary/10 px-2 py-1 text-[11px] font-semibold text-primary">
-              © 2025
-            </span>
+            <Badge variant="secondary" className="text-xs">
+              AI
+            </Badge>
+            <span>© 2025</span>
           </div>
-          <div className="flex items-center gap-4">
-            <a href="#" className="hover:text-foreground">
-              Product
-            </a>
-            <a href="#" className="hover:text-foreground">
-              Support
-            </a>
-            <a href="#" className="hover:text-foreground">
+          <div className="flex gap-6">
+            <a href="#" className="hover:text-blue-600 transition">
               Privacy
             </a>
-            <a href="#" className="hover:text-foreground">
+            <a href="#" className="hover:text-blue-600 transition">
               Terms
+            </a>
+            <a href="#" className="hover:text-blue-600 transition">
+              Support
             </a>
           </div>
         </div>

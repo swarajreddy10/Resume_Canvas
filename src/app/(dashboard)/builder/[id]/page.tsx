@@ -11,7 +11,7 @@ import SkillsForm from '@/components/forms/SkillsForm';
 import ATSOptimizer from '@/components/resume/ATSOptimizer';
 import ResumeAnalytics from '@/components/resume/ResumeAnalytics';
 import ShareButton from '@/components/resume/ShareButton';
-import TemplateGallery from '@/components/resume/TemplateGallery';
+import TemplateSelector from '@/components/resume/TemplateSelector';
 import TemplateRenderer from '@/components/resume/TemplateRenderer';
 import { TemplateType } from '@/components/resume/TemplateSelector';
 import { Button } from '@/components/ui/button';
@@ -40,7 +40,6 @@ import {
 } from '@/lib/validation/resume.schemas';
 import {
   Certification,
-  Project,
   ResumeBuilderData,
   ResumeData,
 } from '@/types/resume.unified';
@@ -674,7 +673,17 @@ export default function ResumeBuilderPage() {
                     initialData={
                       resumeData.projects?.projects
                         ? {
-                            projects: resumeData.projects.projects as Project[],
+                            projects: resumeData.projects.projects.map(
+                              (proj) => ({
+                                ...proj,
+                                technologies:
+                                  typeof proj.technologies === 'string'
+                                    ? proj.technologies
+                                    : (proj.technologies as string[]).join(
+                                        ', '
+                                      ),
+                              })
+                            ),
                           }
                         : undefined
                     }
@@ -710,7 +719,7 @@ export default function ResumeBuilderPage() {
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 sm:p-4">
-              <TemplateGallery
+              <TemplateSelector
                 selectedTemplate={selectedTemplate}
                 onTemplateSelect={(templateId: string) =>
                   setSelectedTemplate(templateId as TemplateType)

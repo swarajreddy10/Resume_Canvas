@@ -478,19 +478,93 @@ Auth Routes:   5 requests / 15 minutes
 ```
 Unit Tests:        91 tests
 Integration Tests: 19 tests
-Performance Tests:  5 tests
+E2E Tests:         1 test
+Performance Tests: 5 tests
 Security Tests:    11 tests
 ```
 
+### Unit Testing (Bun Test)
+
+**Validation & Schemas**
+
+- Zod schema validation for all resume sections
+- Input sanitization and XSS prevention
+- Email format validation and domain checking
+- Password strength requirements (8+ chars, special chars)
+
+**Services & Utilities**
+
+- Memory cache (LRU) with TTL expiration
+- Rate limiting middleware with sliding window
+- PDF generation service error handling
+- AI service integration with Groq API
+
+**Database Models**
+
+- User model with bcrypt password hashing
+- Resume model with proper indexing
+- JobApplication CRUD operations
+- MongoDB connection pooling
+
+### Integration Testing
+
+**API Endpoints**
+
+- Authentication flow (signup, signin, password reset)
+- Resume CRUD operations with user authorization
+- AI features (bullet generation, ATS scoring, review)
+- File upload and PDF generation pipeline
+- Public resume sharing and analytics tracking
+
+**Database Integration**
+
+- MongoDB Atlas connection with proper error handling
+- Transaction rollback on failed operations
+- Index performance and query optimization
+- Data consistency across related collections
+
+**External Services**
+
+- Groq AI API integration with fallback handling
+- Resend email service with template rendering
+- NextAuth.js with Google OAuth provider
+- Puppeteer PDF generation in headless mode
+
+### End-to-End Testing (Playwright)
+
+**Complete User Journey**
+
+```typescript
+// Full workflow test covering:
+✅ User authentication (signin/signup)
+✅ Resume creation and form validation
+✅ Multi-section form filling (Personal, Experience, Education, Skills, Projects)
+✅ Template selection and real-time preview
+✅ Resume publishing and PDF generation
+✅ Navigation and dashboard functionality
+```
+
+**Test Configuration**
+
+- Headed mode for visual debugging
+- Sequential execution to prevent race conditions
+- Role-based selectors for reliable element targeting
+- Proper wait strategies for async operations
+
 ### What's Tested
 
-- ✅ All validation schemas
-- ✅ Cache functionality
-- ✅ AI service integration
-- ✅ API endpoints
-- ✅ Security (XSS, SQL injection)
-- ✅ Rate limiting
+- ✅ All validation schemas (Zod + Mongoose)
+- ✅ Cache functionality (LRU with TTL)
+- ✅ AI service integration (Groq API)
+- ✅ API endpoints (25 routes)
+- ✅ Security (XSS, SQL injection, rate limiting)
+- ✅ Authentication (JWT + OAuth)
+- ✅ Database operations (CRUD + transactions)
+- ✅ PDF generation (Puppeteer)
+- ✅ Email service (Resend)
+- ✅ Complete user workflows (E2E)
 - ✅ Performance benchmarks
+- ✅ Error handling and edge cases
 
 ---
 
@@ -543,9 +617,10 @@ bun start            # Start production server
 bun lint             # Run ESLint
 bun format           # Format with Prettier
 bun type-check       # TypeScript check
-bun test             # Run tests
-bun test --coverage  # Generate coverage
-bun run verify       # Run all checks
+bun test             # Run unit/integration tests
+bun test --coverage  # Generate coverage report
+bun run test:e2e     # Run Playwright E2E tests
+bun run verify       # Run all checks (lint + type + test)
 ```
 
 ---
