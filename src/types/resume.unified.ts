@@ -17,7 +17,7 @@ export interface Experience {
   location: string;
   startDate: string;
   endDate: string;
-  description: string;
+  description?: string;
   bullets: string[];
 }
 
@@ -34,10 +34,11 @@ export interface Education {
 export interface Project {
   name: string;
   description: string;
-  technologies: string;
+  technologies: string | string[];
   url?: string;
-  startDate: string;
-  endDate: string;
+  link?: string;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface Certification {

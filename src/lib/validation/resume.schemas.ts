@@ -198,11 +198,15 @@ export const ProjectSchema = z.object({
       VALIDATION_LIMITS.description.max,
       `Description must be less than ${VALIDATION_LIMITS.description.max} characters`
     ),
-  technologies: z
-    .string()
-    .min(5, 'At least one technology required')
-    .max(200, 'Technologies must be less than 200 characters'),
+  technologies: z.union([
+    z
+      .string()
+      .min(5, 'At least one technology required')
+      .max(200, 'Technologies must be less than 200 characters'),
+    z.array(z.string()).transform((arr) => arr.join(', ')),
+  ]),
   url: optionalUrl,
+  link: optionalUrl,
   startDate: z.string().optional().or(z.literal('')),
   endDate: z.string().optional().or(z.literal('')),
 });
