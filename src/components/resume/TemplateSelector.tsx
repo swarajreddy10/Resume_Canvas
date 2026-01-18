@@ -15,7 +15,8 @@ import { ResumeData } from '@/types/resume.unified';
 
 interface TemplateSelectorProps {
   selectedTemplate: TemplateType;
-  onTemplateChange: (template: TemplateType) => void;
+  onTemplateChange?: (template: TemplateType) => void;
+  onTemplateSelect?: (template: string) => void;
   resumeData?: ResumeData | Record<string, unknown>;
 }
 
@@ -43,7 +44,13 @@ const templates = [
 export default function TemplateSelector({
   selectedTemplate,
   onTemplateChange,
+  onTemplateSelect,
 }: TemplateSelectorProps) {
+  const handleSelect = (template: TemplateType) => {
+    if (onTemplateChange) onTemplateChange(template);
+    if (onTemplateSelect) onTemplateSelect(template);
+  };
+
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-semibold">Choose Template</h3>
@@ -54,7 +61,7 @@ export default function TemplateSelector({
             className={`cursor-pointer transition-all hover:shadow-md ${
               selectedTemplate === template.id ? 'ring-2 ring-blue-500' : ''
             }`}
-            onClick={() => onTemplateChange(template.id)}
+            onClick={() => handleSelect(template.id)}
           >
             <CardContent className="p-4">
               <div className="aspect-[3/4] bg-white border rounded mb-3 overflow-hidden relative">

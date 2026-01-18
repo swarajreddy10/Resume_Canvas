@@ -171,3 +171,10 @@
     color: transparent;
   }
 }
+
+/* Fix for long text overflow in cards */
+.word-break {
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
