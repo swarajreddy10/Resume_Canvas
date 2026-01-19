@@ -13,7 +13,10 @@ import ResumeAnalytics from '@/components/resume/ResumeAnalytics';
 import ShareButton from '@/components/resume/ShareButton';
 import TemplateSelector from '@/components/resume/TemplateSelector';
 import TemplateRenderer from '@/components/resume/TemplateRenderer';
-import { TemplateType } from '@/components/resume/TemplateSelector';
+import {
+  TemplateType,
+  TEMPLATE_IDS,
+} from '@/components/resume/templateLibrary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -42,10 +45,12 @@ import {
   Certification,
   ResumeBuilderData,
   ResumeData,
+  Experience,
+  Education,
 } from '@/types/resume.unified';
 import { useSession } from 'next-auth/react';
 import { useParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 interface LocalResumeData {
   personalInfo: PersonalInfoFormData | null;
@@ -55,6 +60,73 @@ interface LocalResumeData {
   projects: ProjectsArrayData | null;
   certifications: CertificationsArrayData | null;
 }
+
+const SAMPLE_PERSONAL_INFO: ResumeData['personalInfo'] = {
+  name: 'Your Name',
+  email: 'your.email@example.com',
+  phone: '+1 (555) 123-4567',
+  address: 'City, State',
+  summary:
+    'Professional summary will appear here when you fill out the personal information section.',
+};
+
+const SAMPLE_EXPERIENCE: ResumeData['experience'] = [
+  {
+    company: 'Company Name',
+    position: 'Job Title',
+    location: 'City, State',
+    startDate: 'Start Date',
+    endDate: 'End Date',
+    description: 'Job description will appear here.',
+    bullets: [
+      'Key achievement will appear here',
+      'Another achievement will be listed here',
+    ],
+  },
+];
+
+const SAMPLE_EDUCATION: ResumeData['education'] = [
+  {
+    school: 'University Name',
+    degree: 'Degree',
+    field: 'Field of Study',
+    startDate: 'Start Year',
+    endDate: 'End Year',
+    location: 'City, State',
+  },
+];
+
+const SAMPLE_SKILLS: ResumeData['skills'] = [
+  'Skill 1',
+  'Skill 2',
+  'Skill 3',
+  'Skill 4',
+];
+
+const DEFAULT_TEMPLATE: TemplateType = 'tech';
+
+const hasExperienceContent = (experience: Experience) =>
+  Boolean(
+    experience.company ||
+    experience.position ||
+    experience.location ||
+    experience.startDate ||
+    experience.endDate
+  );
+
+const hasEducationContent = (education: Education) =>
+  Boolean(
+    education.school ||
+    education.degree ||
+    education.field ||
+    education.startDate ||
+    education.endDate
+  );
+
+const normalizeTemplateId = (value?: string): TemplateType =>
+  value && TEMPLATE_IDS.includes(value as TemplateType)
+    ? (value as TemplateType)
+    : DEFAULT_TEMPLATE;
 
 export default function ResumeBuilderPage() {
   const { data: session, status } = useSession();
@@ -78,11 +150,46 @@ export default function ResumeBuilderPage() {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [selectedTemplate, setSelectedTemplate] =
-    useState<TemplateType>('tech');
+    useState<TemplateType>(DEFAULT_TEMPLATE);
   const [isPublic, setIsPublic] = useState(false);
   const [viewCount] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
   const resumeRef = useRef<HTMLDivElement>(null);
+
+  const resumePreviewData = useMemo<ResumeData>(() => {
+    const experienceEntries = resumeData.experience?.experiences ?? [];
+    const educationEntries = resumeData.education?.education ?? [];
+
+    const personalInfo = resumeData.personalInfo
+      ? { ...SAMPLE_PERSONAL_INFO, ...resumeData.personalInfo }
+      : SAMPLE_PERSONAL_INFO;
+    const filteredExperience = experienceEntries.filter(hasExperienceContent);
+    const filteredEducation = educationEntries.filter(hasEducationContent);
+    const experience =
+      filteredExperience.length > 0 ? filteredExperience : SAMPLE_EXPERIENCE;
+    const education =
+      filteredEducation.length > 0 ? filteredEducation : SAMPLE_EDUCATION;
+    const skills =
+      resumeData.skills?.skills && resumeData.skills.skills.length > 0
+        ? resumeData.skills.skills
+        : SAMPLE_SKILLS;
+    const projects = resumeData.projects?.projects || [];
+    const certifications = (
+      resumeData.certifications?.certifications || []
+    ).map((cert) => ({
+      ...cert,
+      date: cert.date || '',
+    }));
+
+    return {
+      personalInfo,
+      experience,
+      education,
+      skills,
+      projects,
+      certifications,
+    };
+  }, [resumeData]);
 
   const loadResumeData = useCallback(
     async (id: string) => {
@@ -122,7 +229,7 @@ export default function ResumeBuilderPage() {
               ? { certifications: resume.certifications }
               : { certifications: [] },
           });
-          setSelectedTemplate(resume.templateId || 'modern');
+          setSelectedTemplate(normalizeTemplateId(resume.templateId));
           setIsPublic(resume.isPublic || false);
           setResumeId(resume._id);
 
@@ -713,16 +820,12 @@ export default function ResumeBuilderPage() {
 
           {/* Template Selection */}
           <Card className="glass-panel border border-white/60 shadow-none">
-            <CardHeader className="border-b border-white/60 bg-white/70 py-3 sm:py-6">
-              <CardTitle className="text-base sm:text-lg font-semibold">
-                Choose Template
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="p-3 sm:p-4">
+            <CardContent className="p-4 sm:p-6">
               <TemplateSelector
                 selectedTemplate={selectedTemplate}
-                onTemplateSelect={(templateId: string) =>
-                  setSelectedTemplate(templateId as TemplateType)
+                resumeData={resumePreviewData}
+                onTemplateChange={(templateId) =>
+                  setSelectedTemplate(templateId)
                 }
               />
             </CardContent>
@@ -790,56 +893,7 @@ export default function ResumeBuilderPage() {
               >
                 <TemplateRenderer
                   template={selectedTemplate}
-                  data={
-                    {
-                      personalInfo: resumeData.personalInfo || {
-                        name: 'Your Name',
-                        email: 'your.email@example.com',
-                        phone: '+1 (555) 123-4567',
-                        address: 'City, State',
-                        summary:
-                          'Professional summary will appear here when you fill out the personal information section.',
-                      },
-                      experience:
-                        (resumeData.experience?.experiences?.length || 0) > 0
-                          ? resumeData.experience?.experiences || []
-                          : [
-                              {
-                                company: 'Company Name',
-                                position: 'Job Title',
-                                location: 'City, State',
-                                startDate: 'Start Date',
-                                endDate: 'End Date',
-                                description:
-                                  'Job description will appear here.',
-                                bullets: [
-                                  'Key achievement will appear here',
-                                  'Another achievement will be listed here',
-                                ],
-                              },
-                            ],
-                      education:
-                        (resumeData.education?.education?.length || 0) > 0
-                          ? resumeData.education?.education || []
-                          : [
-                              {
-                                school: 'University Name',
-                                degree: 'Degree',
-                                field: 'Field of Study',
-                                startDate: 'Start Year',
-                                endDate: 'End Year',
-                                location: 'City, State',
-                              },
-                            ],
-                      skills:
-                        (resumeData.skills?.skills?.length || 0) > 0
-                          ? resumeData.skills?.skills || []
-                          : ['Skill 1', 'Skill 2', 'Skill 3', 'Skill 4'],
-                      projects: resumeData.projects?.projects || [],
-                      certifications:
-                        resumeData.certifications?.certifications || [],
-                    } as ResumeData
-                  }
+                  data={resumePreviewData}
                 />
               </div>
             </div>

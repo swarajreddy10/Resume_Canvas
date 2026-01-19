@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import TemplateRenderer from '@/components/resume/TemplateRenderer';
-import { TemplateType } from '@/components/resume/TemplateSelector';
+import { TemplateType } from '@/components/resume/templateLibrary';
 import {
   ResumeData,
   PersonalInfo,
