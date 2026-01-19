@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { FileText, Copy, Check } from 'lucide-react';
 
 interface CoverLetterGeneratorProps {
-  resumeData: unknown;
+  resumeData: { _id: string; [key: string]: unknown };
 }
 
 export default function CoverLetterGenerator({
@@ -21,6 +21,34 @@ export default function CoverLetterGenerator({
   const [generating, setGenerating] = useState(false);
   const [coverLetter, setCoverLetter] = useState('');
   const [copied, setCopied] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const saveCoverLetter = async () => {
+    if (!coverLetter.trim()) return;
+
+    setSaving(true);
+    try {
+      const response = await fetch('/api/cover-letters', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          resumeId: resumeData._id,
+          company: companyName,
+          position: jobTitle,
+          content: coverLetter,
+        }),
+      });
+
+      if (response.ok) {
+        alert('Cover letter saved successfully!');
+      }
+    } catch (error) {
+      console.error('Failed to save cover letter:', error);
+      alert('Failed to save cover letter');
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const generateCoverLetter = async () => {
     if (!jobTitle.trim() || !companyName.trim()) return;
@@ -109,14 +137,24 @@ export default function CoverLetterGenerator({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <Label>Generated Cover Letter</Label>
-              <Button variant="outline" size="sm" onClick={copyToClipboard}>
-                {copied ? (
-                  <Check className="h-4 w-4" />
-                ) : (
-                  <Copy className="h-4 w-4" />
-                )}
-                {copied ? 'Copied!' : 'Copy'}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={saveCoverLetter}
+                  disabled={saving}
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </Button>
+                <Button variant="outline" size="sm" onClick={copyToClipboard}>
+                  {copied ? (
+                    <Check className="h-4 w-4" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                  {copied ? 'Copied!' : 'Copy'}
+                </Button>
+              </div>
             </div>
             <Textarea
               value={coverLetter}

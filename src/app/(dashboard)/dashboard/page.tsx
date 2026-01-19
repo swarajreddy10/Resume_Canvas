@@ -19,7 +19,6 @@ import { FileText, Calendar, Trash2, Eye } from 'lucide-react';
 import PDFDownloader from '@/components/resume/PDFDownloader';
 import ShareButton from '@/components/resume/ShareButton';
 import ResumeCloner from '@/components/resume/ResumeCloner';
-import CoverLetterGenerator from '@/components/ai/CoverLetterGenerator';
 import UsageLimits from '@/components/dashboard/UsageLimits';
 import { fadeInUp, scaleIn, staggerContainer } from '@/lib/motion/variants';
 
@@ -256,18 +255,6 @@ export default function DashboardPage() {
           <Button asChild>
             <Link href="/builder/new">Create Your First Resume</Link>
           </Button>
-        </motion.div>
-      )}
-
-      {/* AI Cover Letter Generator */}
-      {resumes.length > 0 && (
-        <motion.div
-          className="mt-8"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <CoverLetterGenerator resumeData={resumes[0]} />
         </motion.div>
       )}
 
