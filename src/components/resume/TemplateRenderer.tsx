@@ -3,7 +3,7 @@ import TechTemplate from './templates/TechTemplate';
 import CorporateTemplate from './templates/CorporateTemplate';
 import CreativeTemplate from './templates/CreativeTemplate';
 import AcademicTemplate from './templates/AcademicTemplate';
-import { TemplateType } from './TemplateSelector';
+import { TemplateType } from './templateLibrary';
 import { ResumeData } from '@/types/resume.unified';
 
 interface TemplateRendererProps {

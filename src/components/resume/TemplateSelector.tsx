@@ -1,132 +1,109 @@
 'use client';
 
+import TemplateRenderer from './TemplateRenderer';
 import { Card, CardContent } from '@/components/ui/card';
-import { Check } from 'lucide-react';
-import TemplatePreview from './TemplatePreview';
-
-export type TemplateType =
-  | 'executive'
-  | 'tech'
-  | 'corporate'
-  | 'creative'
-  | 'academic';
-
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from '@/components/ui/carousel';
+import { Check, Sparkles } from 'lucide-react';
 import { ResumeData } from '@/types/resume.unified';
-
-interface TemplateSelectorProps {
-  selectedTemplate: TemplateType;
-  onTemplateChange?: (template: TemplateType) => void;
-  onTemplateSelect?: (template: string) => void;
-  resumeData?: ResumeData | Record<string, unknown>;
-}
-
-const templates = [
-  {
-    id: 'executive' as TemplateType,
-    name: 'Executive',
-    description: 'Professional with gradient header',
-    preview: '/api/placeholder/150/200',
-  },
-  {
-    id: 'tech' as TemplateType,
-    name: 'Tech',
-    description: 'Traditional serif layout',
-    preview: '/api/placeholder/150/200',
-  },
-  {
-    id: 'corporate' as TemplateType,
-    name: 'Corporate',
-    description: 'Clean and simple design',
-    preview: '/api/placeholder/150/200',
-  },
-];
+import {
+  TEMPLATE_SAMPLE_DATA,
+  TEMPLATES,
+  TemplateType,
+} from '@/components/resume/templateLibrary';
 
 export default function TemplateSelector({
   selectedTemplate,
   onTemplateChange,
   onTemplateSelect,
-}: TemplateSelectorProps) {
+  resumeData,
+}: {
+  selectedTemplate: TemplateType;
+  onTemplateChange?: (template: TemplateType) => void;
+  onTemplateSelect?: (template: string) => void;
+  resumeData?: ResumeData;
+}) {
   const handleSelect = (template: TemplateType) => {
     if (onTemplateChange) onTemplateChange(template);
     if (onTemplateSelect) onTemplateSelect(template);
   };
 
   return (
-    <div className="space-y-4">
-      <h3 className="text-lg font-semibold">Choose Template</h3>
-      <div className="grid grid-cols-3 gap-4">
-        {templates.map((template) => (
-          <Card
-            key={template.id}
-            className={`cursor-pointer transition-all hover:shadow-md ${
-              selectedTemplate === template.id ? 'ring-2 ring-blue-500' : ''
-            }`}
-            onClick={() => handleSelect(template.id)}
-          >
-            <CardContent className="p-4">
-              <div className="aspect-[3/4] bg-white border rounded mb-3 overflow-hidden relative">
-                <div className="transform scale-[0.3] origin-top-left w-[333%] h-[333%]">
-                  <TemplatePreview
-                    template={template.id}
-                    data={
-                      {
-                        personalInfo: {
-                          name:
-                            template.id === 'executive'
-                              ? 'Alex'
-                              : template.id === 'tech'
-                                ? 'Sam'
-                                : 'Jordan',
-                          email: 'email@example.com',
-                          phone: '(555) 123-4567',
-                          address: 'City, ST',
-                          summary:
-                            'Professional with experience in software development.',
-                        },
-                        experience: [
-                          {
-                            company: 'Tech Co',
-                            position: 'Developer',
-                            location: 'City, ST',
-                            startDate: '2022',
-                            endDate: 'Present',
-                            description: 'Software development',
-                            bullets: ['Built web apps', 'Led projects'],
-                          },
-                        ],
-                        education: [
-                          {
-                            school: 'University',
-                            degree: 'BS',
-                            field: 'Computer Science',
-                            startDate: '2018',
-                            endDate: '2022',
-                            location: 'City, ST',
-                          },
-                        ],
-                        skills: ['JavaScript', 'React', 'Python'],
-                        projects: [],
-                        certifications: [],
-                      } as ResumeData
-                    }
-                  />
-                </div>
-              </div>
-              <div className="flex items-center justify-between">
-                <div>
-                  <h4 className="font-medium text-sm">{template.name}</h4>
-                  <p className="text-xs text-gray-600">
-                    {template.description}
-                  </p>
-                </div>
-                {selectedTemplate === template.id && (
-                  <Check className="h-4 w-4 text-blue-500" />
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+            <h3 className="text-lg sm:text-xl font-bold text-gray-900">
+              Choose Your Template
+            </h3>
+          </div>
+          <p className="text-xs sm:text-sm text-gray-600">
+            Select a professional design that matches your style
+          </p>
+        </div>
       </div>
+      <Carousel className="w-full" opts={{ align: 'start', loop: true }}>
+        <CarouselContent className="-ml-4">
+          {TEMPLATES.map((template) => (
+            <CarouselItem
+              key={template.id}
+              className="pl-4 md:basis-1/2 lg:basis-1/3"
+            >
+              <Card
+                className={`group w-full cursor-pointer transition-all duration-300 ${
+                  selectedTemplate === template.id
+                    ? 'ring-2 ring-blue-500 shadow-xl'
+                    : 'hover:shadow-lg hover:scale-[1.01]'
+                }`}
+                onClick={() => handleSelect(template.id)}
+              >
+                <CardContent className="p-0">
+                  <div className="relative h-[280px] sm:h-[320px] bg-white overflow-hidden">
+                    {selectedTemplate === template.id && (
+                      <div className="absolute left-3 top-3 z-10 bg-blue-500 text-white rounded-full p-1.5 shadow-lg">
+                        <Check className="h-4 w-4" />
+                      </div>
+                    )}
+                    <div className="h-full w-full overflow-hidden">
+                      <div
+                        className="transform scale-[0.35] origin-top-left"
+                        style={{ width: '286%', height: '286%' }}
+                      >
+                        <TemplateRenderer
+                          template={template.id}
+                          data={resumeData || TEMPLATE_SAMPLE_DATA[template.id]}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    className={`p-3 sm:p-4 border-t transition-colors ${
+                      selectedTemplate === template.id
+                        ? 'bg-blue-50 border-blue-200'
+                        : 'bg-white group-hover:bg-gray-50'
+                    }`}
+                  >
+                    <h4 className="font-semibold text-sm sm:text-base text-gray-900 mb-1">
+                      {template.name}
+                    </h4>
+                    <p className="text-[11px] sm:text-xs text-gray-600 leading-relaxed">
+                      {template.description}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="-left-4" />
+        <CarouselNext className="-right-4" />
+      </Carousel>
     </div>
   );
 }

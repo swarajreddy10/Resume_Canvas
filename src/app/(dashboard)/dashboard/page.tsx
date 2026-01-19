@@ -148,9 +148,9 @@ export default function DashboardPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between gap-2 min-w-0">
                     <div className="flex items-start gap-2 min-w-0 flex-1">
-                      <FileText className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <FileText className="h-5 w-5 text-blue-600 shrink-0 mt-0.5" />
                       <div className="min-w-0 flex-1">
-                        <CardTitle className="text-base sm:text-lg leading-tight break-words word-break">
+                        <CardTitle className="text-base sm:text-lg leading-tight wrap-break-word word-break">
                           {resume.personalInfo?.name
                             ? `${resume.personalInfo.name.split(' ')[0]}'s Resume`
                             : resume.title}
@@ -161,7 +161,7 @@ export default function DashboardPage() {
                       variant="ghost"
                       size="sm"
                       onClick={() => deleteResume(resume._id)}
-                      className="text-red-500 hover:text-red-700 hover:bg-red-50 flex-shrink-0"
+                      className="text-red-500 hover:text-red-700 hover:bg-red-50 shrink-0"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -169,11 +169,11 @@ export default function DashboardPage() {
 
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs sm:text-sm text-gray-500">
                     <div className="flex items-center gap-1">
-                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       <span>{formatDate(resume.updatedAt)}</span>
                     </div>
                     <div className="flex items-center gap-1">
-                      <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <Eye className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
                       <span>{resume.viewCount}</span>
                     </div>
                     {resume.templateId && (
@@ -195,7 +195,7 @@ export default function DashboardPage() {
                               ? 'secondary'
                               : 'destructive'
                         }
-                        className="text-xs flex-shrink-0"
+                        className="text-xs shrink-0"
                       >
                         ATS: {resume.atsScore}/100
                       </Badge>
