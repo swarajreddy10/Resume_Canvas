@@ -1,7 +1,8 @@
 /**
  * Centralized service exports
- * Single source of truth for all services
+ * Re-exports from shared directory for backward compatibility
+ * TODO: Update imports to use @/shared/services
  */
 
-export * from './toast.service';
-export * from './validation.service';
+export * from '@/shared/services/toast.service';
+export * from '@/shared/services/validation.service';
