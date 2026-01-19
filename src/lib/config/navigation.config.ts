@@ -3,6 +3,7 @@ import {
   Sparkles,
   BarChart3,
   ClipboardList,
+  FileText,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -33,6 +34,11 @@ export const navigationConfig: NavGroup[] = [
         href: '/builder/new',
         icon: Sparkles,
         badge: 'AI',
+      },
+      {
+        label: 'Cover Letters',
+        href: '/cover-letters',
+        icon: FileText,
       },
     ],
   },

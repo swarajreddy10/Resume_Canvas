@@ -1,27 +1,27 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { motion, useScroll, useTransform } from 'motion/react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import TemplateSection from '@/components/resume/TemplateSection';
-import {
-  Sparkles,
-  Zap,
-  ArrowRight,
-  Check,
-  Target,
-  Rocket,
-  Star,
-  Brain,
-  Shield,
-} from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { fadeInUp, scaleIn, staggerContainer } from '@/lib/motion/variants';
+import {
+  ArrowRight,
+  Brain,
+  Check,
+  Rocket,
+  Shield,
+  Sparkles,
+  Star,
+  Target,
+  Zap,
+} from 'lucide-react';
+import { motion, useScroll, useTransform } from 'motion/react';
+import { useRouter } from 'next/navigation';
 
 const stats = [
-  { value: '50K+', label: 'Resumes Created' },
+  { value: '5K+', label: 'Resumes Created' },
   { value: '95%', label: 'ATS Pass Rate' },
-  { value: '4.9/5', label: 'User Rating' },
+  { value: '4.6/5', label: 'User Rating' },
 ];
 
 const features = [
@@ -92,9 +92,7 @@ export default function HomePage() {
             <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
               ResumeCanvas
             </span>
-            <Badge variant="secondary" className="text-xs">
-              AI
-            </Badge>
+            <span className="text-xs font-semibold text-blue-600">AI</span>
           </div>
           <div className="hidden md:flex items-center gap-6 text-sm">
             <a href="#features" className="hover:text-blue-600 transition">
@@ -161,14 +159,6 @@ export default function HomePage() {
             >
               Start Building Free
               <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="px-8 py-6 text-lg"
-              onClick={() => router.push('/resume/demo')}
-            >
-              View Sample
             </Button>
           </motion.div>
 
@@ -257,7 +247,7 @@ export default function HomePage() {
       <TemplateSection />
 
       {/* Testimonials */}
-      <section id="testimonials" className="py-20 px-6">
+      <section id="testimonials" className="py-20 px-6 bg-gray-50">
         <motion.div
           className="max-w-7xl mx-auto"
           initial="hidden"
@@ -276,22 +266,26 @@ export default function HomePage() {
             {testimonials.map((testimonial, i) => (
               <motion.div
                 key={testimonial.name}
-                className="p-6 rounded-2xl bg-white border"
+                className="p-8 rounded-2xl bg-white border border-gray-200 shadow-sm"
                 variants={scaleIn}
                 whileHover={{ scale: 1.02, y: -4 }}
                 transition={{ delay: i * 0.1 }}
               >
-                <div className="flex gap-1 mb-4">
+                <div className="flex gap-1 mb-6">
                   {[...Array(testimonial.rating)].map((_, i) => (
                     <Star
                       key={i}
-                      className="h-4 w-4 fill-yellow-400 text-yellow-400"
+                      className="h-5 w-5 fill-blue-500 text-blue-500"
                     />
                   ))}
                 </div>
-                <p className="text-gray-700 mb-4">{testimonial.content}</p>
-                <div>
-                  <div className="font-bold">{testimonial.name}</div>
+                <p className="text-lg text-gray-900 mb-8 leading-relaxed">
+                  &ldquo;{testimonial.content}&rdquo;
+                </p>
+                <div className="border-t border-gray-200 pt-6">
+                  <div className="font-bold text-gray-900">
+                    {testimonial.name}
+                  </div>
                   <div className="text-sm text-gray-600">
                     {testimonial.role} at {testimonial.company}
                   </div>
@@ -347,9 +341,7 @@ export default function HomePage() {
             <span className="font-bold text-lg bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
               ResumeCanvas
             </span>
-            <Badge variant="secondary" className="text-xs">
-              AI
-            </Badge>
+            <span className="text-xs font-semibold text-blue-600">AI</span>
             <span>© 2025</span>
           </div>
           <div className="flex gap-6">
