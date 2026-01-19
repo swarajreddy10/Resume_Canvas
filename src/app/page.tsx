@@ -279,7 +279,7 @@ export default function HomePage() {
                     />
                   ))}
                 </div>
-                <p className="text-lg text-white/90 mb-8 leading-relaxed">
+                <p className="text-lg text-gray-900 mb-8 leading-relaxed">
                   &ldquo;{testimonial.content}&rdquo;
                 </p>
                 <div className="border-t border-gray-200 pt-6">
