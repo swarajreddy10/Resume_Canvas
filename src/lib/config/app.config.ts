@@ -50,6 +50,10 @@ interface AppConfig {
 function validateEnv(key: string): string {
   const value = process.env[key];
   if (!value) {
+    // Allow missing env vars in test environment
+    if (process.env.NODE_ENV === 'test') {
+      return `test-${key.toLowerCase()}`;
+    }
     throw new Error(`Missing required environment variable: ${key}`);
   }
   return value;
