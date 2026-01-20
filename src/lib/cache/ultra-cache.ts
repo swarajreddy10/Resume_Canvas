@@ -28,8 +28,10 @@ export class UltraCache<T> {
     const compressed = gzipSync(serialized);
     const size = compressed.length;
 
-    // Evict if needed
-    this.evictIfNeeded(size);
+    // Evict if needed before adding
+    while (this.cache.size >= this.maxSize || this.currentMemory + size > this.maxMemory) {
+      this.evictLRU();
+    }
 
     const entry: CompressedCacheEntry = {
       data: compressed,
@@ -72,6 +74,8 @@ export class UltraCache<T> {
   }
 
   private evictLRU(): void {
+    if (this.cache.size === 0) return;
+    
     let lruKey = '';
     let lruHits = Infinity;
 
