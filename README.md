@@ -585,7 +585,7 @@ PDF Buffer → Download
 
 **Database**
 
-- Production: MongoDB Atlas M20 (4GB RAM)
+- Production: MongoDB Atlas M0
 - Free tier: 512MB storage limit
 - Complex queries may need optimization
 
