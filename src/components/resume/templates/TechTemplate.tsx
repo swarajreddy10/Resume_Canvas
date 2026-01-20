@@ -15,7 +15,7 @@ export default function TechTemplate({ data }: TechTemplateProps) {
   } = data;
 
   return (
-    <div className="w-[210mm] mx-auto bg-white p-10 font-sans text-gray-900 min-h-[297mm]">
+    <div className="w-full max-w-[210mm] mx-auto bg-white p-10 font-sans text-gray-900 min-h-[297mm]">
       {/* Header */}
       <div className="border-b-2 border-blue-600 pb-4 mb-6">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">

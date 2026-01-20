@@ -15,7 +15,7 @@ export default function ExecutiveTemplate({ data }: ExecutiveTemplateProps) {
   } = data;
 
   return (
-    <div className="w-[210mm] mx-auto bg-white flex font-serif text-gray-900 min-h-[297mm]">
+    <div className="w-full max-w-[210mm] mx-auto bg-white flex font-serif text-gray-900 min-h-[297mm]">
       {/* Sidebar */}
       <div className="w-1/3 bg-gray-900 text-white p-6">
         <div className="mb-6">
