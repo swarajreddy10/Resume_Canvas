@@ -4,6 +4,8 @@ import { Resume } from '@/lib/db/models/Resume';
 import { UserCounter } from '@/lib/db/models/UserCounter';
 import { sanitizeResumeData } from '@/lib/security/sanitize';
 import { generateUserSlug } from '@/lib/utils/slug';
+import { ultraCache } from '@/lib/cache/ultra-cache';
+import { optimizedQueries } from '@/lib/db/optimizer';
 import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET() {
@@ -13,11 +15,38 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const cacheKey = `resumes:${session.user.email}`;
+    const cached = ultraCache.get(cacheKey);
+    if (cached) {
+      return NextResponse.json(
+        { resumes: cached },
+        {
+          headers: {
+            'Cache-Control': 'public, max-age=60',
+            'X-Cache': 'HIT',
+          },
+        }
+      );
+    }
+
     await connectDB();
-    const resumes = await Resume.find({ userEmail: session.user.email })
+    const [query, projection] = optimizedQueries.getUserResumes(
+      session.user.email
+    );
+    const resumes = await Resume.find(query, projection)
       .sort({ updatedAt: -1 })
       .lean();
-    return NextResponse.json({ resumes });
+
+    ultraCache.set(cacheKey, resumes, 60000); // 1 min cache
+    return NextResponse.json(
+      { resumes },
+      {
+        headers: {
+          'Cache-Control': 'public, max-age=60',
+          'X-Cache': 'MISS',
+        },
+      }
+    );
   } catch (error) {
     console.error(
       JSON.stringify({ level: 'error', msg: 'Failed to fetch resumes', error })

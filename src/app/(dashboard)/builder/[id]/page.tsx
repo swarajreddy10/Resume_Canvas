@@ -885,12 +885,9 @@ export default function ResumeBuilderPage() {
               Back to Builder
             </Button>
           </div>
-          <div className="flex justify-center -mx-4 sm:mx-0">
-            <div className="bg-white shadow-lg border rounded-none sm:rounded-lg overflow-hidden max-w-4xl w-full">
-              <div
-                ref={resumeRef}
-                className="w-full scale-[0.85] sm:scale-100 origin-top"
-              >
+          <div className="w-full px-2 sm:px-4">
+            <div className="bg-white shadow-lg border rounded-lg overflow-hidden w-full max-w-none">
+              <div ref={resumeRef} className="w-full">
                 <TemplateRenderer
                   template={selectedTemplate}
                   data={resumePreviewData}

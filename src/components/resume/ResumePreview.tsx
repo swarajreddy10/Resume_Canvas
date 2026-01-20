@@ -18,34 +18,51 @@ export default function ResumePreview({
 
   if (template === 'modern') {
     return (
-      <div className="bg-white p-8 shadow-lg rounded-lg max-w-2xl mx-auto">
+      <div className="bg-white p-2 sm:p-3 md:p-4 lg:p-6 shadow-lg rounded-lg w-full min-w-0 overflow-x-auto text-xs sm:text-sm">
         {/* Header */}
         {personalInfo && (
-          <div className="border-b-2 border-blue-600 pb-4 mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="border-b-2 border-blue-600 pb-2 sm:pb-3 mb-3 sm:mb-4">
+            <h1 className="text-base sm:text-lg md:text-xl lg:text-2xl font-bold text-gray-900 mb-1 sm:mb-2 word-wrap break-words hyphens-auto">
               {personalInfo.name}
             </h1>
-            <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-              <span>{personalInfo.email}</span>
-              {personalInfo.phone && <span>{personalInfo.phone}</span>}
-              {personalInfo.address && <span>{personalInfo.address}</span>}
+            <div className="flex flex-col gap-0.5 sm:gap-1 text-xs text-gray-600">
+              <span className="word-wrap break-all">{personalInfo.email}</span>
+              {personalInfo.phone && (
+                <span className="word-wrap break-words">
+                  {personalInfo.phone}
+                </span>
+              )}
+              {personalInfo.address && (
+                <span className="word-wrap break-words">
+                  {personalInfo.address}
+                </span>
+              )}
             </div>
             {(personalInfo.linkedin ||
               personalInfo.github ||
               personalInfo.website) && (
-              <div className="flex flex-wrap gap-4 text-sm text-blue-600 mt-2">
+              <div className="flex flex-col gap-0.5 sm:gap-1 text-xs text-blue-600 mt-1 sm:mt-2">
                 {personalInfo.linkedin && (
-                  <a href={personalInfo.linkedin} className="hover:underline">
+                  <a
+                    href={personalInfo.linkedin}
+                    className="hover:underline word-wrap break-all"
+                  >
                     LinkedIn
                   </a>
                 )}
                 {personalInfo.github && (
-                  <a href={personalInfo.github} className="hover:underline">
+                  <a
+                    href={personalInfo.github}
+                    className="hover:underline word-wrap break-all"
+                  >
                     GitHub
                   </a>
                 )}
                 {personalInfo.website && (
-                  <a href={personalInfo.website} className="hover:underline">
+                  <a
+                    href={personalInfo.website}
+                    className="hover:underline word-wrap break-all"
+                  >
                     Website
                   </a>
                 )}
@@ -68,34 +85,41 @@ export default function ResumePreview({
 
         {/* Experience */}
         {experience && experience.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-3 border-l-4 border-blue-600 pl-3">
+          <div className="mb-3 sm:mb-4">
+            <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-2 border-l-4 border-blue-600 pl-2">
               Experience
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-2 sm:space-y-3">
               {experience.map((exp: Experience, index: number) => (
-                <div key={index} className="border-l-2 border-gray-200 pl-4">
-                  <div className="flex justify-between items-start mb-1">
-                    <h3 className="font-semibold text-gray-900">
+                <div key={index} className="border-l-2 border-gray-200 pl-2">
+                  <div className="mb-0.5 sm:mb-1">
+                    <h3 className="font-semibold text-gray-900 text-xs sm:text-sm word-wrap break-words hyphens-auto">
                       {exp.position}
                     </h3>
-                    <span className="text-sm text-gray-600">
+                    <span className="text-xs text-gray-600 block">
                       {exp.startDate} - {exp.endDate}
                     </span>
                   </div>
-                  <p className="text-blue-600 font-medium mb-1">
+                  <p className="text-blue-600 font-medium mb-0.5 sm:mb-1 text-xs word-wrap break-words">
                     {exp.company} • {exp.location}
                   </p>
                   {exp.description && (
-                    <p className="text-gray-700 text-sm mb-2">
+                    <p className="text-gray-700 text-xs mb-1 word-wrap break-words hyphens-auto">
                       {exp.description}
                     </p>
                   )}
                   {exp.bullets && exp.bullets.length > 0 && (
-                    <ul className="list-disc list-inside text-sm text-gray-700 space-y-1">
+                    <ul className="list-disc list-inside text-xs text-gray-700 space-y-0.5 pl-1">
                       {exp.bullets.map(
                         (bullet: string, bulletIndex: number) =>
-                          bullet && <li key={bulletIndex}>{bullet}</li>
+                          bullet && (
+                            <li
+                              key={bulletIndex}
+                              className="word-wrap break-words hyphens-auto"
+                            >
+                              {bullet}
+                            </li>
+                          )
                       )}
                     </ul>
                   )}
@@ -135,15 +159,15 @@ export default function ResumePreview({
 
         {/* Skills */}
         {skills && skills.length > 0 && (
-          <div className="mb-6">
-            <h2 className="text-xl font-semibold text-gray-900 mb-3 border-l-4 border-blue-600 pl-3">
+          <div className="mb-3 sm:mb-4">
+            <h2 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900 mb-1.5 sm:mb-2 border-l-4 border-blue-600 pl-2">
               Skills
             </h2>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1 sm:gap-1.5">
               {skills.map((skill: string) => (
                 <span
                   key={skill}
-                  className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+                  className="bg-blue-100 text-blue-800 px-1.5 sm:px-2 py-0.5 rounded-full text-xs font-medium break-words"
                 >
                   {skill}
                 </span>
