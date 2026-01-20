@@ -8,7 +8,7 @@ export default function CorporateTemplate({ data }: CorporateTemplateProps) {
   const { personalInfo, experience, education, skills, certifications } = data;
 
   return (
-    <div className="w-[210mm] mx-auto bg-white p-10 font-sans text-gray-800 min-h-[297mm]">
+    <div className="w-full max-w-[210mm] mx-auto bg-white p-10 font-sans text-gray-800 min-h-[297mm]">
       {/* Header */}
       <div className="text-center mb-8 pb-6 border-b border-gray-300">
         <h1 className="text-3xl font-bold text-gray-900 mb-2 tracking-tight">

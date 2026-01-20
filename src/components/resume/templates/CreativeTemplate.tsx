@@ -15,7 +15,7 @@ export default function CreativeTemplate({ data }: CreativeTemplateProps) {
   } = data;
 
   return (
-    <div className="w-[210mm] mx-auto bg-white font-sans text-gray-900 min-h-[297mm]">
+    <div className="w-full max-w-[210mm] mx-auto bg-white font-sans text-gray-900 min-h-[297mm]">
       {/* Header with accent */}
       <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white p-8 mb-6">
         <h1 className="text-3xl font-bold mb-2">

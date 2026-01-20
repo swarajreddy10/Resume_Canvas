@@ -12,7 +12,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
 import PWAInstallPrompt from '@/components/mobile/PWAInstallPrompt';
 import Sidebar from '@/components/layout/Sidebar';
 import { useSidebar } from '@/hooks/useSidebar';
@@ -71,16 +77,20 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                   </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="p-0 w-64">
+                  <SheetTitle className="sr-only">
+                    Mobile navigation menu
+                  </SheetTitle>
+                  <SheetDescription className="sr-only">
+                    Navigate between dashboard sections
+                  </SheetDescription>
                   <Sidebar mobile onNavigate={() => setMobileMenuOpen(false)} />
                 </SheetContent>
               </Sheet>
-              <Link href="/dashboard" className="flex items-center gap-1.5">
-                <span className="text-xl md:text-2xl font-black text-gradient-primary tracking-tight">
+              <Link href="/dashboard" className="flex items-center gap-2">
+                <span className="text-xl md:text-2xl font-black bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent tracking-tight">
                   ResumeCanvas
                 </span>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
-                  AI
-                </span>
+                <span className="text-xs font-semibold text-blue-600">AI</span>
               </Link>
             </div>
 

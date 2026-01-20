@@ -15,7 +15,7 @@ export default function AcademicTemplate({ data }: AcademicTemplateProps) {
   } = data;
 
   return (
-    <div className="w-[210mm] mx-auto bg-white p-10 font-serif text-gray-900 min-h-[297mm]">
+    <div className="w-full max-w-[210mm] mx-auto bg-white p-10 font-serif text-gray-900 min-h-[297mm]">
       {/* Header */}
       <div className="text-center mb-6 pb-4 border-b-2 border-gray-800">
         <h1 className="text-3xl font-bold text-gray-900 mb-3">

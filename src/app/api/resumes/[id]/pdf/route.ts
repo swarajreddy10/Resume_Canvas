@@ -3,6 +3,8 @@ import { auth } from '@/lib/auth/config';
 import connectDB from '@/lib/db/connection';
 import { Resume } from '@/lib/db/models/Resume';
 import { generatePDF } from '@/services/pdf.service';
+import { pdfCache } from '@/lib/cache/ultra-cache';
+import crypto from 'crypto';
 
 export async function GET(
   request: NextRequest,
@@ -15,45 +17,76 @@ export async function GET(
     }
 
     const { id } = await params;
+    const urlTemplate = request.nextUrl.searchParams.get('templateId');
+
+    // Create cache key from resume ID + template + last modified
     await connectDB();
-    const resume = await Resume.findById(id);
+    const resume = (await Resume.findById(
+      id,
+      'updatedAt templateId userEmail'
+    ).lean()) as {
+      userEmail: string;
+      templateId?: string;
+      updatedAt: Date;
+    } | null;
 
     if (!resume || resume.userEmail !== session.user.email) {
       return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
     }
 
-    const urlTemplate = request.nextUrl.searchParams.get('templateId');
-    const resumeDoc = resume as {
-      templateId?: string;
-      toObject?: () => unknown;
-    };
-    const templateId = urlTemplate || resumeDoc.templateId || 'standard';
+    const templateId = urlTemplate || resume.templateId || 'standard';
+    const cacheKey = crypto
+      .createHash('md5')
+      .update(`${id}:${templateId}:${resume.updatedAt}`)
+      .digest('hex');
 
-    const resumeData = resumeDoc.toObject ? resumeDoc.toObject() : resume;
+    // Check PDF cache first
+    const cachedPDF = pdfCache.get(cacheKey);
+    if (cachedPDF) {
+      return new NextResponse(cachedPDF as BodyInit, {
+        headers: {
+          'Content-Type': 'application/pdf',
+          'Content-Disposition': 'attachment; filename="resume.pdf"',
+          'Cache-Control': 'public, max-age=3600',
+          'X-Cache': 'HIT',
+        },
+      });
+    }
 
-    // Ensure all required fields have default values
-    const sanitizedData = {
-      ...resumeData,
+    // Generate PDF if not cached
+    const fullResume = (await Resume.findById(id).lean()) as Record<
+      string,
+      unknown
+    > | null;
+    if (!fullResume) {
+      return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
+    }
+
+    const resumeData = {
+      ...fullResume,
       templateId,
-      personalInfo: resumeData.personalInfo || {},
-      experience: Array.isArray(resumeData.experience)
-        ? resumeData.experience
+      personalInfo: fullResume.personalInfo || {},
+      experience: Array.isArray(fullResume.experience)
+        ? fullResume.experience
         : [],
-      education: Array.isArray(resumeData.education)
-        ? resumeData.education
+      education: Array.isArray(fullResume.education)
+        ? fullResume.education
         : [],
-      skills: Array.isArray(resumeData.skills) ? resumeData.skills : [],
-      projects: Array.isArray(resumeData.projects) ? resumeData.projects : [],
-      certifications: Array.isArray(resumeData.certifications)
-        ? resumeData.certifications
+      skills: Array.isArray(fullResume.skills) ? fullResume.skills : [],
+      projects: Array.isArray(fullResume.projects) ? fullResume.projects : [],
+      certifications: Array.isArray(fullResume.certifications)
+        ? fullResume.certifications
         : [],
     };
 
-    const pdfBuffer = await generatePDF(sanitizedData);
+    const pdfBuffer = await generatePDF(resumeData);
+
+    // Cache PDF for 1 hour
+    pdfCache.set(cacheKey, pdfBuffer, 3600000);
 
     const rawName =
-      (resumeData.personalInfo?.name as string | undefined) ||
-      (resumeData.title as string | undefined) ||
+      (fullResume.personalInfo as { name?: string })?.name ||
+      (fullResume.title as string) ||
       'resume';
     const safeName = rawName.replace(/[^a-z0-9\- ]/gi, '').trim() || 'resume';
 
@@ -61,6 +94,8 @@ export async function GET(
       headers: {
         'Content-Type': 'application/pdf',
         'Content-Disposition': `attachment; filename="${safeName}.pdf"`,
+        'Cache-Control': 'public, max-age=3600',
+        'X-Cache': 'MISS',
       },
     });
   } catch (error) {
