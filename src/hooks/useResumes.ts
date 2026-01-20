@@ -10,7 +10,9 @@ export function useResumes() {
   return useQuery({
     queryKey: ['resumes'],
     queryFn: fetchResumes,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 60 * 1000, // 1 minute
+    gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
   });
 }
 
@@ -19,6 +21,8 @@ export function useResume(id: string) {
     queryKey: ['resume', id],
     queryFn: () => fetchResumeById(id),
     enabled: !!id,
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
   });
 }
 
