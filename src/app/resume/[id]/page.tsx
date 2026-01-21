@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import TemplateRenderer from '@/components/resume/TemplateRenderer';
-import { TemplateType } from '@/components/resume/templateLibrary';
+import TemplateShowcase from '@/components/resume/TemplateShowcase';
+import { TemplateType, TEMPLATES } from '@/components/resume/templateLibrary';
 import {
   ResumeData,
   PersonalInfo,
@@ -104,7 +104,11 @@ export default function PublicResumePage() {
                 <Eye className="h-4 w-4" />
                 {resume.viewCount} views
               </span>
-              <span className="capitalize">{resume.templateId} template</span>
+              <span className="capitalize">
+                {TEMPLATES.find((t) => t.id === resume.templateId)?.name ||
+                  resume.templateId}{' '}
+                template
+              </span>
             </div>
           </div>
           <Button onClick={() => window.print()}>
@@ -115,9 +119,15 @@ export default function PublicResumePage() {
       </div>
 
       <div className="max-w-4xl mx-auto p-4 print:p-0">
-        <div className="transform scale-90 origin-top print:scale-100">
-          <TemplateRenderer template={resume.templateId} data={resumeData} />
-        </div>
+        <TemplateShowcase
+          template={resume.templateId}
+          data={resumeData}
+          mode="preview"
+          className="w-full"
+          frameClassName="border-0 shadow-none px-0 py-0"
+          showFade={false}
+          maxHeight="none"
+        />
       </div>
     </div>
   );
