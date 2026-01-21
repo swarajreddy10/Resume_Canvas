@@ -10,13 +10,14 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Eye } from 'lucide-react';
-import TemplateRenderer from './TemplateRenderer';
-import { TemplateType, TEMPLATE_SAMPLE_DATA } from './templateLibrary';
+import TemplateShowcase from './TemplateShowcase';
+import { TemplateType, TEMPLATES } from './templateLibrary';
 import { ResumeData } from '@/types/resume.unified';
+import { getTemplatePreviewData } from './templateDataHelper';
 
 interface TemplatePreviewProps {
   template: TemplateType;
-  data: ResumeData | Record<string, unknown>;
+  data?: ResumeData | Record<string, unknown>;
 }
 
 export default function TemplatePreview({
@@ -24,12 +25,13 @@ export default function TemplatePreview({
   data,
 }: TemplatePreviewProps) {
   const [open, setOpen] = useState(false);
-  const previewData =
-    data &&
-    typeof data === 'object' &&
-    'personalInfo' in (data as Record<string, unknown>)
+  const templateMeta = TEMPLATES.find((t) => t.id === template);
+  const previewData = getTemplatePreviewData(
+    template,
+    data && typeof data === 'object' && 'personalInfo' in data
       ? (data as ResumeData)
-      : TEMPLATE_SAMPLE_DATA[template];
+      : undefined
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -41,13 +43,19 @@ export default function TemplatePreview({
       </DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-auto">
         <DialogHeader>
-          <DialogTitle className="capitalize">
-            {template} Template Preview
+          <DialogTitle>
+            {templateMeta?.name || template} Template Preview
           </DialogTitle>
         </DialogHeader>
-        <div className="transform scale-75 origin-top">
-          <TemplateRenderer template={template} data={previewData} />
-        </div>
+        <TemplateShowcase
+          template={template}
+          data={previewData}
+          mode="preview"
+          className="w-full"
+          frameClassName="border-0 shadow-none px-0 py-0"
+          showFade={false}
+          maxHeight="none"
+        />
       </DialogContent>
     </Dialog>
   );

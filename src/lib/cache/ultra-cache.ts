@@ -29,7 +29,10 @@ export class UltraCache<T> {
     const size = compressed.length;
 
     // Evict if needed before adding
-    while (this.cache.size >= this.maxSize || this.currentMemory + size > this.maxMemory) {
+    while (
+      this.cache.size >= this.maxSize ||
+      this.currentMemory + size > this.maxMemory
+    ) {
       this.evictLRU();
     }
 
@@ -75,7 +78,7 @@ export class UltraCache<T> {
 
   private evictLRU(): void {
     if (this.cache.size === 0) return;
-    
+
     let lruKey = '';
     let lruHits = Infinity;
 

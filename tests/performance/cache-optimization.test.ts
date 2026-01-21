@@ -40,7 +40,7 @@ describe('Performance Optimization Tests', () => {
 
     test('should evict LRU items when memory limit reached', () => {
       ultraCache.clear();
-      
+
       // Fill cache with smaller data to test eviction
       for (let i = 0; i < 50; i++) {
         ultraCache.set(`evict-${i}`, { data: 'x'.repeat(500) });
