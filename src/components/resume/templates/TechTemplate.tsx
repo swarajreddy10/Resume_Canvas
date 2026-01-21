@@ -2,9 +2,13 @@ import { ResumeData } from '@/types/resume.unified';
 
 interface TechTemplateProps {
   data: ResumeData;
+  isMobile?: boolean;
 }
 
-export default function TechTemplate({ data }: TechTemplateProps) {
+export default function TechTemplate({
+  data,
+  isMobile = false,
+}: TechTemplateProps) {
   const {
     personalInfo,
     experience,
@@ -15,7 +19,9 @@ export default function TechTemplate({ data }: TechTemplateProps) {
   } = data;
 
   return (
-    <div className="w-full max-w-[210mm] mx-auto bg-white p-10 font-sans text-gray-900 min-h-[297mm]">
+    <div
+      className={`w-full max-w-[210mm] mx-auto bg-white font-sans text-gray-900 min-h-[297mm] ${isMobile ? 'scale-75 origin-center p-4' : 'p-10'}`}
+    >
       {/* Header */}
       <div className="border-b-2 border-blue-600 pb-4 mb-6">
         <h1 className="text-4xl font-bold text-gray-900 mb-2">
