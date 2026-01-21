@@ -9,17 +9,19 @@ import { ResumeData } from '@/types/resume.unified';
 interface TemplateRendererProps {
   template: TemplateType;
   data: ResumeData;
+  isMobile?: boolean;
 }
 
 export default function TemplateRenderer({
   template,
   data,
+  isMobile = false,
 }: TemplateRendererProps) {
   switch (template) {
     case 'executive':
       return <ExecutiveTemplate data={data} />;
     case 'tech':
-      return <TechTemplate data={data} />;
+      return <TechTemplate data={data} isMobile={isMobile} />;
     case 'corporate':
       return <CorporateTemplate data={data} />;
     case 'creative':
@@ -27,6 +29,6 @@ export default function TemplateRenderer({
     case 'academic':
       return <AcademicTemplate data={data} />;
     default:
-      return <TechTemplate data={data} />;
+      return <TechTemplate data={data} isMobile={isMobile} />;
   }
 }

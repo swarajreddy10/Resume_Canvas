@@ -1,5 +1,6 @@
 'use client';
 
+import { getTemplatePreviewData } from '@/components/resume/templateDataHelper';
 import KeywordOptimizer from '@/components/ai/KeywordOptimizer';
 import ResumeReviewer from '@/components/ai/ResumeReviewer';
 import CertificationsForm from '@/components/forms/CertificationsForm';
@@ -12,7 +13,7 @@ import ATSOptimizer from '@/components/resume/ATSOptimizer';
 import ResumeAnalytics from '@/components/resume/ResumeAnalytics';
 import ShareButton from '@/components/resume/ShareButton';
 import TemplateSelector from '@/components/resume/TemplateSelector';
-import TemplateRenderer from '@/components/resume/TemplateRenderer';
+import TemplateShowcase from '@/components/resume/TemplateShowcase';
 import {
   TemplateType,
   TEMPLATE_IDS,
@@ -70,39 +71,6 @@ const SAMPLE_PERSONAL_INFO: ResumeData['personalInfo'] = {
     'Professional summary will appear here when you fill out the personal information section.',
 };
 
-const SAMPLE_EXPERIENCE: ResumeData['experience'] = [
-  {
-    company: 'Company Name',
-    position: 'Job Title',
-    location: 'City, State',
-    startDate: 'Start Date',
-    endDate: 'End Date',
-    description: 'Job description will appear here.',
-    bullets: [
-      'Key achievement will appear here',
-      'Another achievement will be listed here',
-    ],
-  },
-];
-
-const SAMPLE_EDUCATION: ResumeData['education'] = [
-  {
-    school: 'University Name',
-    degree: 'Degree',
-    field: 'Field of Study',
-    startDate: 'Start Year',
-    endDate: 'End Year',
-    location: 'City, State',
-  },
-];
-
-const SAMPLE_SKILLS: ResumeData['skills'] = [
-  'Skill 1',
-  'Skill 2',
-  'Skill 3',
-  'Skill 4',
-];
-
 const DEFAULT_TEMPLATE: TemplateType = 'tech';
 
 const hasExperienceContent = (experience: Experience) =>
@@ -154,42 +122,26 @@ export default function ResumeBuilderPage() {
   const [isPublic, setIsPublic] = useState(false);
   const [viewCount] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
-  const resumeRef = useRef<HTMLDivElement>(null);
 
   const resumePreviewData = useMemo<ResumeData>(() => {
-    const experienceEntries = resumeData.experience?.experiences ?? [];
-    const educationEntries = resumeData.education?.education ?? [];
-
-    const personalInfo = resumeData.personalInfo
-      ? { ...SAMPLE_PERSONAL_INFO, ...resumeData.personalInfo }
-      : SAMPLE_PERSONAL_INFO;
-    const filteredExperience = experienceEntries.filter(hasExperienceContent);
-    const filteredEducation = educationEntries.filter(hasEducationContent);
-    const experience =
-      filteredExperience.length > 0 ? filteredExperience : SAMPLE_EXPERIENCE;
-    const education =
-      filteredEducation.length > 0 ? filteredEducation : SAMPLE_EDUCATION;
-    const skills =
-      resumeData.skills?.skills && resumeData.skills.skills.length > 0
-        ? resumeData.skills.skills
-        : SAMPLE_SKILLS;
-    const projects = resumeData.projects?.projects || [];
-    const certifications = (
-      resumeData.certifications?.certifications || []
-    ).map((cert) => ({
-      ...cert,
-      date: cert.date || '',
-    }));
-
-    return {
-      personalInfo,
-      experience,
-      education,
-      skills,
-      projects,
-      certifications,
-    };
-  }, [resumeData]);
+    return getTemplatePreviewData(selectedTemplate, {
+      personalInfo: resumeData.personalInfo
+        ? { ...SAMPLE_PERSONAL_INFO, ...resumeData.personalInfo }
+        : SAMPLE_PERSONAL_INFO,
+      experience:
+        resumeData.experience?.experiences?.filter(hasExperienceContent) || [],
+      education:
+        resumeData.education?.education?.filter(hasEducationContent) || [],
+      skills: resumeData.skills?.skills || [],
+      projects: resumeData.projects?.projects || [],
+      certifications: (resumeData.certifications?.certifications || []).map(
+        (cert) => ({
+          ...cert,
+          date: cert.date || '',
+        })
+      ),
+    });
+  }, [resumeData, selectedTemplate]);
 
   const loadResumeData = useCallback(
     async (id: string) => {
@@ -885,15 +837,17 @@ export default function ResumeBuilderPage() {
               Back to Builder
             </Button>
           </div>
-          <div className="w-full px-2 sm:px-4">
-            <div className="bg-white shadow-lg border rounded-lg overflow-hidden w-full max-w-none">
-              <div ref={resumeRef} className="w-full">
-                <TemplateRenderer
-                  template={selectedTemplate}
-                  data={resumePreviewData}
-                />
-              </div>
-            </div>
+          <div className="bg-white shadow-lg border rounded-lg overflow-hidden">
+            <TemplateShowcase
+              template={selectedTemplate}
+              data={resumePreviewData}
+              mode="preview"
+              className="w-full"
+              frameClassName="border-0 shadow-none px-0 py-0"
+              showFade={false}
+              maxHeight="none"
+              maxPreviewWidth={800}
+            />
           </div>
         </div>
       )}

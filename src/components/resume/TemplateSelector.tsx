@@ -1,6 +1,6 @@
 'use client';
 
-import TemplateRenderer from './TemplateRenderer';
+import TemplateShowcase from './TemplateShowcase';
 import { Card, CardContent } from '@/components/ui/card';
 import {
   Carousel,
@@ -11,11 +11,8 @@ import {
 } from '@/components/ui/carousel';
 import { Check, Sparkles } from 'lucide-react';
 import { ResumeData } from '@/types/resume.unified';
-import {
-  TEMPLATE_SAMPLE_DATA,
-  TEMPLATES,
-  TemplateType,
-} from '@/components/resume/templateLibrary';
+import { TEMPLATES, TemplateType } from '@/components/resume/templateLibrary';
+import { getTemplatePreviewData } from './templateDataHelper';
 
 export default function TemplateSelector({
   selectedTemplate,
@@ -71,15 +68,13 @@ export default function TemplateSelector({
                       </div>
                     )}
                     <div className="h-full w-full overflow-hidden">
-                      <div
-                        className="transform scale-[0.35] origin-top-left"
-                        style={{ width: '286%', height: '286%' }}
-                      >
-                        <TemplateRenderer
-                          template={template.id}
-                          data={resumeData || TEMPLATE_SAMPLE_DATA[template.id]}
-                        />
-                      </div>
+                      <TemplateShowcase
+                        template={template.id}
+                        data={getTemplatePreviewData(template.id, resumeData)}
+                        mode="selector"
+                        className="h-full"
+                        frameClassName="border-0 shadow-none"
+                      />
                     </div>
                   </div>
                   <div
