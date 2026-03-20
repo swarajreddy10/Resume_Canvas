@@ -327,10 +327,33 @@ Modern software engineering increasingly requires the ability to leverage AI too
 
 ## Roadmap
 
-- LinkedIn profile import
-- Pro subscription tier (Stripe integration)
-- Team workspaces and collaboration
-- Advanced analytics with funnel tracking
+## 🎯 Current Limitations & Roadmap
+
+**AI Rate Limits**
+
+- Groq free tier: 14,400 requests/day
+- Per-user limit: 50 requests/hour
+- Cover letter generation: 10 requests/day (free tier)
+
+**PDF Generation**
+
+- Server-side only (Puppeteer)
+- Memory intensive (~100MB per PDF)
+- Browser pool management required
+- Not suitable for edge runtime
+
+**Database**
+
+- Production: MongoDB Atlas M0
+- Free tier: 512MB storage limit
+- Complex queries may need optimization
+
+**Upcoming Features**
+
+- LinkedIn profile import (in development)
+- Team collaboration features
+- Premium subscription tiers
+- Advanced analytics dashboard
 - Mobile app (React Native)
 - Multi-language resume support
 - Career coaching AI (interview prep, salary negotiation)
