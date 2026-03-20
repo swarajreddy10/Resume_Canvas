@@ -33,7 +33,7 @@ Established a unified design token set applied consistently across every page, c
 - Flat `bg-[#f8fafc]` background — no gradients, no blur orbs
 - Split layout: text left, resume mockup right
 - Animated cycling words (`hired faster`, `stand out`, `get callbacks`, `win offers`) in solid `#2563eb`
-- Trust badge: 5 amber stars + "Trusted by 50,000+ professionals"
+- Trust badge: 5 amber stars + "Trusted by 5,000+ professionals"
 - Primary CTA: `bg-[#0c1a3a]` — Create my resume
 - Secondary CTA: `border border-[#e2e8f0]` — View templates
 - Trust signals: 3 check items with `#2563eb` check icons
