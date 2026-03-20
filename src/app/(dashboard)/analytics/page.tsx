@@ -6,10 +6,10 @@ export default function AnalyticsPage() {
   return (
     <div>
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">
+        <h1 className="text-3xl font-bold text-[#11101d]">
           Analytics Dashboard
         </h1>
-        <p className="text-gray-600">
+        <p className="text-[#64748b]">
           Track your resume performance and insights
         </p>
       </div>

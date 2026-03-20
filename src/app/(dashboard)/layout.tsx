@@ -44,7 +44,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   if (status === 'loading') {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#4f46e5] border-t-transparent" />
       </div>
     );
   }
@@ -54,7 +54,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-[#f5f3ff]">
       <Sidebar />
       <div
         className={cn(
@@ -62,7 +62,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           collapsed ? 'md:pl-16' : 'md:pl-64'
         )}
       >
-        <header className="sticky top-0 z-30 bg-white border-b">
+        <header className="sticky top-0 z-30 bg-white border-b border-[#e2e8f0]">
           <div className="flex h-16 items-center justify-between px-6">
             <div className="flex items-center gap-3">
               <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
@@ -87,10 +87,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 </SheetContent>
               </Sheet>
               <Link href="/dashboard" className="flex items-center gap-2">
-                <span className="text-xl md:text-2xl font-black bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent tracking-tight">
-                  ResumeCanvas
+                <span className="text-xl font-extrabold tracking-tight">
+                  <span className="text-[#11101d]">Resume</span>
+                  <span className="text-canvas-gradient">Canvas</span>
                 </span>
-                <span className="text-xs font-semibold text-blue-600">AI</span>
+                <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#eef2ff] text-[#4f46e5] tracking-wide">
+                  AI
+                </span>
               </Link>
             </div>
 
@@ -98,8 +101,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="gap-2">
-                    <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                      <User className="h-4 w-4 text-blue-600" />
+                    <div className="h-8 w-8 rounded-full bg-[#eef2ff] flex items-center justify-center">
+                      <User className="h-4 w-4 text-[#4f46e5]" />
                     </div>
                     <span className="hidden sm:inline">
                       {session.user?.name?.split(' ')[0]}
@@ -110,7 +113,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 <DropdownMenuContent align="end" className="w-56">
                   <div className="px-2 py-1.5">
                     <p className="text-sm font-medium">{session.user?.name}</p>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-[#64748b]">
                       {session.user?.email}
                     </p>
                   </div>

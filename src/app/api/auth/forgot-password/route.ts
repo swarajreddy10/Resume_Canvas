@@ -43,9 +43,6 @@ export const POST = withRateLimit(authRateLimit)(async (
       resetExpiry,
     });
 
-    console.log(`Generated reset token for ${email}`);
-    console.log(`Reset URL generated successfully`);
-
     // Send reset email
     await sendResetEmail(email, resetToken);
 

@@ -62,14 +62,15 @@ export const TEMPLATE_IDS: TemplateType[] = TEMPLATES.map(
 export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
   tech: {
     personalInfo: {
-      name: 'Sarah Chen',
-      email: 'sarah.chen@email.com',
+      name: 'Arjun Sharma',
+      email: 'arjun.sharma@email.com',
       phone: '+1 (415) 234-5678',
       address: 'Seattle, WA',
-      linkedin: 'linkedin.com/in/sarahchen',
-      github: 'github.com/sarahchen',
+      position: 'Senior Software Development Engineer',
+      linkedin: 'linkedin.com/in/arjunsharma',
+      github: 'github.com/arjunsharma',
       summary:
-        'Full-stack software engineer with 6+ years delivering scalable cloud-native solutions. Fluent in React, Node.js, and AWS.',
+        'Full-stack software engineer with 6+ years delivering scalable cloud-native solutions. Expert in React, Node.js, and AWS with a track record of leading high-impact platform migrations and mentoring engineering teams.',
     },
     experience: [
       {
@@ -79,10 +80,13 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         startDate: 'Mar 2021',
         endDate: 'Present',
         description:
-          'Architected microservices platform handling 50M+ daily API requests with 99.99% uptime.',
+          'Architected microservices platform handling 50M+ daily API requests with 99.99% uptime across three global regions.',
         bullets: [
-          'Led migration to serverless architecture, reducing costs by 45%',
-          'Mentored 5 engineers and improved quality metrics by 60%',
+          'Led migration from monolithic to serverless architecture on AWS Lambda, reducing infrastructure costs by 45% and improving p99 latency by 38%',
+          'Designed and shipped a distributed tracing system integrating OpenTelemetry with X-Ray, cutting mean time to detection for incidents from 42 min to 8 min',
+          'Mentored 5 mid-level engineers through bi-weekly code reviews and architecture walkthroughs, improving team code quality score by 60%',
+          'Drove adoption of automated load testing in CI/CD pipelines, eliminating 3 production outages in Q3 2022 and Q1 2023',
+          'Collaborated with product and security teams to achieve SOC 2 Type II compliance for the platform within an 8-month timeline',
         ],
       },
       {
@@ -92,10 +96,12 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         startDate: 'Jun 2019',
         endDate: 'Feb 2021',
         description:
-          'Owned Azure DevOps CI/CD experiences for enterprise customers.',
+          'Owned Azure DevOps CI/CD pipeline experiences for enterprise customers with 5k+ active organizations.',
         bullets: [
-          'Improved release velocity by 30%',
-          'Delivered automation tools adopted by 500+ teams',
+          'Re-architected the YAML pipeline editor with React and Monaco Editor, improving developer satisfaction scores from 62% to 89%',
+          'Built an intelligent task recommendation engine using collaborative filtering, increasing average pipeline task reuse by 30%',
+          'Delivered a self-service automation toolkit adopted by 500+ internal engineering teams within 60 days of launch',
+          'Reduced API response time for the pipeline run dashboard by 55% through query optimization and Redis caching',
         ],
       },
     ],
@@ -148,8 +154,10 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
       email: 'michael.anderson@email.com',
       phone: '+1 (212) 555-0199',
       address: 'New York, NY',
+      position: 'Vice President of Engineering',
+      linkedin: 'linkedin.com/in/manderson',
       summary:
-        'Strategic technology executive with 15+ years leading high-performing engineering teams.',
+        'Strategic technology executive with 15+ years leading high-performing engineering organizations at scale. Proven track record driving digital transformation, building world-class teams, and delivering platforms that generate measurable business impact.',
     },
     experience: [
       {
@@ -159,10 +167,13 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         startDate: 'Jan 2020',
         endDate: 'Present',
         description:
-          'Delivered trading infrastructure serving $2B+ daily volume and led migration to AWS.',
+          'Lead engineering organization of 120+ across equities, fixed income, and risk platforms serving $2B+ daily trading volume.',
         bullets: [
-          'Managed 120+ engineers across 8 teams with 95% retention',
-          'Reduced incidents by 75% with engineering excellence programs',
+          'Directed full migration of legacy on-premise trading infrastructure to AWS, delivering $18M in annual cost savings and reducing deployment time from 3 weeks to under 2 hours',
+          'Built and scaled engineering organization from 65 to 120 engineers across 8 teams while maintaining 95% retention through structured career laddering and mentorship programs',
+          'Reduced production incidents by 75% by institutionalizing SRE practices, blameless post-mortems, and a firm-wide engineering excellence program',
+          'Partnered with Chief Risk Officer to deliver real-time risk analytics platform processing 4M events/sec, enabling traders to act on market signals 60% faster',
+          'Established quarterly OKR process aligning 8 engineering teams to $40M annual technology roadmap with 92% on-time delivery rate',
         ],
       },
       {
@@ -172,10 +183,12 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         startDate: 'Mar 2016',
         endDate: 'Dec 2019',
         description:
-          'Oversaw mobile banking platform for 5M+ users with daily releases.',
+          'Oversaw mobile banking platform serving 5M+ customers with daily release cadence and 99.95% availability SLA.',
         bullets: [
-          'Introduced DevOps practices increasing deployment cadence to daily',
-          'Partnered with product & design on $15M roadmap',
+          'Introduced DevOps practices and trunk-based development, increasing deployment frequency from bi-weekly to daily with zero increase in incident rate',
+          'Partnered with Product and Design on $15M multi-year roadmap; delivered 14 of 14 major features on schedule across three annual planning cycles',
+          'Grew team from 12 to 35 engineers; implemented structured technical interviewing that reduced mis-hire rate from 22% to 4%',
+          'Championed accessibility initiative bringing mobile app to WCAG 2.1 AA compliance, expanding addressable user base by an estimated 400K users',
         ],
       },
     ],
@@ -204,6 +217,7 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
       'Cloud Architecture',
       'Agile Transformation',
       'Stakeholder Management',
+      'Organizational Design',
     ],
     projects: [],
     certifications: [
@@ -221,12 +235,14 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
   },
   corporate: {
     personalInfo: {
-      name: 'Jennifer Martinez',
-      email: 'jennifer.martinez@email.com',
+      name: 'Ananya Krishnan',
+      email: 'ananya.krishnan@email.com',
       phone: '+1 (617) 555-0147',
       address: 'Boston, MA',
+      position: 'Senior Management Consultant',
+      linkedin: 'linkedin.com/in/ananyakrishnan',
       summary:
-        'Management consultant with 8+ years advising Fortune 500 clients on strategy and operations.',
+        'Management consultant with 8+ years advising Fortune 500 clients on digital strategy, operational excellence, and large-scale transformation programs. Deep expertise in financial services, healthcare, and consumer sectors.',
     },
     experience: [
       {
@@ -236,10 +252,13 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         startDate: 'Sep 2019',
         endDate: 'Present',
         description:
-          'Led consulting engagements delivering $80M in client value through digital transformation.',
+          'Lead consulting engagements for financial services and healthcare clients, delivering $80M+ in measurable client value through digital transformation and operating model design.',
         bullets: [
-          'Built operating models for scale-ups growing from 200 to 1,000 employees',
-          'Presented strategy to C-suite with 100% satisfaction',
+          "Designed and implemented a target operating model for a regional bank's digital lending division, reducing loan origination cycle time by 52% and generating $12M in annual cost savings",
+          'Built integrated data analytics platform for a top-5 health insurer, enabling real-time claims adjudication and reducing fraud losses by $8M annually',
+          'Structured and scaled operating model frameworks for three growth-stage companies expanding from 200 to 1,000+ employees across North America and Europe',
+          'Delivered executive strategy presentations to C-suite and board audiences with 100% client satisfaction ratings across 11 engagements',
+          'Managed cross-functional team of 6 consultants and 4 client co-leads on a 9-month enterprise-wide ERP transformation program',
         ],
       },
       {
@@ -249,10 +268,12 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         startDate: 'Jul 2017',
         endDate: 'Aug 2019',
         description:
-          'Performed diligence for private equity and retail clients.',
+          'Executed commercial due diligence, market entry strategy, and operational improvement engagements for private equity and retail clients.',
         bullets: [
-          'Developed financial models for $2B+ investment targets',
-          'Led workshops aligning leadership teams',
+          'Developed detailed financial models and market sizing analyses for $2B+ private equity investment targets across logistics and healthcare services sectors',
+          'Led cross-functional workshops aligning executive leadership teams on post-merger integration priorities, accelerating Day 1 readiness by 3 weeks',
+          'Identified $22M in overhead reduction opportunities for a specialty retailer through zero-based budgeting and procurement benchmarking',
+          'Produced competitive landscape and customer segmentation analysis that shaped a $180M product portfolio reallocation for a consumer goods client',
         ],
       },
     ],
@@ -280,6 +301,11 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
       'Financial Modeling',
       'Data Analysis',
       'SQL',
+      'Operating Model Design',
+      'Stakeholder Management',
+      'Change Management',
+      'Private Equity Due Diligence',
+      'Process Optimization',
     ],
     projects: [],
     certifications: [
@@ -301,8 +327,10 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
       email: 'david.kim@email.com',
       phone: '+1 (650) 555-0123',
       address: 'San Francisco, CA',
+      position: 'Senior Product Designer',
+      linkedin: 'linkedin.com/in/davidkim',
       summary:
-        'Product designer with 7+ years crafting human-centered experiences for consumer and enterprise products.',
+        'Product designer with 7+ years crafting human-centered experiences for consumer and enterprise products. Passionate about systems thinking, accessibility, and bridging the gap between research insights and pixel-perfect execution.',
     },
     experience: [
       {
@@ -312,10 +340,13 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         startDate: 'Apr 2021',
         endDate: 'Present',
         description:
-          'Led onboarding redesign increasing listing completion by 35%.',
+          'Own end-to-end design for host onboarding and listing quality, serving 4M+ active hosts globally.',
         bullets: [
-          'Established design system components used across 15 teams',
-          'Mentored 3 designers in design thinking and prototyping',
+          'Redesigned the host onboarding flow using continuous discovery and A/B testing, increasing listing completion rate by 35% and reducing average time-to-live from 9 days to 4 days',
+          'Established a shared design system with 120+ production-ready components adopted by 15 product teams, reducing design-to-dev handoff time by 40%',
+          'Led a 6-month accessibility audit and remediation effort, bringing core host surfaces to WCAG 2.1 AA compliance and improving ratings among users with disabilities by 28%',
+          'Mentored 3 mid-level designers through weekly critiques, design sprints, and structured growth plans; two received promotions within 12 months',
+          'Partnered with Data Science to build a qualitative-quantitative research repository, reducing time to insight for new feature explorations by 50%',
         ],
       },
       {
@@ -324,10 +355,13 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         location: 'San Francisco, CA',
         startDate: 'Jun 2018',
         endDate: 'Mar 2021',
-        description: 'Designed collaboration features adopted by 600K+ teams.',
+        description:
+          'Designed real-time collaboration features adopted by 600K+ teams across Paper, Spaces, and the core file sharing experience.',
         bullets: [
-          'Shipped prototypes validated with user research',
-          'Built consistent components for Dropbox design system',
+          'Shipped the Spaces product from 0-to-1, running 14 rounds of usability testing and iterating from concept to GA in 11 months; feature drove 22% increase in team retention',
+          'Created interactive prototypes in Figma and ProtoPie that enabled C-level product reviews and accelerated stakeholder sign-off by an average of 3 weeks',
+          'Contributed 40+ reusable components to the Dropbox Design System, reducing inconsistency bugs reported by engineering by 65%',
+          'Partnered with User Research on 8 longitudinal diary studies, surfacing collaboration pain points that directly informed 3 roadmap priorities',
         ],
       },
     ],
@@ -348,6 +382,8 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
       'Figma',
       'Sketch',
       'Adobe Creative Suite',
+      'Prototyping',
+      'Design Systems',
     ],
     projects: [
       {
@@ -367,12 +403,14 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
   },
   academic: {
     personalInfo: {
-      name: 'Dr. Emily Watson',
-      email: 'emily.watson@university.edu',
+      name: 'Dr. Vikram Nair',
+      email: 'vikram.nair@university.edu',
       phone: '+1 (617) 495-0000',
       address: 'Cambridge, MA',
+      position: 'Assistant Professor · Computational Biology',
+      linkedin: 'linkedin.com/in/vikramnair',
       summary:
-        'Computational biologist and assistant professor with expertise in machine learning for genomics.',
+        'Computational biologist and assistant professor specializing in machine learning applications for cancer genomics and single-cell transcriptomics. Committed to open-science principles, interdisciplinary collaboration, and training the next generation of computational researchers.',
     },
     experience: [
       {
@@ -382,10 +420,13 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         startDate: 'Jul 2020',
         endDate: 'Present',
         description:
-          'Leads a lab of 8 researchers focusing on cancer genomics.',
+          'Leads the Nair Computational Genomics Lab (8 researchers: 3 PhD students, 2 postdocs, 2 research scientists, 1 lab manager), focusing on cancer genomics and drug response prediction.',
         bullets: [
-          'Secured $2.5M in NIH & NSF funding',
-          'Published 12 papers with 4.8/5.0 teaching reviews',
+          'Secured $2.5M in extramural funding from NIH R01, NSF CAREER, and Chan Zuckerberg Initiative over 3 grant cycles',
+          'Published 12 peer-reviewed articles in Nature Methods, Cell Systems, and Genome Research; h-index increased from 9 to 18 since joining faculty',
+          'Developed and teach two graduate courses (BMI 210: Computational Genomics; BMI 315: Applied ML in Medicine) with average teaching evaluations of 4.8/5.0',
+          'Co-founded the Harvard Computational Biology Seminar Series, coordinating 24 invited speakers per academic year across 6 departments',
+          'Mentored 5 undergraduate researchers; 4 co-authored publications and 3 went on to top-10 PhD programs',
         ],
       },
       {
@@ -394,10 +435,13 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
         location: 'Cambridge, MA',
         startDate: 'Sep 2017',
         endDate: 'Jun 2020',
-        description: 'Developed ML models for predicting drug response.',
+        description:
+          'Developed deep learning models for predicting cancer drug response from multi-omic patient data, advised by Dr. Levi Garraway.',
         bullets: [
-          'Analyzed CRISPR data from 1,000+ samples',
-          'Published 8 papers',
+          'Built transformer-based model predicting drug sensitivity across 50 compounds with AUC 0.91, outperforming prior state-of-the-art by 12 percentage points',
+          'Analyzed CRISPR knockout screens from 1,000+ cell lines to identify synthetic lethal gene pairs relevant to BRCA1/2-mutant cancers',
+          'Published 8 peer-reviewed papers including first-author articles in Nature Genetics and Bioinformatics',
+          'Presented research at ASHG, RECOMB, and ISMB; received Best Poster Award at RECOMB 2019',
         ],
       },
     ],
@@ -427,12 +471,14 @@ export const TEMPLATE_SAMPLE_DATA: Record<TemplateType, ResumeData> = {
       'R',
       'TensorFlow',
       'High-Performance Computing',
+      'Single-Cell Analysis',
+      'Bioinformatics',
     ],
     projects: [
       {
         name: 'OpenGRAVITY Cancer Atlas',
         description:
-          'Federated learning atlas accelerating biomarker discovery.',
+          'Federated learning atlas accelerating pan-cancer biomarker discovery across 14 institutions without raw data sharing.',
         technologies: ['Python', 'Snakemake', 'Docker'],
       },
     ],
