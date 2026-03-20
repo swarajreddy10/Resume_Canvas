@@ -241,16 +241,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return `${baseUrl}/dashboard`;
     },
   },
-  events: {
-    async signIn({ user, account, isNewUser }) {
-      console.log(
-        `User signed in: ${user.email} via ${account?.provider}${isNewUser ? ' (new user)' : ''}`
-      );
-    },
-    async signOut() {
-      console.log('User signed out');
-    },
-  },
   debug: false,
   trustHost: true,
 });

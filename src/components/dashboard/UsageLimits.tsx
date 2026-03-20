@@ -2,8 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Crown, AlertTriangle } from 'lucide-react';
+import { Crown, Sparkles, FileText, Zap } from 'lucide-react';
 
 interface UsageLimitsProps {
   resumeCount: number;
@@ -26,76 +25,76 @@ export default function UsageLimits({
     plan === 'free' ? (resumeCount / limits.resumes) * 100 : 0;
   const aiProgress = plan === 'free' ? (aiGenerations / limits.ai) * 100 : 0;
 
-  const isNearLimit = resumeProgress > 80 || aiProgress > 80;
-
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-lg">Usage & Limits</CardTitle>
+    <Card className="border-[#e2e8f0] overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between pb-3 p-4 sm:p-5">
+        <CardTitle className="text-sm font-semibold text-[#11101d]">
+          Usage & Limits
+        </CardTitle>
         <Badge
-          variant={plan === 'pro' ? 'default' : 'outline'}
-          className="flex items-center gap-1"
+          variant="outline"
+          className="flex items-center gap-1 text-[10px] border-[#c7d2fe] text-[#4f46e5] bg-[#eef2ff]"
         >
-          <Crown className="h-3 w-3" />
-          {plan === 'pro' ? 'Pro' : 'Free'}
+          <Crown className="h-2.5 w-2.5" />
+          Free
         </Badge>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {plan === 'free' && (
-          <>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Resumes</span>
-                <span>
-                  {resumeCount}/{limits.resumes}
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{ width: `${Math.min(resumeProgress, 100)}%` }}
-                />
-              </div>
+
+      <CardContent className="space-y-3 p-4 sm:p-5 pt-0">
+        {/* Resumes bar */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs text-[#64748b]">
+              <FileText className="h-3 w-3" />
+              <span>Resumes</span>
             </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>AI Generations</span>
-                <span>
-                  {aiGenerations}/{limits.ai}
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-green-600 h-2 rounded-full"
-                  style={{ width: `${Math.min(aiProgress, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            {isNearLimit && (
-              <div className="flex items-center gap-2 p-3 bg-yellow-50 rounded-lg">
-                <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                <p className="text-sm text-yellow-800">
-                  You&apos;re approaching your usage limits
-                </p>
-              </div>
-            )}
-
-            <Button className="w-full" size="sm">
-              Upgrade to Pro
-            </Button>
-          </>
-        )}
-
-        {plan === 'pro' && (
-          <div className="text-center py-4">
-            <p className="text-sm text-gray-600">Unlimited usage</p>
-            <p className="text-xs text-gray-500">
-              Thank you for being a Pro user!
-            </p>
+            <span className="text-xs font-medium text-[#11101d]">
+              {resumeCount}/{limits.resumes}
+            </span>
           </div>
-        )}
+          <div className="w-full bg-[#eef2ff] rounded-full h-1.5">
+            <div
+              className="bg-[#4f46e5] h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(resumeProgress, 100)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* AI Generations bar */}
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-1.5 text-xs text-[#64748b]">
+              <Zap className="h-3 w-3" />
+              <span>AI Generations</span>
+            </div>
+            <span className="text-xs font-medium text-[#11101d]">
+              {aiGenerations}/{limits.ai}
+            </span>
+          </div>
+          <div className="w-full bg-[#eef2ff] rounded-full h-1.5">
+            <div
+              className="bg-[#7c3aed] h-1.5 rounded-full transition-all duration-500"
+              style={{ width: `${Math.min(aiProgress, 100)}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Pro plan teaser — no payment CTA, just awareness */}
+        <div className="mt-1 rounded-xl border border-dashed border-[#c7d2fe] bg-[#f5f3ff] p-3">
+          <div className="flex items-start gap-2.5">
+            <div className="w-7 h-7 rounded-lg bg-[#eef2ff] flex items-center justify-center shrink-0 mt-0.5">
+              <Sparkles className="h-3.5 w-3.5 text-[#4f46e5]" />
+            </div>
+            <div>
+              <p className="text-xs font-semibold text-[#11101d] leading-tight">
+                Pro plan coming soon
+              </p>
+              <p className="text-[11px] text-[#64748b] mt-0.5 leading-snug">
+                Unlimited resumes, AI generations, priority support and more.
+              </p>
+            </div>
+          </div>
+        </div>
       </CardContent>
     </Card>
   );

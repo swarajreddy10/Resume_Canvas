@@ -54,7 +54,7 @@ export default function NewApplicationPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Add Job Application</h1>
-        <p className="text-gray-600">Track a new job application</p>
+        <p className="text-[#64748b]">Track a new job application</p>
       </div>
 
       <Card className="max-w-2xl">

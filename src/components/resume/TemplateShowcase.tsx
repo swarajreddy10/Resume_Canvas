@@ -1,7 +1,5 @@
 'use client';
 
-'use client';
-
 import { ResumeData } from '@/types/resume.unified';
 import { useLayoutEffect, useRef, useState } from 'react';
 import TemplateRenderer from './TemplateRenderer';
@@ -60,20 +58,14 @@ export default function TemplateShowcase({
       const heightRatio = availableHeight / A4_SIZE.height;
       // Increase scale limits for better readability, especially in preview mode
       const minScale =
-        mode === 'preview'
-          ? availableWidth < 640
-            ? 0.3
-            : 0.6
-          : mode === 'selector'
-            ? 0.32
-            : 0.25;
+        mode === 'preview' ? (availableWidth < 640 ? 0.3 : 0.6) : 0.1; // selector/landing: unconstrained — fit to container
       const maxScale =
         mode === 'preview'
           ? availableWidth < 640
             ? 0.6
             : 1.1
           : mode === 'selector'
-            ? 0.5
+            ? 0.55
             : 1;
       const computedScale = Math.min(
         maxScale,
@@ -116,11 +108,9 @@ export default function TemplateShowcase({
         style={{
           aspectRatio: mode === 'preview' ? 'auto' : '210 / 297',
           maxHeight: finalMaxHeight,
-          minHeight: mode === 'preview' ? 'auto' : '280px',
+          minHeight: mode === 'preview' ? 'auto' : undefined,
           height:
-            mode === 'preview'
-              ? `${A4_SIZE.height * scale + (isMobile ? 100 : 40)}px`
-              : 'auto',
+            mode === 'preview' ? `${A4_SIZE.height * scale + 40}px` : '100%',
         }}
       >
         <div
@@ -132,10 +122,11 @@ export default function TemplateShowcase({
               width: `${A4_SIZE.width}px`,
               height: `${A4_SIZE.height}px`,
               left: '50%',
-              top: mode === 'preview' ? (isMobile ? '-30%' : '0%') : '50%',
+              top: mode === 'preview' ? '0%' : '50%',
+              transformOrigin: mode === 'preview' ? 'top center' : '50% 50%',
               transform:
                 mode === 'preview'
-                  ? `translate(-50%, 0%) scale(${scale})`
+                  ? `translateX(-50%) scale(${scale})`
                   : `translate(-50%, -50%) scale(${scale})`,
             }}
           >

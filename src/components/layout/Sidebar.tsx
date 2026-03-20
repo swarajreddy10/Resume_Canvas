@@ -30,7 +30,7 @@ function NavLink({
         <>
           <span className="flex-1">{item.label}</span>
           {item.badge && (
-            <span className="px-1.5 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 rounded">
+            <span className="px-1.5 py-0.5 text-[10px] font-semibold bg-[#eef2ff] text-[#4f46e5] rounded">
               {item.badge}
             </span>
           )}
@@ -41,11 +41,11 @@ function NavLink({
 
   const className = cn(
     'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all',
-    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
+    'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4f46e5]',
     collapsed && 'justify-center',
     isActive
-      ? 'bg-blue-50 text-blue-700'
-      : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900',
+      ? 'bg-[#eef2ff] text-[#4f46e5] font-semibold'
+      : 'text-[#64748b] hover:bg-[#f5f3ff] hover:text-[#11101d]',
     item.disabled && 'opacity-50 cursor-not-allowed pointer-events-none'
   );
 
@@ -66,7 +66,7 @@ function NavLink({
     >
       {content}
       {collapsed && (
-        <span className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+        <span className="absolute left-full ml-2 px-2 py-1 bg-[#1e1b4b] text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
           {item.label}
         </span>
       )}
@@ -92,7 +92,7 @@ export default function Sidebar({
   return (
     <aside
       className={cn(
-        'h-screen bg-white border-r border-gray-200 transition-all duration-300',
+        'h-screen bg-white border-r border-[#e2e8f0] transition-all duration-300',
         !mobile && 'fixed left-0 top-0 z-40',
         !mobile && (collapsed ? 'w-16' : 'w-64'),
         !mobile && 'hidden md:block',
@@ -102,10 +102,10 @@ export default function Sidebar({
     >
       <div className="flex h-full flex-col">
         {!mobile && (
-          <div className="flex h-16 items-center border-b px-3 pr-16">
+          <div className="flex h-16 items-center border-b border-[#e2e8f0] px-3 pr-16">
             <button
               onClick={() => useSidebar.getState().toggle()}
-              className="flex items-center justify-center rounded-lg p-2 text-gray-900 hover:bg-gray-100 transition-colors"
+              className="flex items-center justify-center rounded-lg p-2 text-[#64748b] hover:bg-[#f5f3ff] hover:text-[#11101d] transition-colors"
               aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             >
               <svg
@@ -149,7 +149,7 @@ export default function Sidebar({
                 />
               ))}
               {idx < navigationConfig.length - 1 && (
-                <div className="my-3 border-t border-gray-200" />
+                <div className="my-3 border-t border-[#e2e8f0]" />
               )}
             </div>
           ))}
