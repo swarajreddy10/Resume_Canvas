@@ -213,7 +213,7 @@ export default function HomePage() {
                 ))}
               </div>
               <span className="text-sm text-[#64748b] font-medium">
-                4.8 · Trusted by 50,000+ professionals
+                4.8 · Trusted by 5,000+ professionals
               </span>
             </motion.div>
 
