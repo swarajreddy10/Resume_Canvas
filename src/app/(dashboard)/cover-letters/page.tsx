@@ -58,7 +58,7 @@ export default function CoverLettersPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#4f46e5] border-t-transparent" />
       </div>
     );
   }
@@ -67,7 +67,7 @@ export default function CoverLettersPage() {
     <div className="p-6">
       <div className="mb-8">
         <h1 className="text-3xl font-bold mb-2">Cover Letters</h1>
-        <p className="text-gray-600">
+        <p className="text-[#64748b]">
           Create AI-powered cover letters tailored to your job applications
         </p>
       </div>
@@ -88,7 +88,7 @@ export default function CoverLettersPage() {
                           <CardTitle className="text-lg">
                             {letter.position} at {letter.company}
                           </CardTitle>
-                          <div className="flex items-center gap-2 text-sm text-gray-500 mt-1">
+                          <div className="flex items-center gap-2 text-sm text-[#64748b] mt-1">
                             <Calendar className="h-4 w-4" />
                             {formatDate(letter.createdAt)}
                           </div>
@@ -96,7 +96,7 @@ export default function CoverLettersPage() {
                       </div>
                     </CardHeader>
                     <CardContent>
-                      <p className="text-sm text-gray-700 whitespace-pre-wrap line-clamp-3">
+                      <p className="text-sm text-[#64748b] whitespace-pre-wrap line-clamp-3">
                         {letter.content}
                       </p>
                     </CardContent>
@@ -107,13 +107,13 @@ export default function CoverLettersPage() {
           )}
         </>
       ) : (
-        <div className="text-center py-20 bg-gray-50 rounded-lg">
-          <p className="text-gray-500 mb-4">
+        <div className="text-center py-20 bg-[#f5f3ff] rounded-lg">
+          <p className="text-[#64748b] mb-4">
             Create a resume first to generate cover letters
           </p>
           <Link
             href="/builder/new"
-            className="text-blue-600 hover:underline font-medium"
+            className="text-[#4f46e5] hover:underline font-medium"
           >
             Create Resume
           </Link>

@@ -41,8 +41,6 @@ export async function optimizeDatabase() {
     } catch {
       // Collection might not exist yet
     }
-
-    console.log('Database indexes optimized');
   } catch (error) {
     console.error('Database optimization failed:', error);
   }

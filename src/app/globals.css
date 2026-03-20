@@ -6,7 +6,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -48,42 +48,54 @@
 
 :root {
   --radius: 0.875rem;
-  --background: oklch(0.985 0.01 225);
-  --foreground: oklch(0.24 0.045 252);
-  --card: oklch(0.995 0.01 225);
-  --card-foreground: oklch(0.24 0.045 252);
-  --popover: oklch(1 0.012 225);
-  --popover-foreground: oklch(0.24 0.045 252);
-  --primary: oklch(0.61 0.18 255);
-  --primary-foreground: oklch(0.985 0.02 225);
-  --secondary: oklch(0.95 0.01 225);
-  --secondary-foreground: oklch(0.28 0.04 245);
-  --muted: oklch(0.94 0.01 225);
-  --muted-foreground: oklch(0.52 0.03 245);
-  --accent: oklch(0.96 0.02 220);
-  --accent-foreground: oklch(0.3 0.045 245);
+  /* ── Indigo brand palette ── */
+  --rc-primary: #4f46e5; /* indigo-600  */
+  --rc-primary-mid: #3730a3; /* indigo-800  */
+  --rc-primary-deep: #1e1b4b; /* near-black indigo */
+  --rc-surface: #f5f3ff; /* violet-50   */
+  --rc-surface-alt: #eef2ff; /* indigo-50   */
+  --rc-border-hover: #c7d2fe; /* indigo-200  */
+  --rc-accent: #818cf8; /* indigo-400  */
+  --rc-text: #11101d; /* near-black  */
+  --rc-text-2: #64748b; /* slate-500   */
+
+  /* shadcn tokens — remapped to indigo */
+  --background: oklch(0.988 0.006 280);
+  --foreground: oklch(0.13 0.04 280);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.13 0.04 280);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.13 0.04 280);
+  --primary: oklch(0.53 0.22 277); /* #4f46e5 indigo */
+  --primary-foreground: oklch(0.985 0.01 270);
+  --secondary: oklch(0.95 0.02 275);
+  --secondary-foreground: oklch(0.25 0.05 275);
+  --muted: oklch(0.94 0.015 275);
+  --muted-foreground: oklch(0.52 0.03 270);
+  --accent: oklch(0.95 0.03 280);
+  --accent-foreground: oklch(0.28 0.06 275);
   --destructive: oklch(0.61 0.19 25);
-  --border: oklch(0.92 0.01 225);
-  --input: oklch(0.92 0.01 225);
-  --ring: oklch(0.68 0.15 255);
-  --chart-1: oklch(0.61 0.18 255);
-  --chart-2: oklch(0.58 0.08 180);
-  --chart-3: oklch(0.48 0.12 225);
+  --border: oklch(0.91 0.01 270);
+  --input: oklch(0.91 0.01 270);
+  --ring: oklch(0.53 0.22 277);
+  --chart-1: oklch(0.53 0.22 277);
+  --chart-2: oklch(0.52 0.19 300);
+  --chart-3: oklch(0.48 0.16 250);
   --chart-4: oklch(0.7 0.14 140);
-  --chart-5: oklch(0.56 0.18 300);
-  --sidebar: oklch(0.985 0.01 225);
-  --sidebar-foreground: oklch(0.24 0.045 252);
-  --sidebar-primary: oklch(0.61 0.18 255);
-  --sidebar-primary-foreground: oklch(0.985 0.02 225);
-  --sidebar-accent: oklch(0.95 0.01 225);
-  --sidebar-accent-foreground: oklch(0.28 0.04 245);
-  --sidebar-border: oklch(0.9 0.01 225);
-  --sidebar-ring: oklch(0.68 0.15 255);
+  --chart-5: oklch(0.62 0.2 310);
+  --sidebar: oklch(0.988 0.006 280);
+  --sidebar-foreground: oklch(0.13 0.04 280);
+  --sidebar-primary: oklch(0.53 0.22 277);
+  --sidebar-primary-foreground: oklch(0.985 0.01 270);
+  --sidebar-accent: oklch(0.95 0.02 275);
+  --sidebar-accent-foreground: oklch(0.25 0.05 275);
+  --sidebar-border: oklch(0.91 0.01 270);
+  --sidebar-ring: oklch(0.53 0.22 277);
   --glass-border: color(srgb 1 1 1 / 0.6);
   --glass-bg: color(srgb 1 1 1 / 0.72);
   --shadow-soft:
-    0 20px 50px -30px rgba(15, 23, 42, 0.45),
-    0 12px 24px -18px rgba(12, 74, 110, 0.3);
+    0 20px 50px -30px rgba(30, 27, 75, 0.35),
+    0 12px 24px -18px rgba(79, 70, 229, 0.2);
 }
 
 .dark {
@@ -131,19 +143,16 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image:
-      radial-gradient(
-        circle at 20% 20%,
-        color-mix(in srgb, var(--primary) 8%, transparent),
-        transparent 35%
-      ),
-      radial-gradient(
-        circle at 80% 0%,
-        color-mix(in srgb, var(--primary) 6%, transparent),
-        transparent 30%
-      );
-    background-size: cover;
-    background-repeat: no-repeat;
+    font-family:
+      var(--font-jakarta),
+      'Plus Jakarta Sans',
+      system-ui,
+      -apple-system,
+      sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
 }
 
@@ -161,14 +170,28 @@
     box-shadow: var(--shadow-soft);
     backdrop-filter: blur(18px);
   }
-  .text-gradient-primary {
-    background: linear-gradient(
-      90deg,
-      oklch(0.61 0.18 255),
-      oklch(0.7 0.13 240)
-    );
+  /* Subtle card lift on hover — consistent across all cards */
+  .card-hover {
+    transition:
+      transform 0.18s ease,
+      box-shadow 0.18s ease,
+      border-color 0.18s ease;
+  }
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 28px rgba(79, 70, 229, 0.12);
+  }
+  /* Gradient text utility for wordmark: indigo → violet */
+  .text-canvas-gradient {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     -webkit-background-clip: text;
-    color: transparent;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  /* Focus ring aligned to brand */
+  .focus-brand:focus-visible {
+    outline: 2px solid #4f46e5;
+    outline-offset: 2px;
   }
 }
 
@@ -177,4 +200,18 @@
   word-break: break-word;
   overflow-wrap: break-word;
   hyphens: auto;
+}
+
+/* ============================================================
+   LIGHT THEME UTILITIES
+   ============================================================ */
+
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
 }

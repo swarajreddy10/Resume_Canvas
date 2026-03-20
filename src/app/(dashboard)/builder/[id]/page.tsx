@@ -543,7 +543,7 @@ export default function ResumeBuilderPage() {
   if (status === 'loading' || loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#4f46e5] border-t-transparent" />
       </div>
     );
   }
@@ -605,7 +605,7 @@ export default function ResumeBuilderPage() {
               </Button>
               <div className="flex items-center gap-2 w-full sm:w-auto">
                 {lastSaved && (
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-[#64748b]">
                     Last saved: {lastSaved.toLocaleTimeString()}
                   </span>
                 )}
@@ -630,7 +630,7 @@ export default function ResumeBuilderPage() {
                 onValueChange={setActiveTab}
                 id="resume-builder-tabs"
               >
-                <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-2 h-auto p-1 bg-gray-100">
+                <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-2 h-auto p-1 bg-[#eef2ff]">
                   <TabsTrigger
                     value="personal"
                     className="relative text-xs sm:text-sm px-3 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm rounded-md"
@@ -771,7 +771,7 @@ export default function ResumeBuilderPage() {
           </Card>
 
           {/* Template Selection */}
-          <Card className="glass-panel border border-white/60 shadow-none">
+          <Card className="border border-[#e2e8f0] bg-white shadow-none">
             <CardContent className="p-4 sm:p-6">
               <TemplateSelector
                 selectedTemplate={selectedTemplate}
@@ -785,7 +785,7 @@ export default function ResumeBuilderPage() {
 
           {/* AI Tools Section */}
           <div className="space-y-3 sm:space-y-4">
-            <h3 className="text-base sm:text-lg font-semibold text-gray-900">
+            <h3 className="text-base sm:text-lg font-semibold text-[#11101d]">
               AI Tools
             </h3>
             <div className="grid gap-3 sm:gap-4">
@@ -813,7 +813,7 @@ export default function ResumeBuilderPage() {
           {/* Analytics */}
           {resumeId && (
             <div className="border-t pt-4 sm:pt-6">
-              <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-gray-900">
+              <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-[#11101d]">
                 Analytics
               </h3>
               <ResumeAnalytics viewCount={viewCount} isPublic={isPublic} />

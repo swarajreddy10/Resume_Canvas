@@ -5,10 +5,39 @@ interface TechTemplateProps {
   isMobile?: boolean;
 }
 
-export default function TechTemplate({
-  data,
-  isMobile = false,
-}: TechTemplateProps) {
+function getInitials(name: string): string {
+  return name
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+function SectionHeader({ title }: { title: string }) {
+  return (
+    <div style={{ marginBottom: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <span
+          style={{
+            fontSize: '10.5px',
+            fontWeight: 900,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase' as const,
+            color: '#2563eb',
+          }}
+        >
+          {title}
+        </span>
+      </div>
+      <div
+        style={{ height: '1.5px', background: '#2563eb', marginTop: '4px' }}
+      />
+    </div>
+  );
+}
+
+export default function TechTemplate({ data }: TechTemplateProps) {
   const {
     personalInfo,
     experience,
@@ -18,83 +47,212 @@ export default function TechTemplate({
     certifications,
   } = data;
 
+  const contactParts: string[] = [];
+  if (personalInfo?.email) contactParts.push(personalInfo.email);
+  if (personalInfo?.phone) contactParts.push(personalInfo.phone);
+  if (personalInfo?.address) contactParts.push(personalInfo.address);
+  if (personalInfo?.linkedin) contactParts.push(personalInfo.linkedin);
+  if (personalInfo?.github) contactParts.push(personalInfo.github);
+
   return (
     <div
-      className={`w-full max-w-[210mm] mx-auto bg-white font-sans text-gray-900 min-h-[297mm] ${isMobile ? 'scale-75 origin-center p-4' : 'p-10'}`}
+      style={{
+        width: '794px',
+        minHeight: '1123px',
+        background: '#fff',
+        padding: '48px 52px',
+        fontFamily: "'Inter', 'Helvetica Neue', Arial, sans-serif",
+        fontSize: '12px',
+        color: '#374151',
+        lineHeight: 1.5,
+        boxSizing: 'border-box' as const,
+      }}
     >
-      {/* Header */}
-      <div className="border-b-2 border-blue-600 pb-4 mb-6">
-        <h1 className="text-4xl font-bold text-gray-900 mb-2">
-          {personalInfo?.name || 'YOUR NAME'}
-        </h1>
-        <div className="flex flex-wrap gap-3 text-sm text-gray-700">
-          {personalInfo?.email && <span>{personalInfo.email}</span>}
-          {personalInfo?.phone && <span>• {personalInfo.phone}</span>}
-          {personalInfo?.address && <span>• {personalInfo.address}</span>}
-        </div>
-        {(personalInfo?.linkedin || personalInfo?.github) && (
-          <div className="flex gap-3 text-sm text-blue-600 mt-1">
-            {personalInfo?.linkedin && <span>{personalInfo.linkedin}</span>}
-            {personalInfo?.github && <span>• {personalInfo.github}</span>}
+      {/* ── Header ─────────────────────────────────── */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'flex-start',
+          gap: '20px',
+          marginBottom: '10px',
+        }}
+      >
+        {/* Main header text */}
+        <div style={{ flex: 1 }}>
+          <h1
+            style={{
+              fontSize: '36px',
+              fontWeight: 900,
+              color: '#1d4ed8',
+              letterSpacing: '-0.02em',
+              margin: '0 0 4px',
+              lineHeight: 1.05,
+            }}
+          >
+            {personalInfo?.name || 'YOUR NAME'}
+          </h1>
+          {personalInfo?.position && (
+            <div
+              style={{
+                fontSize: '14px',
+                color: '#64748b',
+                fontWeight: 500,
+                marginBottom: '8px',
+              }}
+            >
+              {personalInfo.position}
+            </div>
+          )}
+          {/* Contact row with bullet separators */}
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap' as const,
+              alignItems: 'center',
+              fontSize: '11px',
+              color: '#64748b',
+              gap: '0',
+            }}
+          >
+            {contactParts.map((part, i) => (
+              <span key={i} style={{ display: 'flex', alignItems: 'center' }}>
+                {i > 0 && (
+                  <span style={{ margin: '0 6px', color: '#94a3b8' }}>•</span>
+                )}
+                <span>{part}</span>
+              </span>
+            ))}
           </div>
-        )}
+        </div>
+        {/* Initials avatar circle */}
+        <div
+          style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '50%',
+            background: '#dbeafe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '18px',
+            fontWeight: 700,
+            color: '#2563eb',
+            flexShrink: 0,
+          }}
+        >
+          {getInitials(personalInfo?.name || 'YN')}
+        </div>
       </div>
 
-      {/* Summary */}
+      {/* Full-width blue rule */}
+      <div
+        style={{ height: '2px', background: '#2563eb', marginBottom: '20px' }}
+      />
+
+      {/* ── Summary ───────────────────────────────── */}
       {personalInfo?.summary && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-2 uppercase tracking-wide">
-            Professional Summary
-          </h2>
-          <p className="text-sm text-gray-700 leading-relaxed">
+        <div style={{ marginBottom: '20px' }}>
+          <SectionHeader title="Summary" />
+          <p
+            style={{
+              fontSize: '12px',
+              color: '#374151',
+              lineHeight: '1.65',
+              margin: 0,
+            }}
+          >
             {personalInfo.summary}
           </p>
         </div>
       )}
 
-      {/* Skills */}
-      {skills && skills.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-2 uppercase tracking-wide">
-            Technical Skills
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {skills.map((skill, idx) => (
-              <span
-                key={idx}
-                className="px-3 py-1 bg-blue-50 text-blue-700 text-sm rounded-md border border-blue-200"
-              >
-                {skill}
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Experience */}
+      {/* ── Professional Experience ────────────────── */}
       {experience && experience.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 uppercase tracking-wide">
-            Professional Experience
-          </h2>
-          {experience.map((exp, idx) => (
-            <div key={idx} className="mb-4">
-              <div className="flex justify-between items-baseline mb-1">
-                <h3 className="text-base font-bold text-gray-900">
+        <div style={{ marginBottom: '20px' }}>
+          <SectionHeader title="Professional Experience" />
+          {experience.map((exp, i) => (
+            <div
+              key={i}
+              style={{ marginBottom: i < experience.length - 1 ? '16px' : 0 }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                  marginBottom: '1px',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                  }}
+                >
                   {exp.position}
-                </h3>
-                <span className="text-sm text-gray-600">
-                  {exp.startDate} - {exp.endDate}
+                </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: '#64748b',
+                    fontStyle: 'italic',
+                    whiteSpace: 'nowrap',
+                    marginLeft: '8px',
+                  }}
+                >
+                  {exp.startDate} – {exp.endDate}
                 </span>
               </div>
-              <div className="text-sm font-semibold text-blue-600 mb-2">
-                {exp.company} {exp.location && `• ${exp.location}`}
+              <div
+                style={{
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  color: '#2563eb',
+                  marginBottom: '5px',
+                }}
+              >
+                {exp.company}
+                {exp.location ? `, ${exp.location}` : ''}
               </div>
-              {exp.bullets && (
-                <ul className="list-disc ml-5 space-y-1">
-                  {exp.bullets.map((bullet, i) => (
-                    <li key={i} className="text-sm text-gray-700">
-                      {bullet}
+              {exp.description && (
+                <p
+                  style={{
+                    fontSize: '11px',
+                    color: '#374151',
+                    lineHeight: '1.55',
+                    margin: '0 0 4px',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  {exp.description}
+                </p>
+              )}
+              {exp.bullets && exp.bullets.length > 0 && (
+                <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+                  {exp.bullets.map((b, j) => (
+                    <li
+                      key={j}
+                      style={{
+                        display: 'flex',
+                        gap: '7px',
+                        fontSize: '11.5px',
+                        color: '#374151',
+                        lineHeight: '1.55',
+                        marginBottom: '3px',
+                      }}
+                    >
+                      <span
+                        style={{
+                          color: '#2563eb',
+                          fontWeight: 700,
+                          flexShrink: 0,
+                          marginTop: '1px',
+                        }}
+                      >
+                        ›
+                      </span>
+                      <span>{b}</span>
                     </li>
                   ))}
                 </ul>
@@ -104,69 +262,189 @@ export default function TechTemplate({
         </div>
       )}
 
-      {/* Projects */}
-      {projects && projects.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 uppercase tracking-wide">
-            Projects
-          </h2>
-          {projects.map((project, idx) => (
-            <div key={idx} className="mb-3">
-              <h3 className="text-base font-bold text-gray-900">
-                {project.name}
-              </h3>
-              <p className="text-sm text-gray-700 mb-1">
-                {project.description}
-              </p>
-              {project.technologies && (
-                <p className="text-xs text-blue-600 font-semibold">
-                  Tech: {project.technologies}
-                </p>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Education */}
+      {/* ── Education ─────────────────────────────── */}
       {education && education.length > 0 && (
-        <div className="mb-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-3 uppercase tracking-wide">
-            Education
-          </h2>
-          {education.map((edu, idx) => (
-            <div key={idx} className="mb-3">
-              <div className="flex justify-between items-baseline">
-                <h3 className="text-base font-bold text-gray-900">
+        <div style={{ marginBottom: '20px' }}>
+          <SectionHeader title="Education" />
+          {education.map((edu, i) => (
+            <div
+              key={i}
+              style={{ marginBottom: i < education.length - 1 ? '12px' : 0 }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'baseline',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                  }}
+                >
                   {edu.degree} in {edu.field}
-                </h3>
-                <span className="text-sm text-gray-600">
-                  {edu.startDate} - {edu.endDate}
+                </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: '#64748b',
+                    fontStyle: 'italic',
+                    whiteSpace: 'nowrap',
+                    marginLeft: '8px',
+                  }}
+                >
+                  {edu.startDate} – {edu.endDate}
                 </span>
               </div>
-              <div className="text-sm text-blue-600 font-semibold">
-                {edu.school} {edu.location && `• ${edu.location}`}
+              <div
+                style={{
+                  fontSize: '11.5px',
+                  fontWeight: 700,
+                  color: '#2563eb',
+                }}
+              >
+                {edu.school}
+                {edu.location ? `, ${edu.location}` : ''}
+                {edu.gpa ? ` | GPA: ${edu.gpa}` : ''}
               </div>
-              {edu.gpa && (
-                <p className="text-sm text-gray-700">GPA: {edu.gpa}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Technical Skills ──────────────────────── */}
+      {skills && skills.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <SectionHeader title="Technical Skills" />
+          <div
+            style={{ display: 'flex', flexWrap: 'wrap' as const, gap: '6px' }}
+          >
+            {skills.map((skill, i) => (
+              <span
+                key={i}
+                style={{
+                  padding: '3px 10px',
+                  background: '#eff6ff',
+                  color: '#1d4ed8',
+                  border: '1px solid #bfdbfe',
+                  borderRadius: '4px',
+                  fontSize: '11px',
+                  fontWeight: 600,
+                }}
+              >
+                {skill}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Projects ──────────────────────────────── */}
+      {projects && projects.length > 0 && (
+        <div style={{ marginBottom: '20px' }}>
+          <SectionHeader title="Projects" />
+          {projects.map((p, i) => (
+            <div
+              key={i}
+              style={{ marginBottom: i < projects.length - 1 ? '12px' : 0 }}
+            >
+              <span
+                style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}
+              >
+                {p.name}
+              </span>
+              <p
+                style={{
+                  fontSize: '11.5px',
+                  color: '#374151',
+                  lineHeight: '1.55',
+                  margin: '3px 0',
+                }}
+              >
+                {p.description}
+              </p>
+              {p.technologies && (
+                <div
+                  style={{
+                    display: 'flex',
+                    flexWrap: 'wrap' as const,
+                    gap: '4px',
+                    marginTop: '4px',
+                  }}
+                >
+                  {(Array.isArray(p.technologies)
+                    ? p.technologies
+                    : [p.technologies]
+                  ).map((t, k) => (
+                    <span
+                      key={k}
+                      style={{
+                        fontSize: '10px',
+                        color: '#1d4ed8',
+                        background: '#eff6ff',
+                        padding: '1px 6px',
+                        borderRadius: '3px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
               )}
             </div>
           ))}
         </div>
       )}
 
-      {/* Certifications */}
+      {/* ── Certifications ────────────────────────── */}
       {certifications && certifications.length > 0 && (
         <div>
-          <h2 className="text-lg font-bold text-gray-900 mb-3 uppercase tracking-wide">
-            Certifications
-          </h2>
-          {certifications.map((cert, idx) => (
-            <div key={idx} className="flex justify-between items-baseline mb-2">
-              <span className="text-sm font-semibold text-gray-900">
-                {cert.name} • {cert.issuer}
+          <SectionHeader title="Certifications" />
+          {certifications.map((cert, i) => (
+            <div
+              key={i}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'baseline',
+                marginBottom: '5px',
+              }}
+            >
+              <div>
+                <span
+                  style={{
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    color: '#0f172a',
+                  }}
+                >
+                  {cert.name}
+                </span>
+                <span
+                  style={{
+                    fontSize: '11px',
+                    color: '#64748b',
+                    marginLeft: '6px',
+                  }}
+                >
+                  — {cert.issuer}
+                </span>
+              </div>
+              <span
+                style={{
+                  fontSize: '11px',
+                  color: '#64748b',
+                  fontStyle: 'italic',
+                  whiteSpace: 'nowrap',
+                  marginLeft: '8px',
+                }}
+              >
+                {cert.date}
               </span>
-              <span className="text-sm text-gray-600">{cert.date}</span>
             </div>
           ))}
         </div>
