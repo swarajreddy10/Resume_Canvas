@@ -6,10 +6,7 @@ export async function POST(request: NextRequest) {
   try {
     const { token } = await request.json();
 
-    console.log('Token validation request received');
-
     if (!token) {
-      console.log('No token provided');
       return NextResponse.json(
         { error: 'Token is required', status: 'invalid' },
         { status: 400 }
@@ -22,15 +19,6 @@ export async function POST(request: NextRequest) {
     const user = await User.findOne({
       resetToken: token,
     }).select('+resetToken +resetExpiry email');
-
-    console.log('User found:', !!user);
-    if (user) {
-      console.log('Token valid, checking expiry');
-      console.log(
-        'Is expired:',
-        user.resetExpiry && user.resetExpiry < new Date()
-      );
-    }
 
     if (!user) {
       return NextResponse.json(

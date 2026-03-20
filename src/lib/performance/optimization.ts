@@ -73,31 +73,3 @@ export const debouncedAutoSave = debounce((...args: unknown[]) => {
     saveFunction();
   }
 }, 2000);
-
-// Performance tracking
-export function trackPageLoad(pageName: string) {
-  if (typeof window !== 'undefined') {
-    const loadTime = performance.now();
-    console.log(`${pageName} loaded in ${loadTime}ms`);
-  }
-}
-
-// Memory usage monitoring
-export function logMemoryUsage() {
-  if (typeof window !== 'undefined' && 'memory' in performance) {
-    const memory = (
-      performance as {
-        memory: {
-          usedJSHeapSize: number;
-          totalJSHeapSize: number;
-          jsHeapSizeLimit: number;
-        };
-      }
-    ).memory;
-    console.log('Memory usage:', {
-      used: Math.round(memory.usedJSHeapSize / 1048576) + ' MB',
-      total: Math.round(memory.totalJSHeapSize / 1048576) + ' MB',
-      limit: Math.round(memory.jsHeapSizeLimit / 1048576) + ' MB',
-    });
-  }
-}

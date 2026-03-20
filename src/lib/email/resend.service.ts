@@ -5,10 +5,6 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export async function sendResetEmail(email: string, resetToken: string) {
   const resetUrl = `${process.env.NEXTAUTH_URL}/auth/reset-password?token=${encodeURIComponent(resetToken)}`;
 
-  console.log(`Sending email to: ${email}`);
-  console.log(`Reset URL generated for email`);
-  console.log(`NEXTAUTH_URL: ${process.env.NEXTAUTH_URL}`);
-
   const emailHtml = `
     <!DOCTYPE html>
     <html lang="en">
@@ -333,7 +329,7 @@ export async function sendResetEmail(email: string, resetToken: string) {
   `;
 
   try {
-    const { data, error } = await resend.emails.send({
+    const { error } = await resend.emails.send({
       from: `${process.env.RESEND_FROM_NAME || 'ResumeCanvas'} <${process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev'}>`,
       to: [email],
       subject: 'Reset your password - ResumeCanvas',
@@ -344,8 +340,6 @@ export async function sendResetEmail(email: string, resetToken: string) {
       console.error('Resend error:', error);
       throw new Error('Failed to send email');
     }
-
-    console.log('Email sent successfully:', data);
   } catch (error) {
     console.error('Email send error:', error);
     throw error;

@@ -44,7 +44,7 @@ export default function ApplicationsPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'applied':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-[#eef2ff] text-[#3730a3]';
       case 'screening':
         return 'bg-yellow-100 text-yellow-800';
       case 'interview':
@@ -54,9 +54,9 @@ export default function ApplicationsPage() {
       case 'rejected':
         return 'bg-red-100 text-red-800';
       case 'withdrawn':
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-[#eef2ff] text-[#11101d]';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-[#eef2ff] text-[#11101d]';
     }
   };
 
@@ -71,7 +71,7 @@ export default function ApplicationsPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-blue-600 border-t-transparent" />
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#4f46e5] border-t-transparent" />
       </div>
     );
   }
@@ -81,10 +81,10 @@ export default function ApplicationsPage() {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold flex items-center gap-2">
-            <Briefcase className="h-8 w-8 text-blue-600" />
+            <Briefcase className="h-8 w-8 text-[#4f46e5]" />
             Job Applications
           </h1>
-          <p className="text-gray-600">
+          <p className="text-[#64748b]">
             Track your job applications and interviews
           </p>
         </div>
@@ -99,11 +99,11 @@ export default function ApplicationsPage() {
       {applications.length === 0 ? (
         <Card>
           <CardContent className="text-center py-12">
-            <Briefcase className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+            <Briefcase className="h-12 w-12 text-[#94a3b8] mx-auto mb-4" />
+            <h3 className="text-lg font-semibold text-[#11101d] mb-2">
               No applications yet
             </h3>
-            <p className="text-gray-600 mb-4">
+            <p className="text-[#64748b] mb-4">
               Start tracking your job applications to stay organized
             </p>
             <Button asChild>
@@ -119,7 +119,7 @@ export default function ApplicationsPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <CardTitle className="text-lg">{app.jobTitle}</CardTitle>
-                    <p className="text-blue-600 font-medium">{app.company}</p>
+                    <p className="text-[#4f46e5] font-medium">{app.company}</p>
                   </div>
                   <Badge className={getStatusColor(app.status)}>
                     {app.status}
@@ -128,17 +128,17 @@ export default function ApplicationsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {app.location && (
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                  <div className="flex items-center gap-2 text-sm text-[#64748b]">
                     <MapPin className="h-4 w-4" />
                     {app.location}
                   </div>
                 )}
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-[#64748b]">
                   <Calendar className="h-4 w-4" />
                   Applied {formatDate(app.appliedDate)}
                 </div>
                 {app.salary && (
-                  <p className="text-sm font-medium text-green-600">
+                  <p className="text-sm font-medium text-[#059669]">
                     {app.salary}
                   </p>
                 )}

@@ -41,8 +41,6 @@ class AnalyticsTracker {
     if (typeof window !== 'undefined' && win.gtag) {
       win.gtag('event', name, properties);
     }
-
-    console.log('[Analytics]', name, properties);
   }
 
   page(path: string, properties?: AnalyticsProperties) {

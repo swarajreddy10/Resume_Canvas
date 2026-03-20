@@ -1,18 +1,24 @@
 'use client';
 
-import { signIn } from 'next-auth/react';
-import { useState, Suspense, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
-  Sparkles,
+  AlertCircle,
+  ArrowRight,
+  BrainCircuit,
+  Check,
+  CheckCircle2,
   Eye,
   EyeOff,
-  AlertCircle,
+  LayoutTemplate,
   Loader2,
-  CheckCircle2,
+  LockKeyhole,
+  ScanSearch,
+  Star,
 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { signIn } from 'next-auth/react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useEffect, useState } from 'react';
 
 const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   OAuthSignin: 'Error constructing OAuth URL. Please try again.',
@@ -26,9 +32,27 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
   EmailSignin: 'Check your email for the sign-in link.',
   CredentialsSignin: 'Sign in failed. Check your credentials.',
   SessionRequired: 'Please sign in to access this page.',
-  Default:
-    'Unable to sign in. Please try again or visit /auth/debug for diagnostics.',
+  Default: 'Unable to sign in. Please try again.',
 };
+
+const FEATURES = [
+  {
+    icon: BrainCircuit,
+    label: 'AI-Powered Writing',
+    desc: 'Bullets in seconds',
+  },
+  { icon: ScanSearch, label: 'ATS Optimization', desc: 'Score 90+ guaranteed' },
+  {
+    icon: LayoutTemplate,
+    label: 'Pro Templates',
+    desc: '5 recruiter-approved',
+  },
+  {
+    icon: LockKeyhole,
+    label: 'Secure & Private',
+    desc: 'End-to-end encrypted',
+  },
+];
 
 function SignInContent() {
   const router = useRouter();
@@ -48,50 +72,35 @@ function SignInContent() {
 
   useEffect(() => {
     if (!oauthError) return;
-
-    const errorMessage =
+    const msg =
       OAUTH_ERROR_MESSAGES[oauthError] || OAUTH_ERROR_MESSAGES.Default;
-
-    const newUrl = new URL(window.location.href);
-    newUrl.searchParams.delete('error');
-    window.history.replaceState({}, '', newUrl.toString());
-
-    setTimeout(() => setError(errorMessage), 0);
+    const url = new URL(window.location.href);
+    url.searchParams.delete('error');
+    window.history.replaceState({}, '', url.toString());
+    setTimeout(() => setError(msg), 0);
   }, [oauthError]);
 
   const handleGoogleSignIn = async () => {
     try {
       setOauthLoading(true);
       setError('');
-
-      // Add timeout to detect stuck redirects
-      const timeoutId = setTimeout(() => {
-        setError(
-          'Redirect taking too long. Please check your internet connection and try again.'
-        );
+      const tid = setTimeout(() => {
+        setError('Redirect taking too long. Please check your connection.');
         setOauthLoading(false);
-      }, 15000); // 15 second timeout
-
-      await signIn('google', {
-        callbackUrl,
-        redirect: true,
-      });
-
-      clearTimeout(timeoutId);
-    } catch (err) {
-      console.error('Google sign-in error:', err);
-      setError(
-        'Failed to initiate Google sign-in. Please check your internet connection and try again.'
-      );
+      }, 15000);
+      await signIn('google', { callbackUrl, redirect: true });
+      clearTimeout(tid);
+    } catch {
+      setError('Failed to initiate Google sign-in. Please try again.');
       setOauthLoading(false);
     }
   };
 
   const validatePassword = (pwd: string) => {
     if (pwd.length < 8) return 'Password must be at least 8 characters';
-    if (!/[a-z]/.test(pwd)) return 'Password must contain a lowercase letter';
-    if (!/[A-Z]/.test(pwd)) return 'Password must contain an uppercase letter';
-    if (!/\d/.test(pwd)) return 'Password must contain a number';
+    if (!/[a-z]/.test(pwd)) return 'Must contain a lowercase letter';
+    if (!/[A-Z]/.test(pwd)) return 'Must contain an uppercase letter';
+    if (!/\d/.test(pwd)) return 'Must contain a number';
     return null;
   };
 
@@ -99,32 +108,26 @@ function SignInContent() {
     e.preventDefault();
     setError('');
     setSuccess('');
-
     if (!email.trim()) {
       setError('Please enter your email');
       return;
     }
-
     if (!password.trim()) {
       setError('Please enter your password');
       return;
     }
-
     if (isSignUp && !name.trim()) {
       setError('Please enter your name');
       return;
     }
-
     if (isSignUp) {
-      const pwdError = validatePassword(password);
-      if (pwdError) {
-        setError(pwdError);
+      const err = validatePassword(password);
+      if (err) {
+        setError(err);
         return;
       }
     }
-
     setLoading(true);
-
     try {
       if (isSignUp) {
         const res = await fetch('/api/user/register', {
@@ -136,20 +139,16 @@ function SignInContent() {
             password,
           }),
         });
-
         const data = await res.json();
-
         if (!res.ok) {
-          const errorMsg = data.suggestion
-            ? `${data.error}. ${data.suggestion}.`
-            : data.error;
-          setError(errorMsg);
+          setError(
+            data.suggestion ? `${data.error}. ${data.suggestion}.` : data.error
+          );
           setLoading(false);
           return;
         }
-
         setSuccess('Account created! Signing you in...');
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((r) => setTimeout(r, 800));
       }
 
       const result = await signIn('credentials', {
@@ -160,18 +159,16 @@ function SignInContent() {
       });
 
       if (result?.error) {
-        const errorMessage = result.error;
-        if (errorMessage.includes('No account')) {
+        const msg = result.error;
+        if (msg.includes('No account'))
           setError('No account found. Please sign up first.');
-        } else if (errorMessage.includes('Google')) {
+        else if (msg.includes('Google'))
           setError(
-            'This account uses Google sign-in. Please use the Google button above.'
+            'This account uses Google sign-in. Use the Google button above.'
           );
-        } else if (errorMessage.includes('password')) {
+        else if (msg.includes('password'))
           setError('Incorrect password. Please try again.');
-        } else {
-          setError('Sign in failed. Please check your credentials.');
-        }
+        else setError('Sign in failed. Please check your credentials.');
         setLoading(false);
         return;
       }
@@ -180,14 +177,13 @@ function SignInContent() {
         setSuccess(
           isSignUp ? 'Welcome! Redirecting...' : 'Signed in! Redirecting...'
         );
-        await new Promise((resolve) => setTimeout(resolve, 800));
+        await new Promise((r) => setTimeout(r, 800));
         window.location.href = callbackUrl;
       } else {
         setError('Authentication failed. Please try again.');
         setLoading(false);
       }
-    } catch (err) {
-      console.error('Auth error:', err);
+    } catch {
       setError('Something went wrong. Please try again.');
       setLoading(false);
     }
@@ -201,37 +197,149 @@ function SignInContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50/30 to-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="mb-6 text-center">
+    <div className="min-h-screen bg-white flex">
+      {/* ══ LEFT — Brand panel (hidden on mobile) ══ */}
+      <div className="hidden lg:flex lg:w-[45%] xl:w-[42%] flex-col bg-gradient-to-br from-blue-600 to-blue-800 text-white px-10 xl:px-14 py-12 relative overflow-hidden flex-shrink-0">
+        {/* Subtle dot pattern */}
+        <div className="absolute inset-0 bg-[radial-gradient(circle,rgba(255,255,255,0.08)_1px,transparent_1px)] bg-[length:24px_24px]" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_20%_80%,rgba(255,255,255,0.1),transparent)]" />
+
+        <div className="relative z-10 flex flex-col h-full">
+          {/* Logo */}
           <button
             onClick={() => router.push('/')}
-            className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-4 py-2 text-sm font-semibold text-primary mb-4 hover:border-primary/50 transition"
+            className="flex items-center gap-2 group mb-auto"
           >
-            <Sparkles className="h-4 w-4" />
-            ResumeCanvas
+            <span className="text-xl font-black tracking-tight text-white">
+              Resume<span className="text-indigo-200">Canvas</span>
+            </span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-white/20 text-white/90 tracking-wide">
+              AI
+            </span>
           </button>
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            {isSignUp ? 'Create your account' : 'Welcome back'}
-          </h1>
-          <p className="text-gray-600">
-            {isSignUp
-              ? 'Start building professional resumes in minutes'
-              : 'Sign in to continue to your dashboard'}
-          </p>
+
+          {/* Main copy */}
+          <div className="py-12">
+            <h2 className="text-4xl xl:text-5xl font-black leading-tight mb-4">
+              Build a resume
+              <br />
+              <span className="text-indigo-200">that opens doors</span>
+            </h2>
+            <p className="text-indigo-100 text-base leading-relaxed mb-10">
+              AI-powered tools that take you from blank page to interview-ready
+              in under 10 minutes.
+            </p>
+
+            {/* Features */}
+            <div className="space-y-4 mb-10">
+              {FEATURES.map(({ icon: Icon, label, desc }) => (
+                <div key={label} className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-4.5 w-4.5 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-white">
+                      {label}
+                    </div>
+                    <div className="text-xs text-indigo-200">{desc}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Testimonial card */}
+            <div className="rounded-2xl bg-white/10 border border-white/20 p-5 backdrop-blur-sm">
+              <div className="flex gap-1 mb-3">
+                {[...Array(5)].map((_, i) => (
+                  <Star
+                    key={i}
+                    className="h-3.5 w-3.5 fill-amber-300 text-amber-300"
+                  />
+                ))}
+              </div>
+              <p className="text-sm text-white leading-relaxed mb-4">
+                &ldquo;Landed 3 interviews in my first week. The ATS
+                optimization is incredible!&rdquo;
+              </p>
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
+                  AS
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-white">
+                    Arjun Sharma
+                  </div>
+                  <div className="text-[10px] text-indigo-200">
+                    Software Engineer @ Google
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats */}
+          <div className="flex items-center gap-8 pt-6 border-t border-white/15">
+            {[
+              ['5k', 'Resumes'],
+              ['95%', 'ATS Rate'],
+              ['4.8★', 'Rating'],
+            ].map(([val, label]) => (
+              <div key={label}>
+                <div className="text-lg font-black text-white">{val}</div>
+                <div className="text-[10px] text-indigo-200 uppercase tracking-wider">
+                  {label}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ══ RIGHT — Form panel ══ */}
+      <motion.div
+        className="flex-1 flex flex-col justify-center px-5 sm:px-10 lg:px-14 xl:px-20 py-12 bg-white overflow-y-auto"
+        initial={{ opacity: 0, x: 30 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {/* Mobile logo */}
+        <div className="flex justify-center mb-8 lg:hidden">
+          <button
+            onClick={() => router.push('/')}
+            className="flex items-center gap-2"
+          >
+            <span className="text-xl font-black tracking-tight text-slate-900">
+              Resume<span className="text-[#4f46e5]">Canvas</span>
+            </span>
+            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#eef2ff] text-[#3730a3] tracking-wide">
+              AI
+            </span>
+          </button>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 space-y-5">
-          <Button
+        <div className="w-full max-w-md mx-auto">
+          {/* Heading */}
+          <div className="mb-8">
+            <h1 className="text-3xl font-black text-slate-900 mb-2">
+              {isSignUp ? 'Create your account' : 'Welcome back'}
+            </h1>
+            <p className="text-slate-500 text-sm">
+              {isSignUp
+                ? 'Start building professional resumes in minutes'
+                : 'Sign in to continue to your dashboard'}
+            </p>
+          </div>
+
+          {/* Google */}
+          <button
             onClick={handleGoogleSignIn}
-            variant="outline"
-            className="w-full h-12 flex items-center justify-center gap-3 text-base font-medium hover:bg-gray-50 transition"
             disabled={loading || oauthLoading}
+            className="w-full h-11 mb-5 flex items-center justify-center gap-3 text-sm font-medium rounded-xl border border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             {oauthLoading ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
+              <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <svg className="w-4.5 h-4.5" viewBox="0 0 24 24">
                 <path
                   fill="#4285F4"
                   d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
@@ -251,23 +359,27 @@ function SignInContent() {
               </svg>
             )}
             {oauthLoading ? 'Connecting...' : 'Continue with Google'}
-          </Button>
+          </button>
 
-          <div className="relative">
+          {/* Divider */}
+          <div className="relative mb-5">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-slate-100" />
             </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-2 bg-white text-gray-500">or</span>
+            <div className="relative flex justify-center text-xs">
+              <span className="px-3 bg-white text-slate-400">
+                or continue with email
+              </span>
             </div>
           </div>
 
+          {/* Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             {isSignUp && (
               <div>
                 <label
                   htmlFor="name"
-                  className="block text-sm font-medium text-gray-700 mb-1.5"
+                  className="block text-xs font-semibold text-slate-700 mb-1.5"
                 >
                   Full Name
                 </label>
@@ -279,15 +391,16 @@ function SignInContent() {
                   placeholder="John Doe"
                   required
                   disabled={loading}
-                  className="h-11"
                   autoComplete="name"
+                  className="h-11 border-slate-200 focus:border-blue-400 focus:ring-blue-100"
                 />
               </div>
             )}
+
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1.5"
+                className="block text-xs font-semibold text-slate-700 mb-1.5"
               >
                 Email Address
               </label>
@@ -299,15 +412,16 @@ function SignInContent() {
                 placeholder="you@example.com"
                 required
                 disabled={loading}
-                className="h-11"
                 autoComplete="email"
+                className="h-11 border-slate-200 focus:border-blue-400 focus:ring-blue-100"
               />
             </div>
+
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-gray-700"
+                  className="block text-xs font-semibold text-slate-700"
                 >
                   Password
                 </label>
@@ -315,7 +429,7 @@ function SignInContent() {
                   <button
                     type="button"
                     onClick={() => router.push('/auth/forgot-password')}
-                    className="text-sm text-primary hover:underline font-medium transition"
+                    className="text-xs text-[#4f46e5] hover:text-[#3730a3] font-semibold transition-colors"
                     disabled={loading}
                   >
                     Forgot password?
@@ -335,13 +449,13 @@ function SignInContent() {
                   }
                   required
                   disabled={loading}
-                  className="h-11 pr-10"
+                  className="h-11 pr-10 border-slate-200 focus:border-blue-400 focus:ring-blue-100"
                   autoComplete={isSignUp ? 'new-password' : 'current-password'}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
                   disabled={loading}
                 >
                   {showPassword ? (
@@ -353,45 +467,52 @@ function SignInContent() {
               </div>
             </div>
 
+            {/* Error */}
             {error && (
-              <div className="flex items-start gap-2 text-sm bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 animate-in fade-in slide-in-from-top-1 duration-300">
+              <div className="flex items-start gap-2.5 text-sm bg-red-50 border border-red-100 rounded-xl p-3.5 text-red-700 animate-in fade-in slide-in-from-top-1 duration-300">
                 <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
+            {/* Success */}
             {success && (
-              <div className="flex items-start gap-2 text-sm bg-green-50 border border-green-200 rounded-lg p-3 text-green-700 animate-in fade-in slide-in-from-top-1 duration-300">
+              <div className="flex items-start gap-2.5 text-sm bg-emerald-50 border border-emerald-100 rounded-xl p-3.5 text-emerald-700 animate-in fade-in slide-in-from-top-1 duration-300">
                 <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
                 <span>{success}</span>
               </div>
             )}
 
-            <Button
+            {/* Submit */}
+            <motion.button
               type="submit"
               disabled={loading}
-              className="w-full h-11 text-base font-medium"
+              className="w-full h-11 flex items-center justify-center gap-2 bg-[#4f46e5] hover:bg-[#3730a3] text-white font-semibold rounded-xl text-sm transition-colors shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              whileHover={loading ? {} : { scale: 1.02 }}
+              whileTap={loading ? {} : { scale: 0.98 }}
             >
               {loading ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
                   {isSignUp ? 'Creating account...' : 'Signing in...'}
                 </>
-              ) : isSignUp ? (
-                'Create account'
               ) : (
-                'Sign in'
+                <>
+                  {isSignUp ? 'Create account' : 'Sign in'}
+                  <ArrowRight className="h-4 w-4" />
+                </>
               )}
-            </Button>
+            </motion.button>
           </form>
 
-          <div className="text-center text-sm text-gray-600">
+          {/* Switch */}
+          <div className="text-center text-sm text-slate-500 mt-5">
             {isSignUp ? (
               <>
                 Already have an account?{' '}
                 <button
                   onClick={switchMode}
-                  className="text-primary hover:underline font-semibold transition"
+                  className="text-[#4f46e5] hover:text-[#3730a3] font-semibold transition-colors"
                   disabled={loading}
                 >
                   Sign in
@@ -402,31 +523,47 @@ function SignInContent() {
                 Don&apos;t have an account?{' '}
                 <button
                   onClick={switchMode}
-                  className="text-primary hover:underline font-semibold transition"
+                  className="text-[#4f46e5] hover:text-[#3730a3] font-semibold transition-colors"
                   disabled={loading}
                 >
-                  Sign up
+                  Sign up free
                 </button>
               </>
             )}
           </div>
-        </div>
 
-        <p className="text-center text-xs text-gray-500 mt-6">
-          By continuing, you agree to our{' '}
-          <a href="#" className="underline hover:text-gray-700">
-            Terms
-          </a>{' '}
-          and{' '}
-          <a href="#" className="underline hover:text-gray-700">
-            Privacy Policy
-          </a>
-          {' • '}
-          <a href="/auth/debug" className="underline hover:text-gray-700">
-            Debug OAuth
-          </a>
-        </p>
-      </div>
+          {/* Trust strip */}
+          <div className="flex flex-wrap justify-center gap-4 mt-8 pt-6 border-t border-slate-100">
+            {['No credit card', 'Free forever', 'ATS-optimized'].map((item) => (
+              <div
+                key={item}
+                className="flex items-center gap-1.5 text-xs text-slate-400"
+              >
+                <Check className="h-3 w-3 text-emerald-500 flex-shrink-0" />
+                {item}
+              </div>
+            ))}
+          </div>
+
+          {/* Legal */}
+          <p className="text-center text-xs text-slate-400 mt-4">
+            By continuing, you agree to our{' '}
+            <a
+              href="#"
+              className="underline hover:text-slate-600 transition-colors"
+            >
+              Terms
+            </a>{' '}
+            and{' '}
+            <a
+              href="#"
+              className="underline hover:text-slate-600 transition-colors"
+            >
+              Privacy Policy
+            </a>
+          </p>
+        </div>
+      </motion.div>
     </div>
   );
 }
@@ -435,8 +572,11 @@ export default function SignInPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="min-h-screen bg-white flex items-center justify-center">
+          <div className="flex items-center gap-3">
+            <div className="w-7 h-7 rounded-full border-2 border-blue-500 border-t-transparent animate-spin" />
+            <span className="text-slate-500 text-sm">Loading...</span>
+          </div>
         </div>
       }
     >
