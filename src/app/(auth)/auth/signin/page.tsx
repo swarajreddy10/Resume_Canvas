@@ -13,7 +13,6 @@ import {
   Loader2,
   LockKeyhole,
   ScanSearch,
-  Star,
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { signIn } from 'next-auth/react';
@@ -38,19 +37,23 @@ const OAUTH_ERROR_MESSAGES: Record<string, string> = {
 const FEATURES = [
   {
     icon: BrainCircuit,
-    label: 'AI-Powered Writing',
-    desc: 'Bullets in seconds',
+    label: 'AI-Assisted Writing',
+    desc: 'Bullets tailored to the job',
   },
-  { icon: ScanSearch, label: 'ATS Optimization', desc: 'Score 90+ guaranteed' },
+  {
+    icon: ScanSearch,
+    label: 'ATS Keyword Check',
+    desc: 'See what the job asks for',
+  },
   {
     icon: LayoutTemplate,
-    label: 'Pro Templates',
-    desc: '5 recruiter-approved',
+    label: 'Templates',
+    desc: '5 designs, live preview',
   },
   {
     icon: LockKeyhole,
-    label: 'Secure & Private',
-    desc: 'End-to-end encrypted',
+    label: 'Private by Default',
+    desc: 'Shared only if you publish',
   },
 ];
 
@@ -246,43 +249,14 @@ function SignInContent() {
                 </div>
               ))}
             </div>
-
-            {/* Testimonial card */}
-            <div className="rounded-2xl bg-white/10 border border-white/20 p-5 backdrop-blur-sm">
-              <div className="flex gap-1 mb-3">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-3.5 w-3.5 fill-amber-300 text-amber-300"
-                  />
-                ))}
-              </div>
-              <p className="text-sm text-white leading-relaxed mb-4">
-                &ldquo;Landed 3 interviews in my first week. The ATS
-                optimization is incredible!&rdquo;
-              </p>
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-xs font-bold text-white flex-shrink-0">
-                  AS
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-white">
-                    Arjun Sharma
-                  </div>
-                  <div className="text-[10px] text-indigo-200">
-                    Software Engineer @ Google
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
 
-          {/* Stats */}
+          {/* Product facts (no user counts or ratings: none are measured) */}
           <div className="flex items-center gap-8 pt-6 border-t border-white/15">
             {[
-              ['5k', 'Resumes'],
-              ['95%', 'ATS Rate'],
-              ['4.8★', 'Rating'],
+              ['5', 'Templates'],
+              ['7', 'AI tools'],
+              ['PDF', 'Export'],
             ].map(([val, label]) => (
               <div key={label}>
                 <div className="text-lg font-black text-white">{val}</div>
