@@ -313,7 +313,7 @@ export async function sendResetEmail(email: string, resetToken: string) {
           <div class="footer">
             <p class="footer-text">
               This email was sent by ResumeCanvas. If you have any questions, 
-              please contact our support team at <a href="mailto:support@resumecanvas.live" style="color: #2563eb; text-decoration: none;">support@resumecanvas.live</a>
+              please open an issue at <a href="https://github.com/swarajreddy10/Resume_Canvas/issues" style="color: #2563eb; text-decoration: none;">github.com/swarajreddy10/Resume_Canvas/issues</a>
             </p>
             
             <div class="divider"></div>

@@ -16,7 +16,6 @@ import {
   LockKeyhole,
   ScanSearch,
   Sparkles,
-  Star,
   Timer,
   TrendingUp,
   Wand2,
@@ -27,40 +26,42 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 const CYCLING_WORDS = [
-  'hired faster',
   'stand out',
-  'get callbacks',
-  'win offers',
+  'tailor faster',
+  'match the job',
+  'apply with confidence',
 ];
 
+// Product facts only. No user counts, ratings, outcome rates, or testimonials: this is a
+// free hobby project with no measured user base, so any such figure would be invented.
 const STATS = [
-  { value: '5K+', label: 'Professionals hired', dark: false },
-  { value: '95%', label: 'ATS pass rate', dark: false },
-  { value: '4.8★', label: 'User rating', dark: false },
-  { value: '3×', label: 'More interviews', dark: false },
-  { value: '+40%', label: 'Salary outcome', dark: true },
+  { value: '5', label: 'Resume templates', dark: false },
+  { value: '7', label: 'AI tools', dark: false },
+  { value: 'Live', label: 'Preview as you edit', dark: false },
+  { value: 'PDF', label: 'One-click export', dark: false },
+  { value: 'Free', label: 'Open source on GitHub', dark: true },
 ];
 
 const FEATURES = [
   {
     icon: Zap,
-    title: 'Build a draft in 10 minutes',
-    desc: 'The AI builder is 10× faster than doing it yourself. Just paste your experience and let AI handle the rest.',
+    title: 'Start from a draft, not a blank page',
+    desc: 'Paste your experience and the AI suggests structured bullets you can edit and keep.',
   },
   {
     icon: ScanSearch,
-    title: 'Zero ATS failures, guaranteed',
-    desc: 'Your resume passes every automated scan. Recruiters will see you, not a filtered-out file.',
+    title: 'See which keywords are missing',
+    desc: 'Compare your resume with a job description before you apply and close the gaps you choose.',
   },
   {
     icon: Wand2,
-    title: 'AI-written, job-tailored bullets',
-    desc: 'Context-aware suggestions built for every job description you target. Metrics-first, always.',
+    title: 'Bullets tailored to the job',
+    desc: 'Suggestions are written against the job description you target, with room for your own numbers.',
   },
   {
     icon: TrendingUp,
-    title: 'Get offers 7% above market',
-    desc: 'Better resumes open better salary conversations. We help you negotiate too.',
+    title: 'Prepare beyond the resume',
+    desc: 'Draft a tailored cover letter and practise likely interview questions from the same job description.',
   },
 ];
 
@@ -68,68 +69,38 @@ const TOOLS = [
   {
     icon: Wand2,
     title: 'AI Writing Assistant',
-    desc: 'Generate quantified bullet points tailored to any job description. ATS-ready in one click.',
-    tag: 'Most Popular',
+    desc: 'Generate bullet points tailored to a job description, then edit them in place.',
+    tag: null,
   },
   {
     icon: ScanSearch,
-    title: 'ATS Score Checker',
-    desc: "Instant keyword analysis against job postings. Know exactly what's missing before you apply.",
+    title: 'ATS Keyword Check',
+    desc: 'Keyword analysis against a job posting, so you know what is missing before you apply.',
     tag: null,
   },
   {
     icon: LayoutTemplate,
-    title: 'Pro Templates',
-    desc: 'Recruiter-approved designs. Switch templates instantly with a single click.',
+    title: 'Templates',
+    desc: 'Five designs with live preview. Switch templates with a single click.',
     tag: null,
   },
   {
     icon: LockKeyhole,
-    title: 'Secure & Private',
-    desc: 'End-to-end encryption. Your data is never sold or shared with third parties.',
+    title: 'Private by Default',
+    desc: 'Your resumes stay in your account unless you choose to publish a share link.',
     tag: null,
   },
   {
     icon: Timer,
-    title: 'Built in Minutes',
-    desc: 'Stop spending days on formatting. Create a polished resume in under 10 minutes.',
+    title: 'Less Time Formatting',
+    desc: 'Live preview and one-click PDF export keep the layout out of your way.',
     tag: null,
   },
   {
     icon: BrainCircuit,
-    title: 'Smart Suggestions',
-    desc: 'Real-time coaching as you type: stronger verbs, missing skills, better metrics.',
+    title: 'Resume Review',
+    desc: 'AI feedback on verbs, missing skills, and where a number would make a bullet stronger.',
     tag: null,
-  },
-];
-
-const TESTIMONIALS = [
-  {
-    name: 'Arjun Sharma',
-    role: 'Software Engineer',
-    company: 'Google',
-    content:
-      'Landed 3 interviews in my first week. The ATS optimization is incredible. Went from zero callbacks to multiple offers.',
-    rating: 5,
-    initials: 'AS',
-  },
-  {
-    name: 'Sarah Mitchell',
-    role: 'Product Manager',
-    company: 'Amazon',
-    content:
-      "Best resume builder I've used. The AI suggestions saved me hours and the result looked completely professional.",
-    rating: 5,
-    initials: 'SM',
-  },
-  {
-    name: 'Priya Nambiar',
-    role: 'Data Scientist',
-    company: 'Microsoft',
-    content:
-      'Professional templates and smart AI. Got my dream job at Microsoft within 3 weeks of using ResumeCanvas.',
-    rating: 5,
-    initials: 'PN',
   },
 ];
 
@@ -159,7 +130,6 @@ export default function HomePage() {
             {[
               ['Templates', '#templates'],
               ['Features', '#features'],
-              ['Reviews', '#reviews'],
             ].map(([label, href]) => (
               <a
                 key={label}
@@ -204,16 +174,9 @@ export default function HomePage() {
           >
             {/* Trust badge */}
             <motion.div variants={fadeInUp} className="flex items-center gap-2">
-              <div className="flex gap-0.5">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-4 w-4 fill-amber-400 text-amber-400"
-                  />
-                ))}
-              </div>
+              <Sparkles className="h-4 w-4 text-[#4f46e5]" />
               <span className="text-sm text-[#64748b] font-medium">
-                4.8 · Trusted by 5,000+ professionals
+                Free and open source · AI-assisted resume builder
               </span>
             </motion.div>
 
@@ -222,9 +185,9 @@ export default function HomePage() {
               variants={fadeInUp}
               className="text-4xl sm:text-5xl lg:text-[3.4rem] font-extrabold leading-[1.1] tracking-tight text-[#11101d]"
             >
-              This resume builder
+              A resume builder
               <br />
-              gets you{' '}
+              that helps you{' '}
               <AnimatePresence mode="wait">
                 <motion.span
                   key={wordIndex}
@@ -244,8 +207,8 @@ export default function HomePage() {
               variants={fadeInUp}
               className="text-lg text-[#64748b] leading-relaxed max-w-md"
             >
-              Only 2% of resumes win. Yours will be one of them. AI-powered,
-              ATS-optimized, recruiter-approved.
+              Write with AI help, check your resume against the job&apos;s
+              keywords, and export a clean PDF, with live preview the whole way.
             </motion.p>
 
             {/* CTAs */}
@@ -277,7 +240,7 @@ export default function HomePage() {
               className="flex flex-wrap gap-4 text-sm text-[#64748b]"
             >
               {[
-                '39% more likely to land the job',
+                'Open source on GitHub',
                 'No credit card required',
                 'Export to PDF free',
               ].map((text) => (
@@ -586,77 +549,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ── TESTIMONIALS ── */}
-      <section
-        id="reviews"
-        className="py-20 sm:py-28 px-5 sm:px-8 bg-[#f5f3ff]"
-      >
-        <motion.div
-          className="max-w-6xl mx-auto"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={staggerContainer}
-        >
-          <motion.div className="mb-14" variants={fadeInUp}>
-            <p className="text-xs font-semibold tracking-[0.2em] uppercase text-[#4f46e5] mb-3">
-              SUCCESS STORIES
-            </p>
-            <div className="flex items-end justify-between flex-wrap gap-4">
-              <h2 className="text-3xl sm:text-4xl font-extrabold text-[#11101d] leading-tight">
-                Loved by job seekers
-              </h2>
-              <div className="flex gap-1">
-                {[...Array(5)].map((_, i) => (
-                  <Star
-                    key={i}
-                    className="h-5 w-5 fill-amber-400 text-amber-400"
-                  />
-                ))}
-              </div>
-            </div>
-            <p className="text-[#64748b] text-base mt-3 leading-relaxed">
-              From big tech to startups, see who&apos;s getting hired
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-3 gap-5">
-            {TESTIMONIALS.map((t) => (
-              <motion.div
-                key={t.name}
-                variants={scaleIn}
-                className="bg-white border border-[#e2e8f0] rounded-2xl p-7 hover:border-[#c7d2fe] card-hover"
-              >
-                <div className="flex gap-1 mb-5">
-                  {[...Array(t.rating)].map((_, j) => (
-                    <Star
-                      key={j}
-                      className="h-4 w-4 fill-amber-400 text-amber-400"
-                    />
-                  ))}
-                </div>
-                <p className="text-[#11101d] leading-relaxed mb-6">
-                  &ldquo;{t.content}&rdquo;
-                </p>
-                <div className="border-t border-[#e2e8f0] pt-5 flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-[#eef2ff] flex items-center justify-center text-sm font-bold text-[#4f46e5] flex-shrink-0">
-                    {t.initials}
-                  </div>
-                  <div>
-                    <div className="font-semibold text-[#11101d] text-sm">
-                      {t.name}
-                    </div>
-                    <div className="text-xs text-[#64748b]">
-                      {t.role} · {t.company}
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-      </section>
-
       {/* ── CTA ── */}
       <section className="py-20 sm:py-28 px-5 sm:px-8 bg-white">
         <motion.div
@@ -673,11 +565,11 @@ export default function HomePage() {
                 START FOR FREE
               </p>
               <h2 className="text-3xl sm:text-5xl font-extrabold mb-4 leading-tight text-white">
-                Ready to get hired?
+                Ready to write your next resume?
               </h2>
               <p className="text-[#94a3b8] text-base sm:text-lg max-w-lg mx-auto mb-10 leading-relaxed">
-                Join 50,000+ professionals who landed their dream jobs with
-                AI-powered resumes.
+                AI help for every section, a keyword check against the job, and
+                a clean PDF when you are done.
               </p>
               <button
                 onClick={() => router.push('/auth/signin')}
@@ -687,7 +579,7 @@ export default function HomePage() {
                 <ArrowRight className="h-4 w-4" />
               </button>
               <div className="flex flex-wrap justify-center gap-6 sm:gap-10 mt-8 text-sm text-[#94a3b8]">
-                {['No credit card', 'Free forever', 'Export to PDF'].map(
+                {['No credit card', 'Free to use', 'Export to PDF'].map(
                   (item) => (
                     <div key={item} className="flex items-center gap-1.5">
                       <Check className="h-3.5 w-3.5 text-[#818cf8]" />

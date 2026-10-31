@@ -1,8 +1,8 @@
 # ResumeCanvas
 
-> Full-stack AI-powered resume builder — production-grade, mobile-first, and built with agentic AI development.
+> Full-stack AI-assisted resume builder: a free, open-source hobby project, mobile-first, built with agentic AI development.
 
-**Live:** [resumecanvas.live](https://www.resumecanvas.live)
+**Live:** [resumecanvas.vercel.app](https://resumecanvas.vercel.app)
 
 ---
 
@@ -366,4 +366,4 @@ MIT — see [LICENSE](./LICENSE)
 
 ---
 
-Built and maintained by a full-stack developer exploring the edge of what's possible when human engineering judgment meets agentic AI tooling. Deployed at [resumecanvas.live](https://www.resumecanvas.live).
+Built and maintained by a full-stack developer exploring the edge of what's possible when human engineering judgment meets agentic AI tooling. Deployed at [resumecanvas.vercel.app](https://resumecanvas.vercel.app).
