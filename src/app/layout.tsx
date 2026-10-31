@@ -5,6 +5,7 @@ import '../styles/print.css';
 import { SessionProvider } from '@/components/providers/SessionProvider';
 import { QueryProvider } from '@/components/providers/QueryProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import Script from 'next/script';
 
@@ -30,7 +31,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: 'ResumeCanvas - AI Resume Builder',
   description:
-    'AI-powered resume builder with real-time ATS optimization and professional templates',
+    'AI-assisted resume builder with ATS keyword checks, live preview, five templates, and PDF export',
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.svg',
@@ -67,6 +68,7 @@ export default function RootLayout({
             <SessionProvider>{children}</SessionProvider>
           </QueryProvider>
         </ErrorBoundary>
+        <Analytics />
         <SpeedInsights />
         <Script id="register-sw" strategy="afterInteractive">
           {`

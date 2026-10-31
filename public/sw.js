@@ -1,4 +1,6 @@
-const CACHE_NAME = 'resumecanvas-v2';
+// v3: pages are no longer cached; bumping the name makes activate delete the v2 cache,
+// which held cache-first copies of pages such as the landing page.
+const CACHE_NAME = 'resumecanvas-v3';
 
 // Only pre-cache truly static assets
 const PRECACHE_URLS = ['/manifest.json'];
@@ -25,8 +27,11 @@ self.addEventListener('fetch', (event) => {
   // Only handle same-origin GET requests
   if (request.method !== 'GET' || url.origin !== self.location.origin) return;
 
-  // Never intercept: Next.js internals, API routes, auth, or dynamic app routes
+  // Never intercept: page navigations (a cache-first page never shows a redeploy), Next.js
+  // internals, Vercel analytics, API routes, auth, or dynamic app routes
   const skip =
+    request.mode === 'navigate' ||
+    url.pathname.startsWith('/_vercel/') ||
     url.pathname.startsWith('/_next/') ||
     url.pathname.startsWith('/api/') ||
     url.pathname.startsWith('/auth/') ||
