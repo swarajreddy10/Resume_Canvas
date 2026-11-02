@@ -95,7 +95,6 @@ export class RateLimiter {
 
 import { appConfig } from '@/lib/config/app.config';
 
-export const apiRateLimit = new RateLimiter(appConfig.security.rateLimits.api);
 export const aiRateLimit = new RateLimiter(appConfig.security.rateLimits.ai);
 export const authRateLimit = new RateLimiter(
   appConfig.security.rateLimits.auth

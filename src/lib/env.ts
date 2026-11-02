@@ -9,8 +9,6 @@ export const env = createEnv({
     GOOGLE_CLIENT_ID: z.string().min(1),
     GOOGLE_CLIENT_SECRET: z.string().min(1),
     GROQ_API_KEY: z.string().min(1),
-    KV_REST_API_URL: z.string().url().optional(),
-    KV_REST_API_TOKEN: z.string().optional(),
   },
   client: {
     NEXT_PUBLIC_APP_NAME: z.string().default('ResumeCanvas'),
@@ -25,8 +23,6 @@ export const env = createEnv({
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET,
     GROQ_API_KEY: process.env.GROQ_API_KEY,
-    KV_REST_API_URL: process.env.KV_REST_API_URL,
-    KV_REST_API_TOKEN: process.env.KV_REST_API_TOKEN,
     NEXT_PUBLIC_APP_NAME: process.env.NEXT_PUBLIC_APP_NAME,
     NEXT_PUBLIC_APP_TAGLINE: process.env.NEXT_PUBLIC_APP_TAGLINE,
   },
