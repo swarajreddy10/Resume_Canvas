@@ -22,7 +22,8 @@ const userSchema = new mongoose.Schema(
       select: false,
     },
     image: { type: String, trim: true, maxlength: 500 },
-    resetToken: { type: String, select: false },
+    // SHA-256 hash of the emailed token; indexed so reset lookups never scan users.
+    resetToken: { type: String, select: false, index: { sparse: true } },
     resetExpiry: { type: Date, select: false },
     subscriptionTier: {
       type: String,

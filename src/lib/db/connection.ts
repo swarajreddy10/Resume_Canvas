@@ -2,6 +2,11 @@ import mongoose from 'mongoose';
 import { appConfig } from '@/lib/config/app.config';
 import { optimizeDatabase } from './optimizer';
 
+// Treat any `$`-prefixed object inside a query filter as a literal value, so request
+// data can never become a query operator. Code that needs an operator wraps it in
+// mongoose.trusted(). https://mongoosejs.com/docs/api/mongoose.html#Mongoose.prototype.sanitizeFilter()
+mongoose.set('sanitizeFilter', true);
+
 interface MongooseCache {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
