@@ -1,6 +1,8 @@
 import { createHash } from 'crypto';
 import mongoose from 'mongoose';
+import { Resume } from '@/lib/db/models/Resume';
 import { UserCounter } from '@/lib/db/models/UserCounter';
+import { pickFields } from '@/lib/security/allowList';
 import { generateUserSlug } from '@/lib/utils/slug';
 
 /** Filter for one resume owned by `userEmail`; null when the id cannot exist. */
@@ -25,11 +27,13 @@ const EDITABLE_FIELDS = [
 ] as const;
 
 export function editableResumeFields(body: unknown): Record<string, unknown> {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) return {};
-  const source = body as Record<string, unknown>;
-  return Object.fromEntries(
-    EDITABLE_FIELDS.filter((key) => key in source).map((key) => [key, source[key]])
-  );
+  return pickFields(body, EDITABLE_FIELDS);
+}
+
+/** True when `id` names a resume owned by `userEmail`: one indexed existence check. */
+export async function ownsResume(id: unknown, userEmail: string): Promise<boolean> {
+  const filter = typeof id === 'string' ? ownedResume(id, userEmail) : null;
+  return filter !== null && (await Resume.exists(filter)) !== null;
 }
 
 /**

@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
+import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db/connection';
 import { Resume } from '@/lib/db/models/Resume';
+import { withAuth } from '@/lib/middleware/withAuth';
+import { ownedResume } from '@/lib/resume/ownership';
 
 interface ResumeDoc {
   personalInfo?: {
@@ -15,26 +16,21 @@ interface ResumeDoc {
   skills?: string[];
   projects?: unknown[];
   certifications?: unknown[];
-  userEmail: string;
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+const notFound = () => NextResponse.json({ error: 'Resume not found' }, { status: 404 });
+
+// Read and write both use the owner-scoped filter, so another user's resume is a 404
+// and is never scored or written.
+export const POST = withAuth<{ id: string }>(async (_request, { session, params }) => {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { id } = await params;
+    const filter = ownedResume((await params).id, session.user.email);
+    if (!filter) return notFound();
     await connectDB();
-    const resume = (await Resume.findById(id)) as ResumeDoc;
-
-    if (!resume || resume.userEmail !== session.user.email) {
-      return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
-    }
+    const resume = (await Resume.findOne(filter)
+      .select('personalInfo experience education skills projects certifications')
+      .lean()) as ResumeDoc | null;
+    if (!resume) return notFound();
 
     // Enhanced ATS score calculation based on industry standards
     let score = 0;
@@ -132,7 +128,7 @@ export async function POST(
     score = Math.min(score, 100);
 
     // Update resume with calculated score
-    await Resume.findByIdAndUpdate(id, { atsScore: score });
+    await Resume.updateOne(filter, { $set: { atsScore: score } });
 
     return NextResponse.json({
       atsScore: score,
@@ -144,10 +140,8 @@ export async function POST(
             ? "Good foundation, but there's room for improvement."
             : 'Your resume needs significant improvements to pass ATS filters.',
     });
-  } catch {
-    return NextResponse.json(
-      { error: 'Failed to calculate ATS score' },
-      { status: 500 }
-    );
+  } catch (error) {
+    console.error('Failed to calculate ATS score:', error);
+    return NextResponse.json({ error: 'Failed to calculate ATS score' }, { status: 500 });
   }
-}
+});
