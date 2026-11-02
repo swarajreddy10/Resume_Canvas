@@ -288,7 +288,19 @@ bun type-check       # tsc --noEmit
 bun test             # Unit + performance tests
 bun run test:e2e     # Playwright end-to-end
 bun run verify       # format + lint + type-check
+bun run db:sync-indexes  # make MongoDB indexes match the Mongoose schemas
 ```
+
+### Database indexes
+
+Every index is declared once, in the Mongoose schemas under `src/lib/db/models`.
+Production instances start with `autoIndex` and `autoCreate` off, so a cold start sends no
+index or collection commands; `bun run db:sync-indexes` runs on deploy instead, with
+`MONGODB_URI` pointing at that environment's database. It builds missing indexes, drops
+indexes no schema declares (never `_id_`), and prints both per collection. On Vercel, set
+the production Build Command to `bun run db:sync-indexes && bun run build`;
+`docker compose up` runs it as the one-shot `db-sync-indexes` service before `app`
+starts. Development and tests keep Mongoose's automatic index builds.
 
 ---
 
