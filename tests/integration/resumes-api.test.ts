@@ -120,6 +120,11 @@ describe('slugs', () => {
     expect((await createAs(BOB, 'B')).res.status).toBe(200);
   });
 
+  test('a slug is a single URL segment, so /resume/<slug> resolves', async () => {
+    const { body } = await createAs(ALICE, 'Shared');
+    expect(body.resume!.slug).toMatch(/^[a-z0-9-]+$/);
+  });
+
   test('a clone gets its own slug', async () => {
     const { body } = await createAs(ALICE, 'Original');
     const res = await clone(req('POST', {}), ctx(body.resume!._id));
