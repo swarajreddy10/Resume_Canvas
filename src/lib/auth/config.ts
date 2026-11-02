@@ -1,4 +1,4 @@
-import NextAuth, { type NextAuthConfig } from 'next-auth';
+import NextAuth, { CredentialsSignin, type NextAuthConfig } from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
@@ -6,6 +6,7 @@ import { MongoClient } from 'mongodb';
 import { appConfig } from '@/lib/config/app.config';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';
+import { authAttemptKey, authRateLimit } from '@/lib/security/rateLimit';
 
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
@@ -40,14 +41,29 @@ const credentialsSchema = z.object({
 // the same whether or not the account exists.
 const NO_PASSWORD_HASH = '$2b$12$yxuP.kabfYx732/CEX7qReSb/yef1ltpDFP3GOn85IGTUSSYoM6xe';
 
+// Auth.js puts `code` in the sign-in error URL; this one says only that the client is
+// being slowed down, which is true whether or not the account exists.
+class RateLimitedSignIn extends CredentialsSignin {
+  code = 'rate_limited';
+}
+
 /**
  * Every failure returns null, which Auth.js reports as the one generic CredentialsSignin
  * error, so a response never says whether the email has an account or how it signs in.
  * https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-and-error-messages
+ * Attempts are limited per client IP and email like every other auth endpoint; Auth.js
+ * passes the incoming request's headers as the second argument.
  */
 export async function authorizeCredentials(
-  credentials: Partial<Record<'email' | 'password', unknown>>
+  credentials: Partial<Record<'email' | 'password', unknown>>,
+  request: Request
 ) {
+  const limit = await authRateLimit.check(
+    authAttemptKey('signin', request, credentials?.email),
+    request
+  );
+  if (!limit.success) throw new RateLimitedSignIn();
+
   const parsed = credentialsSchema.safeParse(credentials);
   if (!parsed.success) return null;
   const { email, password } = parsed.data;

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import connectDB from '@/lib/db/connection';
 import { User } from '@/lib/db/models/User';
 import { hashPassword, passwordSchema } from '@/lib/auth/password';
+import { limitAuthAttempt } from '@/lib/middleware/withRateLimit';
 
 const schema = z.object({
   email: z.string().trim().toLowerCase().email('Please enter a valid email address'),
@@ -20,7 +21,11 @@ const DUPLICATE_KEY = 11000;
 
 export async function POST(request: NextRequest) {
   try {
-    const parsed = schema.safeParse(await request.json().catch(() => null));
+    const body = await request.json().catch(() => null);
+    const limited = await limitAuthAttempt('register', request, body?.email);
+    if (limited) return limited;
+
+    const parsed = schema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: parsed.error.issues[0]?.message ?? 'Invalid request' },

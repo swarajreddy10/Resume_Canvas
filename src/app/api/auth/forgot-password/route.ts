@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
-import { withRateLimit } from '@/lib/middleware/withRateLimit';
-import { authRateLimit } from '@/lib/security/rateLimit';
+import { limitAuthAttempt } from '@/lib/middleware/withRateLimit';
 import connectDB from '@/lib/db/connection';
 import { User } from '@/lib/db/models/User';
 import { sendResetEmail } from '@/lib/email/resend.service';
@@ -12,11 +11,13 @@ const bodySchema = z.object({ email: z.string().trim().toLowerCase().email() });
 // Same answer whether or not the account exists, so the endpoint cannot enumerate users.
 const GENERIC_REPLY = { message: 'If email exists, reset link sent' };
 
-export const POST = withRateLimit(authRateLimit)(async (
-  request: NextRequest
-) => {
+export async function POST(request: NextRequest) {
   try {
-    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    const body = await request.json().catch(() => null);
+    const limited = await limitAuthAttempt('forgot-password', request, body?.email);
+    if (limited) return limited;
+
+    const parsed = bodySchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
@@ -49,4 +50,4 @@ export const POST = withRateLimit(authRateLimit)(async (
       { status: 500 }
     );
   }
-});
+}

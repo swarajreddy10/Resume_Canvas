@@ -39,8 +39,18 @@ function googleSignIn(email: string, emailVerified: boolean) {
   } as never);
 }
 
+let clientCounter = 0;
+/** The request Auth.js hands authorize(), from a new client each time so limits never apply. */
+function signInRequest(): Request {
+  clientCounter += 1;
+  return new Request('http://test/api/auth/callback/credentials', {
+    method: 'POST',
+    headers: { 'x-forwarded-for': `192.0.2.${clientCounter}` },
+  });
+}
+
 async function passwordSignIn(email: string, password: string) {
-  return authorizeCredentials({ email, password }).catch(() => null);
+  return authorizeCredentials({ email, password }, signInRequest());
 }
 
 describe('Google sign-in to an email that already has a password account', () => {
@@ -132,11 +142,11 @@ describe('responses do not reveal whether an account exists', () => {
     ['an account without a password', 'google-only@example.com', 'Owner12345'],
     ['a malformed email', 'not-an-email', 'Owner12345'],
   ])('password sign-in with %s fails with no distinguishing error', async (_, email, password) => {
-    expect(await authorizeCredentials({ email, password })).toBeNull();
+    expect(await passwordSignIn(email, password)).toBeNull();
   });
 
   test('password sign-in with the right password succeeds, case-insensitively', async () => {
-    expect(await authorizeCredentials({ email: ' Owner@Example.com ', password: 'Owner12345' })).toMatchObject({
+    expect(await passwordSignIn(' Owner@Example.com ', 'Owner12345')).toMatchObject({
       email: OWNER,
     });
   });

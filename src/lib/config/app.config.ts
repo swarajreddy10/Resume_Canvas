@@ -31,7 +31,6 @@ interface AppConfig {
   };
   security: {
     rateLimits: {
-      api: { windowMs: number; maxRequests: number };
       ai: { windowMs: number; maxRequests: number };
       auth: { windowMs: number; maxRequests: number };
     };
@@ -91,7 +90,6 @@ export const appConfig: AppConfig = {
 
   security: {
     rateLimits: {
-      api: { windowMs: 15 * 60 * 1000, maxRequests: 100 },
       ai: { windowMs: 60 * 60 * 1000, maxRequests: 50 },
       auth: { windowMs: 15 * 60 * 1000, maxRequests: 5 },
     },
