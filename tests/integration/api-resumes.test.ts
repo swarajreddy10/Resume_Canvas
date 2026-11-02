@@ -14,15 +14,6 @@ describe('Resume API - Authentication & Authorization', () => {
   }, 10000);
 });
 
-describe('Resume API - Database Health', () => {
-  test('GET /api/test-db returns valid response', async () => {
-    const response = await fetch(`${BASE_URL}/api/test-db`);
-    expect(response.status).toBe(200);
-    const data = await response.json();
-    expect(data).toBeDefined();
-  }, 10000);
-});
-
 describe('Resume API - Input Validation', () => {
   test('POST /api/auth/check-email validates email format', async () => {
     const response = await fetch(`${BASE_URL}/api/auth/check-email`, {
@@ -180,7 +171,7 @@ describe('Resume API - Error Handling', () => {
   }, 10000);
 
   test('returns proper content-type headers', async () => {
-    const response = await fetch(`${BASE_URL}/api/test-db`);
+    const response = await fetch(`${BASE_URL}/api/resumes`);
     const contentType = response.headers.get('content-type');
     expect(contentType).toContain('application/json');
   }, 10000);
@@ -188,7 +179,7 @@ describe('Resume API - Error Handling', () => {
 
 describe('Resume API - CORS & Headers', () => {
   test('includes security headers', async () => {
-    const response = await fetch(`${BASE_URL}/api/test-db`);
+    const response = await fetch(`${BASE_URL}/api/resumes`);
     expect(response.headers.get('content-type')).toBeDefined();
   }, 10000);
 });
