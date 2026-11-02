@@ -6,7 +6,7 @@
 import { afterAll, beforeAll, beforeEach, describe, expect, test } from 'bun:test';
 import bcryptjs from 'bcryptjs';
 import type { NextAuthConfig } from 'next-auth';
-import { startMongo, stopMongo } from '../helpers/mongo';
+import { jsonRequest, startMongo, stopMongo } from '../helpers/mongo';
 
 const VICTIM = 'victim@gmail.com';
 const ATTACKER_PASSWORD = 'Attacker123';
@@ -106,5 +106,62 @@ describe('Google sign-in to an email that already has a password account', () =>
     const stored = await User.collection.findOne({ email: VICTIM });
     expect(stored?.password).toBeString();
     expect(stored?.emailVerified).toBeUndefined();
+  });
+});
+
+describe('responses do not reveal whether an account exists', () => {
+  const OWNER = 'owner@example.com';
+  let register: (r: Request) => Promise<Response>;
+
+  beforeAll(async () => {
+    ({ POST: register } = (await import('@/app/api/user/register/route')) as never);
+  });
+
+  beforeEach(async () => {
+    await User.create({
+      email: OWNER,
+      name: 'Owner',
+      password: await bcryptjs.hash('Owner12345', 10),
+    });
+    await User.collection.insertOne({ email: 'google-only@example.com', name: 'G' });
+  });
+
+  test.each([
+    ['an unknown email', 'nobody@example.com', 'Owner12345'],
+    ['a wrong password', OWNER, 'Wrong12345'],
+    ['an account without a password', 'google-only@example.com', 'Owner12345'],
+    ['a malformed email', 'not-an-email', 'Owner12345'],
+  ])('password sign-in with %s fails with no distinguishing error', async (_, email, password) => {
+    expect(await authorizeCredentials({ email, password })).toBeNull();
+  });
+
+  test('password sign-in with the right password succeeds, case-insensitively', async () => {
+    expect(await authorizeCredentials({ email: ' Owner@Example.com ', password: 'Owner12345' })).toMatchObject({
+      email: OWNER,
+    });
+  });
+
+  test('registering a taken email answers exactly like a new registration and changes nothing', async () => {
+    const fresh = await register(
+      jsonRequest('http://test/api/user/register', {
+        email: 'new@example.com',
+        name: 'New',
+        password: 'Fresh12345',
+      })
+    );
+    const taken = await register(
+      jsonRequest('http://test/api/user/register', {
+        email: OWNER,
+        name: 'Intruder',
+        password: 'Intruder123',
+      })
+    );
+
+    expect(taken.status).toBe(fresh.status);
+    expect(await taken.json()).toEqual(await fresh.json());
+    expect(await User.countDocuments({ email: OWNER })).toBe(1);
+    expect(await passwordSignIn(OWNER, 'Owner12345')).not.toBeNull();
+    expect(await passwordSignIn(OWNER, 'Intruder123')).toBeNull();
+    expect(await passwordSignIn('new@example.com', 'Fresh12345')).not.toBeNull();
   });
 });

@@ -15,31 +15,22 @@ describe('Resume API - Authentication & Authorization', () => {
 });
 
 describe('Resume API - Input Validation', () => {
-  test('POST /api/auth/check-email validates email format', async () => {
-    const response = await fetch(`${BASE_URL}/api/auth/check-email`, {
+  test('POST /api/user/register rejects an invalid email', async () => {
+    const response = await fetch(`${BASE_URL}/api/user/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'test@example.com' }),
+      body: JSON.stringify({ email: 'invalid-email', name: 'X', password: 'Valid12345' }),
     });
-    expect([200, 400, 405]).toContain(response.status);
+    expect(response.status).toBe(400);
   }, 10000);
 
-  test('POST /api/auth/check-email rejects invalid email', async () => {
-    const response = await fetch(`${BASE_URL}/api/auth/check-email`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'invalid-email' }),
-    });
-    expect([200, 400, 405]).toContain(response.status);
-  }, 10000);
-
-  test('POST /api/auth/check-email rejects empty body', async () => {
-    const response = await fetch(`${BASE_URL}/api/auth/check-email`, {
+  test('POST /api/user/register rejects an empty body', async () => {
+    const response = await fetch(`${BASE_URL}/api/user/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({}),
     });
-    expect([400, 405]).toContain(response.status);
+    expect(response.status).toBe(400);
   }, 10000);
 });
 
@@ -81,12 +72,12 @@ describe('Resume API - AI Endpoints', () => {
 
 describe('Resume API - Security', () => {
   test('rejects SQL injection in email', async () => {
-    const response = await fetch(`${BASE_URL}/api/auth/check-email`, {
+    const response = await fetch(`${BASE_URL}/api/user/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: "'; DROP TABLE users--" }),
+      body: JSON.stringify({ email: "'; DROP TABLE users--", name: 'X', password: 'Valid12345' }),
     });
-    expect([200, 400, 405]).toContain(response.status);
+    expect(response.status).toBe(400);
   }, 10000);
 
   test('rejects XSS attempts in AI input', async () => {
@@ -103,12 +94,12 @@ describe('Resume API - Security', () => {
   }, 10000);
 
   test('handles malformed JSON gracefully', async () => {
-    const response = await fetch(`${BASE_URL}/api/auth/check-email`, {
+    const response = await fetch(`${BASE_URL}/api/user/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: 'invalid json{',
     });
-    expect([400, 405, 500]).toContain(response.status);
+    expect(response.status).toBe(400);
   }, 10000);
 
   test('rejects oversized payloads', async () => {
@@ -133,8 +124,8 @@ describe('Resume API - HTTP Methods', () => {
     expect([200, 401]).toContain(response.status);
   }, 10000);
 
-  test('POST /api/auth/check-email rejects GET method', async () => {
-    const response = await fetch(`${BASE_URL}/api/auth/check-email`, {
+  test('POST /api/user/register rejects GET method', async () => {
+    const response = await fetch(`${BASE_URL}/api/user/register`, {
       method: 'GET',
     });
     expect([405]).toContain(response.status);
