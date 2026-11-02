@@ -30,7 +30,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 | **Clone Resumes** | One-click resume duplication with full data copy |
 | **Job Application Tracker** | Kanban-style status tracking with notes and follow-ups |
 | **Analytics** | Resume view counts, download metrics, application funnel |
-| **PWA** | Installable on mobile, service worker caching, offline-capable static routes |
+| **PWA** | Web app manifest for installation; no service worker and no offline mode |
 
 ---
 
@@ -230,7 +230,7 @@ Consistent indigo palette applied across all pages, components, and templates:
 ## PWA
 
 - `manifest.json` with app name, icons, display mode
-- Service worker (`public/sw.js`) — cache-first for static assets, passthrough for all dynamic routes (`/api/`, `/builder/`, `/dashboard`, etc.)
+- No service worker: the app has no offline mode. `public/sw.js` is a retired no-op that deletes the caches an earlier version made and unregisters itself in browsers that installed it
 - Theme color `#4f46e5` synced to browser chrome
 - Custom favicon — abstract mini resume mark (no text, scales to 16px)
 
