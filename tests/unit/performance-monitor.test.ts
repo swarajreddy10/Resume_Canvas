@@ -2,9 +2,17 @@
  * PerformanceMonitor with a stubbed performance.now(), so durations are exact and no
  * test spins the CPU waiting for a wall-clock interval.
  */
-import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test';
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  spyOn,
+  test,
+} from 'bun:test';
 import type { Mock } from 'bun:test';
-import { performanceMonitor } from '@/lib/performance/monitor';
+import { monitoredFetch, performanceMonitor } from '@/lib/performance/monitor';
 
 let now: Mock<() => number>;
 let t: number;
@@ -74,5 +82,45 @@ describe('PerformanceMonitor', () => {
     performanceMonitor.getMetrics().pop();
 
     expect(performanceMonitor.getMetrics()).toHaveLength(1);
+  });
+});
+
+describe('monitoredFetch', () => {
+  const realFetch = globalThis.fetch;
+
+  afterEach(() => {
+    globalThis.fetch = realFetch;
+  });
+
+  test('passes the request through and records its status', async () => {
+    const fetchMock = mock(async () => {
+      t += 12;
+      return new Response('ok', { status: 201 });
+    });
+    globalThis.fetch = fetchMock as unknown as typeof fetch;
+
+    const res = await monitoredFetch('/api/resumes', { method: 'POST' });
+
+    expect(res.status).toBe(201);
+    expect(fetchMock).toHaveBeenCalledWith('/api/resumes', { method: 'POST' });
+    expect(performanceMonitor.getMetrics()).toEqual([
+      expect.objectContaining({
+        endpoint: '/api/resumes',
+        method: 'POST',
+        duration: 12,
+        status: 201,
+      }),
+    ]);
+  });
+
+  test('records status 0 and rethrows when the request fails', async () => {
+    globalThis.fetch = mock(async () => {
+      throw new TypeError('fetch failed');
+    }) as unknown as typeof fetch;
+
+    await expect(monitoredFetch('/api/x')).rejects.toThrow('fetch failed');
+    expect(performanceMonitor.getMetrics()).toEqual([
+      expect.objectContaining({ endpoint: '/api/x', method: 'GET', status: 0 }),
+    ]);
   });
 });
