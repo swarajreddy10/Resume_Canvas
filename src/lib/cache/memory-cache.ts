@@ -9,19 +9,26 @@ interface CacheEntry<T> {
 }
 
 export class MemoryCache<T> {
+  // A Map iterates in insertion order; get() re-inserts, so the first key is the LRU.
   private cache = new Map<string, CacheEntry<T>>();
   private maxSize: number;
   private ttl: number;
+  private now: () => number;
   private cleanupInterval: NodeJS.Timeout;
 
-  constructor(maxSize = 100, ttlMs = 5 * 60 * 1000) {
+  constructor(
+    maxSize = 100,
+    ttlMs = 5 * 60 * 1000,
+    now: () => number = Date.now
+  ) {
     this.maxSize = maxSize;
     this.ttl = ttlMs;
+    this.now = now;
     this.cleanupInterval = setInterval(() => this.cleanup(), 60000);
   }
 
   private cleanup(): void {
-    const now = Date.now();
+    const now = this.now();
     for (const [key, entry] of this.cache.entries()) {
       if (now > entry.expiry) {
         this.cache.delete(key);
@@ -30,14 +37,17 @@ export class MemoryCache<T> {
   }
 
   set(key: string, value: T, ttl?: number): void {
+    // An overwrite replaces its own entry and never evicts another.
+    this.cache.delete(key);
+
     if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value as string;
-      if (firstKey) this.cache.delete(firstKey);
+      const oldest = this.cache.keys().next();
+      if (!oldest.done) this.cache.delete(oldest.value);
     }
 
     this.cache.set(key, {
       value,
-      expiry: Date.now() + (ttl || this.ttl),
+      expiry: this.now() + (ttl || this.ttl),
     });
   }
 
@@ -46,11 +56,13 @@ export class MemoryCache<T> {
 
     if (!entry) return null;
 
-    if (Date.now() > entry.expiry) {
+    if (this.now() > entry.expiry) {
       this.cache.delete(key);
       return null;
     }
 
+    this.cache.delete(key);
+    this.cache.set(key, entry);
     return entry.value;
   }
 
@@ -66,7 +78,7 @@ export class MemoryCache<T> {
     const entry = this.cache.get(key);
     if (!entry) return false;
 
-    if (Date.now() > entry.expiry) {
+    if (this.now() > entry.expiry) {
       this.cache.delete(key);
       return false;
     }
