@@ -12,6 +12,7 @@
     "build": "bun --bun next build",
     "start": "bun --bun next start",
     "lint": "bun eslint . --ext .ts,.tsx --fix",
+    "lint:check": "bun eslint . --max-warnings=0",
     "format": "bun prettier --write . --config config/.prettierrc",
     "format:check": "bun prettier --check . --config config/.prettierrc",
     "type-check": "bun tsc --noEmit",
