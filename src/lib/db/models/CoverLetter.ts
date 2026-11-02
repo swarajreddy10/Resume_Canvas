@@ -12,7 +12,7 @@ export interface ICoverLetter extends Document {
 
 const CoverLetterSchema = new Schema<ICoverLetter>(
   {
-    userEmail: { type: String, required: true, index: true },
+    userEmail: { type: String, required: true },
     resumeId: { type: Schema.Types.ObjectId, ref: 'Resume', required: true },
     company: { type: String, required: true },
     position: { type: String, required: true },

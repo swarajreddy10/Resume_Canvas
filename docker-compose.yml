@@ -10,6 +10,22 @@ services:
     env_file:
       - .env.local # Use .env.local with MONGODB_URI=mongodb://admin:password123@mongo:27017/careercanvas?authSource=admin
     depends_on:
+      mongo:
+        condition: service_started
+      # Production starts with autoIndex off; indexes come from this one-shot sync.
+      db-sync-indexes:
+        condition: service_completed_successfully
+    networks:
+      - careercanvas-network
+
+  db-sync-indexes:
+    build:
+      context: .
+      target: builder
+    command: ['bun', 'scripts/sync-indexes.ts']
+    env_file:
+      - .env.local
+    depends_on:
       - mongo
     networks:
       - careercanvas-network
