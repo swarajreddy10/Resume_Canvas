@@ -22,7 +22,7 @@ services:
     build:
       context: .
       target: builder
-    command: ['bun', 'scripts/sync-indexes.ts']
+    command: ['sh', '-c', 'bun scripts/sync-indexes.ts && bun scripts/migrate-legacy-slugs.ts']
     env_file:
       - .env.local
     depends_on:
