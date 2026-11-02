@@ -37,9 +37,10 @@ export async function ownsResume(id: unknown, userEmail: string): Promise<boolea
 }
 
 /**
- * Public slug for a user's next resume: `<first-name>-<owner tag>/<count>`. The owner
+ * Public slug for a user's next resume: `<first-name>-<owner tag>-<count>`. The owner
  * tag (six hex characters of a hash of the email) keeps two users with the same first
- * name apart; the counter is per owner.
+ * name apart; the counter is per owner. No `/`: the share URL `/resume/<slug>` is a
+ * single dynamic segment. https://nextjs.org/docs/app/api-reference/file-conventions/dynamic-routes
  */
 export async function nextResumeSlug(userEmail: string, displayName: string): Promise<string> {
   const counter = await UserCounter.findOneAndUpdate(
@@ -48,5 +49,5 @@ export async function nextResumeSlug(userEmail: string, displayName: string): Pr
     { upsert: true, returnDocument: 'after' }
   );
   const ownerTag = createHash('sha256').update(userEmail).digest('hex').slice(0, 6);
-  return `${generateUserSlug(displayName)}-${ownerTag}/${counter.resumeCount}`;
+  return `${generateUserSlug(displayName)}-${ownerTag}-${counter.resumeCount}`;
 }

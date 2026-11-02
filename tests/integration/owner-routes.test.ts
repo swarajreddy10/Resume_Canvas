@@ -48,7 +48,7 @@ async function resumeOf(user: typeof ALICE, extra: Record<string, unknown> = {})
   return Resume.create({
     userEmail: user.email,
     title: `${user.name} resume`,
-    slug: `${user.name.toLowerCase()}-test/${++slugCounter}`,
+    slug: `${user.name.toLowerCase()}-test-${++slugCounter}`,
     personalInfo: { name: user.name },
     ...extra,
   });

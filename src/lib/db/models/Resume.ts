@@ -22,7 +22,8 @@ const resumeSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: /^[a-z0-9-/]+$/,
+      // One URL segment: the share link is /resume/<slug>.
+      match: /^[a-z0-9-]+$/,
     },
     personalInfo: {
       name: { type: String, trim: true, maxlength: 100 },
