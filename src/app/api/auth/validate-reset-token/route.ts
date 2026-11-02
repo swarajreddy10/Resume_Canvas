@@ -1,24 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { z } from 'zod';
 import connectDB from '@/lib/db/connection';
 import { User } from '@/lib/db/models/User';
+import { hashResetToken, resetTokenSchema } from '@/lib/auth/password';
+
+const bodySchema = z.object({ token: resetTokenSchema });
 
 export async function POST(request: NextRequest) {
   try {
-    const { token } = await request.json();
-
-    if (!token) {
+    const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+    if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Token is required', status: 'invalid' },
+        { error: 'Invalid reset token', status: 'invalid' },
         { status: 400 }
       );
     }
 
     await connectDB();
 
-    // Find user with this reset token
     const user = await User.findOne({
-      resetToken: token,
-    }).select('+resetToken +resetExpiry email');
+      resetToken: hashResetToken(parsed.data.token),
+    }).select('+resetExpiry email');
 
     if (!user) {
       return NextResponse.json(
@@ -27,19 +29,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if token is expired
-    if (user.resetExpiry && user.resetExpiry < new Date()) {
+    if (!user.resetExpiry || user.resetExpiry < new Date()) {
       return NextResponse.json(
-        {
-          error: 'Reset token has expired',
-          status: 'expired',
-          email: user.email,
-        },
+        { error: 'Reset token has expired', status: 'expired', email: user.email },
         { status: 400 }
       );
     }
 
-    // Token is valid
     return NextResponse.json({
       message: 'Token is valid',
       status: 'valid',

@@ -2,17 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import connectDB from '@/lib/db/connection';
 import { User } from '@/lib/db/models/User';
-import bcrypt from 'bcryptjs';
+import { hashPassword, passwordSchema } from '@/lib/auth/password';
 
 const schema = z.object({
   email: z.string().email('Please enter a valid email address'),
   name: z.string().min(1, 'Name is required').max(100, 'Name is too long'),
-  password: z
-    .string()
-    .min(8, 'Password must be at least 8 characters')
-    .regex(/[a-z]/, 'Password must contain a lowercase letter')
-    .regex(/[A-Z]/, 'Password must contain an uppercase letter')
-    .regex(/\d/, 'Password must contain a number'),
+  password: passwordSchema,
 });
 
 export async function POST(request: NextRequest) {
@@ -37,7 +32,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const hashedPassword = await bcrypt.hash(validated.password, 12);
+    const hashedPassword = await hashPassword(validated.password);
     const user = await User.create({
       email: validated.email.toLowerCase(),
       name: validated.name.trim(),
