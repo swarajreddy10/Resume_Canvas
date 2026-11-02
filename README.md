@@ -114,8 +114,8 @@ src/
 ├── lib/
 │   ├── auth/config.ts             # NextAuth config (JWT, MongoDB adapter, callbacks)
 │   ├── db/                        # Connection, models (User, Resume, JobApplication, CoverLetter)
-│   ├── middleware/                # withAuth, withRateLimit, withValidation
-│   ├── cache/                     # LRU memory cache + quota-aware layer
+│   ├── middleware/                # withAuth (private, no-store), withRateLimit
+│   ├── cache/                     # In-memory cache classes (no route caches responses)
 │   ├── security/                  # Rate limiting, input sanitization
 │   └── email/                     # Resend integration
 │
@@ -169,7 +169,7 @@ src/
 | POST | `/api/user/register` | New user registration |
 | GET | `/api/user/stats` | User statistics |
 
-**Rate limits:** 100 req/15 min (API) · 50 req/hr (AI endpoints) · 5 req/15 min (auth)
+**Rate limits:** 50 req/hr (AI endpoints) · 5 req/15 min (auth)
 
 ---
 

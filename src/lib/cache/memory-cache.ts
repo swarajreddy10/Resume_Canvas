@@ -79,8 +79,3 @@ export class MemoryCache<T> {
     this.cache.clear();
   }
 }
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const resumeCache = new MemoryCache<any>(50, 5 * 60 * 1000);
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const userCache = new MemoryCache<any>(100, 10 * 60 * 1000);
