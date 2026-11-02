@@ -92,14 +92,10 @@ const resumeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Indexes for performance
-resumeSchema.index({ slug: 1 }, { unique: true });
+// The collection's indexes are slug_1 (unique, from the field option above) and this one,
+// each declared once; `bun run db:sync-indexes` builds them on deploy. The owner's list
+// (GET /api/resumes, sorted by updatedAt) and every other {userEmail} read use this one.
 resumeSchema.index({ userEmail: 1, updatedAt: -1 });
-resumeSchema.index({ userEmail: 1, isPublic: 1 });
-resumeSchema.index({ userEmail: 1, templateId: 1, isPublic: 1 });
-resumeSchema.index({ createdAt: 1 });
-resumeSchema.index({ atsScore: -1 });
-resumeSchema.index({ userEmail: 1, templateId: 1 });
 
 export const Resume =
   mongoose.models.Resume || mongoose.model('Resume', resumeSchema);

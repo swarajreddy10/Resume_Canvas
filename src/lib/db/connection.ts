@@ -1,6 +1,5 @@
-import mongoose from 'mongoose';
+import mongoose, { type ConnectOptions } from 'mongoose';
 import { appConfig } from '@/lib/config/app.config';
-import { optimizeDatabase } from './optimizer';
 
 // Treat any `$`-prefixed object inside a query filter as a literal value, so request
 // data can never become a query operator. Code that needs an operator wraps it in
@@ -28,42 +27,49 @@ if (!globalThis.mongoose) {
   globalThis.mongoose = cached;
 }
 
+/**
+ * Options for the Mongoose connection pool.
+ *
+ * - In production, indexes and collections are built once per deploy by
+ *   `bun run db:sync-indexes`, so a cold start sends no createIndexes or create commands.
+ *   Development and test keep Mongoose's autoIndex/autoCreate.
+ *   https://mongoosejs.com/docs/guide.html#indexes
+ */
+export function connectionOptions(
+  nodeEnv = process.env.NODE_ENV
+): ConnectOptions {
+  const buildSchemaObjects = nodeEnv !== 'production';
+  return {
+    bufferCommands: false,
+    autoIndex: buildSchemaObjects,
+    autoCreate: buildSchemaObjects,
+    maxPoolSize: 20,
+    minPoolSize: 10,
+    maxIdleTimeMS: 15000,
+    serverSelectionTimeoutMS: 3000,
+    socketTimeoutMS: 30000,
+    connectTimeoutMS: 5000,
+    heartbeatFrequencyMS: 5000,
+    compressors: 'zlib',
+    zlibCompressionLevel: 1,
+    readPreference: 'primaryPreferred',
+    retryWrites: true,
+    w: 'majority',
+  };
+}
+
 async function connectDB() {
   if (cached.conn) {
     return cached.conn;
   }
 
   if (!cached.promise) {
-    const options = {
-      bufferCommands: false,
-      maxPoolSize: 20, // Increased pool size
-      minPoolSize: 10, // Higher minimum
-      serverSelectionTimeoutMS: 3000, // Faster timeout
-      socketTimeoutMS: 30000,
-      maxIdleTimeMS: 15000, // Faster cleanup
-      // Ultra performance optimizations
-      compressors: 'zlib',
-      zlibCompressionLevel: 1 as const, // Fast compression
-      readPreference: 'primaryPreferred' as const,
-      retryWrites: true,
-      w: 'majority' as const,
-      // Connection optimization
-      heartbeatFrequencyMS: 5000,
-      connectTimeoutMS: 5000,
-    };
-
     cached.promise = Promise.race([
-      mongoose.connect(appConfig.mongodb.uri, options),
+      mongoose.connect(appConfig.mongodb.uri, connectionOptions()),
       new Promise<typeof mongoose>((_, reject) =>
         setTimeout(() => reject(new Error('Connection timeout')), 3000)
       ),
-    ])
-      .then(async (conn) => {
-        // Optimize database after connection
-        await optimizeDatabase();
-        return conn;
-      })
-      .catch((err) => {
+    ]).catch((err) => {
         cached.promise = null;
         console.error('MongoDB connection failed:', err);
         throw new Error('Database connection failed');
@@ -72,7 +78,6 @@ async function connectDB() {
 
   try {
     cached.conn = await cached.promise;
-    // Ultra performance settings
     cached.conn.set('bufferCommands', false);
     cached.conn.set('maxTimeMS', 5000); // 5 second query timeout
   } catch (e) {
