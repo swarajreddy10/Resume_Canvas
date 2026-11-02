@@ -16,6 +16,7 @@
     "format:check": "bun prettier --check . --config config/.prettierrc",
     "type-check": "bun tsc --noEmit",
     "db:sync-indexes": "bun scripts/sync-indexes.ts",
+    "db:migrate-slugs": "bun scripts/migrate-legacy-slugs.ts",
     "test": "bun test tests/unit tests/performance --config config/bunfig.toml",
     "test:watch": "bun test --watch --config config/bunfig.toml",
     "test:coverage": "bun test --coverage --config config/bunfig.toml",
