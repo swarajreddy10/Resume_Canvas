@@ -1,24 +1,33 @@
 /**
- * Real MongoDB for integration tests: an in-memory mongod started per test file.
+ * Real MongoDB for integration tests: one in-memory mongod per test process.
  *
- * Call startMongo() before importing any module that reads MONGODB_URI (the app
- * config reads it at import time), then import route handlers dynamically.
+ * Bun runs every test file in one process, and the app config reads MONGODB_URI once at
+ * import time, so all files share one server. Call startMongo() before importing any
+ * module that reads MONGODB_URI, then import route handlers dynamically.
+ * https://bun.com/docs/cli/test
  */
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
-let server: MongoMemoryServer | undefined;
+let server: Promise<MongoMemoryServer> | undefined;
 
 export async function startMongo(): Promise<string> {
-  server = await MongoMemoryServer.create();
-  const uri = server.getUri('resumecanvas-test');
+  if (!server) {
+    server = MongoMemoryServer.create();
+    process.once('beforeExit', async () => {
+      const { default: mongoose } = await import('mongoose');
+      await mongoose.disconnect();
+      await (await server!).stop();
+    });
+  }
+  const uri = (await server).getUri('resumecanvas-test');
   process.env.MONGODB_URI = uri;
   return uri;
 }
 
+/** Leave the server running for the next file; just drop this file's data. */
 export async function stopMongo(): Promise<void> {
   const { default: mongoose } = await import('mongoose');
-  await mongoose.disconnect();
-  await server?.stop();
+  await mongoose.connection.db?.dropDatabase();
 }
 
 let clientCounter = 0;

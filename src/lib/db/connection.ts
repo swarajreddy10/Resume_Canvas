@@ -6,6 +6,9 @@ import { optimizeDatabase } from './optimizer';
 // data can never become a query operator. Code that needs an operator wraps it in
 // mongoose.trusted(). https://mongoosejs.com/docs/api/mongoose.html#Mongoose.prototype.sanitizeFilter()
 mongoose.set('sanitizeFilter', true);
+// Validate updates against the schema too (Mongoose leaves update validators off by
+// default). https://mongoosejs.com/docs/validation.html#update-validators
+mongoose.set('runValidators', true);
 
 interface MongooseCache {
   conn: typeof mongoose | null;
