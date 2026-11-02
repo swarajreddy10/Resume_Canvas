@@ -6,14 +6,7 @@
 interface AppConfig {
   env: 'development' | 'production' | 'test';
   mongodb: {
-    uri: string;
-    options: {
-      maxPoolSize: number;
-      minPoolSize: number;
-      serverSelectionTimeoutMS: number;
-      socketTimeoutMS: number;
-      retryWrites: boolean;
-    };
+    uri: string; // pool and timeout options: connectionOptions() in src/lib/db/connection.ts
   };
   auth: {
     secret: string;
@@ -64,13 +57,6 @@ export const appConfig: AppConfig = {
 
   mongodb: {
     uri: validateEnv('MONGODB_URI'),
-    options: {
-      maxPoolSize: 10,
-      minPoolSize: 2,
-      serverSelectionTimeoutMS: 5000,
-      socketTimeoutMS: 45000,
-      retryWrites: true,
-    },
   },
 
   auth: {

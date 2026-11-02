@@ -1,4 +1,5 @@
 import mongoose, { type ConnectOptions } from 'mongoose';
+import type { MongoClient } from 'mongodb';
 import { appConfig } from '@/lib/config/app.config';
 
 // Treat any `$`-prefixed object inside a query filter as a literal value, so request
@@ -28,12 +29,17 @@ if (!globalThis.mongoose) {
 }
 
 /**
- * Options for the Mongoose connection pool.
+ * Options for the one connection pool each server instance holds.
  *
  * - In production, indexes and collections are built once per deploy by
  *   `bun run db:sync-indexes`, so a cold start sends no createIndexes or create commands.
  *   Development and test keep Mongoose's autoIndex/autoCreate.
  *   https://mongoosejs.com/docs/guide.html#indexes
+ * - Serverless sizing: keep one connection warm and close idle ones after 5 s.
+ *   https://vercel.com/kb/guide/efficiently-manage-database-connection-pools-with-fluid-compute
+ * - serverSelectionTimeoutMS bounds how long connect() waits for a server, so no
+ *   separate timer is raced against it.
+ *   https://www.mongodb.com/docs/drivers/node/current/connect/connection-options/
  */
 export function connectionOptions(
   nodeEnv = process.env.NODE_ENV
@@ -44,8 +50,8 @@ export function connectionOptions(
     autoIndex: buildSchemaObjects,
     autoCreate: buildSchemaObjects,
     maxPoolSize: 20,
-    minPoolSize: 10,
-    maxIdleTimeMS: 15000,
+    minPoolSize: 1,
+    maxIdleTimeMS: 5000,
     serverSelectionTimeoutMS: 3000,
     socketTimeoutMS: 30000,
     connectTimeoutMS: 5000,
@@ -64,12 +70,9 @@ async function connectDB() {
   }
 
   if (!cached.promise) {
-    cached.promise = Promise.race([
-      mongoose.connect(appConfig.mongodb.uri, connectionOptions()),
-      new Promise<typeof mongoose>((_, reject) =>
-        setTimeout(() => reject(new Error('Connection timeout')), 3000)
-      ),
-    ]).catch((err) => {
+    cached.promise = mongoose
+      .connect(appConfig.mongodb.uri, connectionOptions())
+      .catch((err) => {
         cached.promise = null;
         console.error('MongoDB connection failed:', err);
         throw new Error('Database connection failed');
@@ -86,6 +89,15 @@ async function connectDB() {
   }
 
   return cached.conn;
+}
+
+/**
+ * The driver client behind the Mongoose connection. Anything else that needs a raw
+ * MongoClient (the Auth.js MongoDB adapter) takes this one, so each instance holds a
+ * single pool instead of a second MongoClient of its own.
+ */
+export async function getMongoClient(): Promise<MongoClient> {
+  return (await connectDB()).connection.getClient();
 }
 
 export default connectDB;
