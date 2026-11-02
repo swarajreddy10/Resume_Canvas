@@ -289,6 +289,7 @@ bun test             # Unit + performance tests
 bun run test:e2e     # Playwright end-to-end
 bun run verify       # format + lint + type-check
 bun run db:sync-indexes  # make MongoDB indexes match the Mongoose schemas
+bun run db:migrate-slugs # rewrite legacy name/N resume slugs to one URL segment
 ```
 
 ### Database indexes
@@ -298,7 +299,10 @@ Production instances start with `autoIndex` and `autoCreate` off, so a cold star
 index or collection commands; `bun run db:sync-indexes` runs on deploy instead, with
 `MONGODB_URI` pointing at that environment's database. It builds missing indexes, drops
 indexes no schema declares (never `_id_`), and prints both per collection. On Vercel, set
-the production Build Command to `bun run db:sync-indexes && bun run build`;
+the production Build Command to
+`bun run db:sync-indexes && bun run db:migrate-slugs && bun run build` (the slug migration
+is idempotent and rewrites slugs from the old `name/N` format, whose share links never
+resolved);
 `docker compose up` runs it as the one-shot `db-sync-indexes` service before `app`
 starts. Development and tests keep Mongoose's automatic index builds.
 
