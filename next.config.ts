@@ -1,5 +1,26 @@
 import type { NextConfig } from 'next';
 
+const isDev = process.env.NODE_ENV === 'development';
+
+// The Next.js "Without Nonces" policy: nonces would force every page to render
+// dynamically, and Next.js's own inline scripts then need 'unsafe-inline'.
+// https://nextjs.org/docs/app/guides/content-security-policy#without-nonces
+// Development adds 'unsafe-eval' (React's dev error overlay) and the origin that
+// @vercel/analytics and @vercel/speed-insights load their debug scripts from; in
+// production both load from this origin under /_vercel/.
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval' https://va.vercel-scripts.com" : ''}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' blob: data:",
+  "font-src 'self'",
+  "object-src 'none'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "frame-ancestors 'none'",
+  'upgrade-insecure-requests',
+].join('; ');
+
 const nextConfig: NextConfig = {
   // Server external packages to fix react-email warnings
   serverExternalPackages: ['@react-email/render'],
@@ -19,25 +40,6 @@ const nextConfig: NextConfig = {
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
   },
 
-  // Bundle analyzer
-  webpack: (config, { dev, isServer }) => {
-    // Optimize bundle size
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        chunks: 'all',
-        cacheGroups: {
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-          },
-        },
-      };
-    }
-
-    return config;
-  },
-
   // Headers configuration
   async headers() {
     return [
@@ -53,6 +55,10 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: [
+          {
+            key: 'Content-Security-Policy',
+            value: contentSecurityPolicy,
+          },
           {
             key: 'X-Frame-Options',
             value: 'DENY',

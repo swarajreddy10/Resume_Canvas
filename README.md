@@ -204,6 +204,7 @@ const completion = await groq.chat.completions.create({
 - **Password hashing** — bcryptjs, 10 rounds
 - **Rate limiting** — in-process fixed windows behind one store interface (`src/lib/security/rateLimit.ts`), so on Vercel each function instance counts separately. The shared limit across instances needs one Vercel Firewall rule set up in the dashboard (all plans; Hobby allows one): Firewall → Configure → New Rule, *If* Request Path starts with `/api/auth/` **or** equals `/api/user/register`, *Then* Rate Limit, Fixed Window, 60 s, 30 requests (the session endpoint under `/api/auth/` is polled by every open tab), keyed by IP, action 429, then Review Changes → Publish ([docs](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting))
 - **Account enumeration** — sign-in, registration and password reset give the same answer whether or not an account exists
+- **Content-Security-Policy** — same-origin only, set in `next.config.ts` without nonces so pages stay statically rendered
 - **Input sanitization** — XSS prevention on all user-submitted fields
 - **CSRF** — NextAuth built-in protection on all mutations
 - **Environment validation** — `@t3-oss/env-nextjs` with Zod at startup
