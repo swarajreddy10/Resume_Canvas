@@ -126,7 +126,7 @@ describe('list queries are served by an index in sort order', () => {
         resumes.push({
           userEmail,
           title: `R ${i}`,
-          slug: `u${u}/${i}`,
+          slug: `u${u}-${i}`,
           isPublic: i % 3 === 0,
           templateId: 'tech',
         });
