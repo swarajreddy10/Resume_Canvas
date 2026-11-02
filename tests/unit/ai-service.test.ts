@@ -3,7 +3,12 @@
  * queues the model's reply, then checks how the service parses it or falls back.
  */
 import { beforeEach, describe, expect, test } from 'bun:test';
-import { generateBulletPoints, optimizeResume } from '@/services/ai.service';
+import {
+  aiService,
+  generateBulletPoints,
+  generateCoverLetter,
+  optimizeResume,
+} from '@/services/ai.service';
 import {
   failWith,
   groqCreate,
@@ -132,5 +137,63 @@ describe('optimizeResume', () => {
       'teamwork',
       'problem-solving',
     ]);
+  });
+});
+
+describe('generateCoverLetter', () => {
+  const input = {
+    resumeData: { name: 'Jane Smith', skills: ['Go', 'Postgres'] },
+    jobTitle: 'Backend Engineer',
+    companyName: 'Acme',
+  };
+
+  test('returns the model text and sends the job and resume details', async () => {
+    replyWith('Dear Acme team,\n\nI am applying...');
+
+    expect(
+      await generateCoverLetter({ ...input, jobDescription: 'Build APIs' })
+    ).toBe('Dear Acme team,\n\nI am applying...');
+    const prompt = lastPrompt();
+    expect(prompt).toContain('Job Title: Backend Engineer');
+    expect(prompt).toContain('Company: Acme');
+    expect(prompt).toContain('Job Description: Build APIs');
+    expect(prompt).toContain('"name": "Jane Smith"');
+  });
+
+  test('omits the job description line when none is given', async () => {
+    replyWith('Letter');
+
+    await generateCoverLetter(input);
+
+    expect(lastPrompt()).not.toContain('Job Description:');
+  });
+
+  test('returns a failure message when the model returns no content', async () => {
+    groqCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: '' } }],
+    });
+
+    expect(await generateCoverLetter(input)).toBe(
+      'Failed to generate cover letter'
+    );
+  });
+
+  test('rethrows when the API call fails', async () => {
+    failWith('429 Rate limit');
+
+    await expect(generateCoverLetter(input)).rejects.toThrow('429 Rate limit');
+  });
+});
+
+describe('AIService', () => {
+  test('delegates to the module functions', async () => {
+    replyWith('Led A');
+    replyWith('{"overallScore": 80}');
+    replyWith('{"atsScore": 90, "suggestions": [], "keywords": []}');
+
+    expect(await aiService.generateBulletPoints(request)).toEqual(['Led A']);
+    expect((await aiService.analyzeResume({})).overallScore).toBe(80);
+    expect((await aiService.optimizeResume('x')).atsScore).toBe(90);
+    expect(groqCreate).toHaveBeenCalledTimes(3);
   });
 });
