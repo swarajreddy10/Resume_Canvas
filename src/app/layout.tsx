@@ -5,7 +5,6 @@ import '../styles/print.css';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
-import Script from 'next/script';
 
 const jakarta = Plus_Jakarta_Sans({
   variable: '--font-jakarta',
@@ -64,15 +63,6 @@ export default function RootLayout({
         <ErrorBoundary>{children}</ErrorBoundary>
         <Analytics />
         <SpeedInsights />
-        <Script id="register-sw" strategy="afterInteractive">
-          {`
-            if ('serviceWorker' in navigator) {
-              window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js').catch(() => {});
-              });
-            }
-          `}
-        </Script>
       </body>
     </html>
   );
