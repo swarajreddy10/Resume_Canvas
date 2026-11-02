@@ -136,7 +136,7 @@ src/
 
 **Server-side PDF** — Puppeteer runs in a browser pool on the server. Each PDF request acquires a pooled Chromium instance, navigates to the resume's public URL, and captures a PDF — avoiding any client-side jank or font inconsistencies.
 
-**Three-layer validation** — Zod on the client (React Hook Form), Zod again on the API route, and Mongoose schema validation at the database layer.
+**Validation** — Zod on the client (React Hook Form) and on registration, input sanitization on the AI and resume-write routes, and Mongoose schema validation at the database layer.
 
 ---
 
@@ -169,7 +169,7 @@ src/
 | POST | `/api/user/register` | New user registration |
 | GET | `/api/user/stats` | User statistics |
 
-**Rate limits:** 100 req/15 min (API) · 50 req/hr (AI endpoints) · 5 req/15 min (auth)
+**Rate limits:** 50 req/hr per client on every AI endpoint · 5 req/15 min on password reset. Limits are keyed by client IP and held in memory per server instance.
 
 ---
 
@@ -202,8 +202,8 @@ const completion = await groq.chat.completions.create({
 
 - **Authentication** — NextAuth.js v5 with JWT, Google OAuth 2.0 (PKCE), credentials provider
 - **Password hashing** — bcryptjs, 10 rounds
-- **Rate limiting** — middleware-level per route group
-- **Input sanitization** — XSS prevention on all user-submitted fields
+- **Rate limiting** — a `withRateLimit` wrapper on each AI route and on password reset
+- **Input sanitization** — markup and script patterns stripped from AI inputs and resume writes
 - **CSRF** — NextAuth built-in protection on all mutations
 - **Environment validation** — `@t3-oss/env-nextjs` with Zod at startup
 - **Dependency security** — `bun audit` clean (zero vulnerabilities). Patched: Mongoose search injection (→ 9.3.1), Next.js DoS (→ 16.2.0), transitive overrides for `minimatch`, `flatted`, `basic-ftp`
