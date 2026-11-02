@@ -93,8 +93,8 @@ src/
 │   │   ├── career/                # Career recommendations
 │   │   ├── profile/               # Account info + stats
 │   │   └── settings/              # User preferences
-│   ├── api/                       # 32 API routes
-│   │   ├── auth/                  # NextAuth, register, forgot/reset password, email check
+│   ├── api/                       # 30 API routes
+│   │   ├── auth/                  # NextAuth, forgot/reset password
 │   │   ├── resumes/               # CRUD, PDF, ATS score, clone, slug, view tracking
 │   │   ├── ai/                    # Bullets, review, ATS, keywords, cover letter, job match
 │   │   ├── analytics/             # Resume + user + performance analytics

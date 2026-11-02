@@ -5,6 +5,7 @@ import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { MongoClient } from 'mongodb';
 import { appConfig } from '@/lib/config/app.config';
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 
 declare global {
   var _mongoClientPromise: Promise<MongoClient> | undefined;
@@ -29,70 +30,43 @@ if (!hasGoogleConfig) {
   console.warn('Google OAuth not configured - provider will be disabled');
 }
 
+const credentialsSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(255),
+  password: z.string().min(1).max(128),
+});
+
+// bcrypt hash (cost 12, as hashPassword uses) of a random value no one knows. Comparing
+// against it when there is no stored password keeps the work, and so the response time,
+// the same whether or not the account exists.
+const NO_PASSWORD_HASH = '$2b$12$yxuP.kabfYx732/CEX7qReSb/yef1ltpDFP3GOn85IGTUSSYoM6xe';
+
+/**
+ * Every failure returns null, which Auth.js reports as the one generic CredentialsSignin
+ * error, so a response never says whether the email has an account or how it signs in.
+ * https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-and-error-messages
+ */
 export async function authorizeCredentials(
   credentials: Partial<Record<'email' | 'password', unknown>>
 ) {
-  try {
-    if (!credentials?.email || !credentials?.password) {
-      throw new Error('Email and password required');
-    }
+  const parsed = credentialsSchema.safeParse(credentials);
+  if (!parsed.success) return null;
+  const { email, password } = parsed.data;
 
-    if (
-      typeof credentials.email !== 'string' ||
-      typeof credentials.password !== 'string'
-    ) {
-      throw new Error('Invalid credentials format');
-    }
+  const client = await clientPromise;
+  const user = await client
+    .db()
+    .collection('users')
+    .findOne({ email }, { projection: { _id: 1, email: 1, name: 1, password: 1 } });
 
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (
-      !emailRegex.test(credentials.email) ||
-      credentials.email.length > 255
-    ) {
-      throw new Error('Invalid email format');
-    }
+  const storedHash = typeof user?.password === 'string' ? user.password : null;
+  const valid = await bcrypt.compare(password, storedHash ?? NO_PASSWORD_HASH);
+  if (!user || !storedHash || !valid) return null;
 
-    if (
-      credentials.password.length < 8 ||
-      credentials.password.length > 128
-    ) {
-      throw new Error('Invalid password length');
-    }
-
-    const client = await clientPromise;
-    const db = client.db();
-    const user = await db
-      .collection('users')
-      .findOne(
-        { email: credentials.email.toLowerCase() },
-        { projection: { _id: 1, email: 1, name: 1, password: 1 } }
-      );
-
-    if (!user) {
-      throw new Error('No account found with this email');
-    }
-
-    if (!user.password) {
-      throw new Error('Please sign in with Google');
-    }
-
-    const valid = await bcrypt.compare(
-      credentials.password as string,
-      user.password
-    );
-    if (!valid) {
-      throw new Error('Incorrect password');
-    }
-
-    return {
-      id: user._id.toString(),
-      email: user.email as string,
-      name: user.name as string,
-    };
-  } catch (error) {
-    console.error('Auth error:', error);
-    throw error;
-  }
+  return {
+    id: user._id.toString(),
+    email: user.email as string,
+    name: user.name as string,
+  };
 }
 
 export const authConfig: NextAuthConfig = {

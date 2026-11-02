@@ -16,4 +16,8 @@ describe('removed endpoints', () => {
   test('/api/test-db (public, returned raw database error messages) is not served', () => {
     expect(existsSync(join(API_DIR, 'test-db/route.ts'))).toBe(false);
   });
+
+  test('/api/auth/check-email (told anyone whether an account exists, and its sign-in method) is not served', () => {
+    expect(existsSync(join(API_DIR, 'auth/check-email/route.ts'))).toBe(false);
+  });
 });
