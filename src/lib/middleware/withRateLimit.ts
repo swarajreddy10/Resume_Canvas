@@ -3,12 +3,14 @@ import { RateLimiter } from '@/lib/security/rateLimit';
 
 export function withRateLimit(rateLimiter: RateLimiter) {
   return function <
+    // `never[]` accepts any trailing parameters (such as an optional route context),
+    // which `unknown[]` rejects under strict function types.
     T extends (
       request: NextRequest,
-      ...args: unknown[]
+      ...args: never[]
     ) => Promise<NextResponse>,
   >(handler: T): T {
-    return (async (request: NextRequest, ...args: unknown[]) => {
+    return (async (request: NextRequest, ...args: never[]) => {
       const result = await rateLimiter.checkLimit(request);
 
       if (!result.success) {

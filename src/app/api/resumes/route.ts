@@ -1,98 +1,39 @@
-import { auth } from '@/lib/auth/config';
 import connectDB from '@/lib/db/connection';
 import { Resume } from '@/lib/db/models/Resume';
-import { UserCounter } from '@/lib/db/models/UserCounter';
-import { sanitizeResumeData } from '@/lib/security/sanitize';
-import { generateUserSlug } from '@/lib/utils/slug';
-import { ultraCache } from '@/lib/cache/ultra-cache';
 import { optimizedQueries } from '@/lib/db/optimizer';
-import { NextRequest, NextResponse } from 'next/server';
+import { withAuth } from '@/lib/middleware/withAuth';
+import { editableResumeFields, nextResumeSlug } from '@/lib/resume/ownership';
+import { mapWriteError } from '@/lib/resume/errors';
+import { NextResponse } from 'next/server';
 
-export async function GET() {
+// No response cache: the indexed read examines only the owner's documents
+// (25 of 50,000 in a local benchmark, about 2 ms p50), and a per-instance cache
+// served stale lists after every write.
+export const GET = withAuth(async (_request, { session }) => {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const cacheKey = `resumes:${session.user.email}`;
-    const cached = ultraCache.get(cacheKey);
-    if (cached) {
-      return NextResponse.json(
-        { resumes: cached },
-        {
-          headers: {
-            'Cache-Control': 'public, max-age=60',
-            'X-Cache': 'HIT',
-          },
-        }
-      );
-    }
-
     await connectDB();
-    const [query, projection] = optimizedQueries.getUserResumes(
-      session.user.email
-    );
-    const resumes = await Resume.find(query, projection)
-      .sort({ updatedAt: -1 })
-      .lean();
-
-    ultraCache.set(cacheKey, resumes, 60000); // 1 min cache
-    return NextResponse.json(
-      { resumes },
-      {
-        headers: {
-          'Cache-Control': 'public, max-age=60',
-          'X-Cache': 'MISS',
-        },
-      }
-    );
+    const [query, projection] = optimizedQueries.getUserResumes(session.user.email);
+    const resumes = await Resume.find(query, projection).sort({ updatedAt: -1 }).lean();
+    return NextResponse.json({ resumes });
   } catch (error) {
-    console.error(
-      JSON.stringify({ level: 'error', msg: 'Failed to fetch resumes', error })
-    );
-    return NextResponse.json(
-      { error: 'Failed to fetch resumes' },
-      { status: 500 }
-    );
+    console.error('Failed to fetch resumes:', error);
+    return NextResponse.json({ error: 'Failed to fetch resumes' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, { session }) => {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = sanitizeResumeData(await request.json());
+    const fields = editableResumeFields(await request.json().catch(() => null));
     await connectDB();
 
-    const userName = generateUserSlug(session.user.name || session.user.email);
-
-    const counter = await UserCounter.findOneAndUpdate(
-      { userEmail: session.user.email },
-      { $inc: { resumeCount: 1 } },
-      { upsert: true, new: true }
-    );
-
-    const slug = `${userName}/${counter.resumeCount}`;
-
-    const resume = new Resume({
-      ...body,
-      slug,
+    const resume = await Resume.create({
+      ...fields,
+      slug: await nextResumeSlug(session.user.email, session.user.name || session.user.email),
       userEmail: session.user.email,
     });
-    const saved = await resume.save();
 
-    return NextResponse.json({ resume: saved });
+    return NextResponse.json({ resume });
   } catch (error) {
-    console.error(
-      JSON.stringify({ level: 'error', msg: 'Failed to create resume', error })
-    );
-    return NextResponse.json(
-      { error: 'Failed to create resume' },
-      { status: 500 }
-    );
+    return mapWriteError(error, 'Failed to create resume');
   }
-}
+});
