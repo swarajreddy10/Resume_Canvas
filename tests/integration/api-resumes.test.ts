@@ -174,9 +174,9 @@ describe('Resume API - Rate Limiting', () => {
 });
 
 describe('Resume API - Error Handling', () => {
-  test('handles non-existent endpoints', async () => {
+  test('an anonymous request to an unknown API path is refused before routing', async () => {
     const response = await fetch(`${BASE_URL}/api/nonexistent`);
-    expect(response.status).toBe(404);
+    expect(response.status).toBe(401);
   }, 10000);
 
   test('returns proper content-type headers', async () => {
