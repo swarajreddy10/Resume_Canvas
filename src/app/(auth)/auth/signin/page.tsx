@@ -164,11 +164,17 @@ function SignInContent() {
         // One message for every failure: the server never says whether the email has
         // an account or which sign-in method it uses.
         setSuccess('');
-        setError(
-          isSignUp
-            ? 'We could not sign you in. If this email already has an account, sign in with its password or Google, or reset the password.'
-            : 'Sign in failed. Please check your credentials.'
-        );
+        if (result.code === 'rate_limited') {
+          setError(
+            'Too many sign-in attempts. Please wait a few minutes, or reset your password.'
+          );
+        } else {
+          setError(
+            isSignUp
+              ? 'We could not sign you in. If this email already has an account, sign in with its password or Google, or reset the password.'
+              : 'Sign in failed. Please check your credentials.'
+          );
+        }
         setLoading(false);
         return;
       }
