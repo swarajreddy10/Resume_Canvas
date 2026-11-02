@@ -150,8 +150,8 @@ src/
 | POST | `/api/resumes/[id]/clone` | Duplicate resume |
 | GET | `/api/resumes/[id]/pdf` | Generate and download PDF |
 | POST | `/api/resumes/[id]/ats-score` | Run ATS analysis |
-| POST | `/api/resumes/[id]/view` | Increment view count |
 | GET | `/api/resumes/slug/[slug]` | Resolve resume by slug |
+| GET | `/api/resume/public/[id]`, `/api/resume/public/slug/[slug]` | Published resume for the public page; counts one view per read |
 | POST | `/api/ai/generate-bullets` | AI bullet point generation |
 | POST | `/api/ai/review-resume` | Full resume review |
 | POST | `/api/ai/optimize` | ATS keyword optimization |
