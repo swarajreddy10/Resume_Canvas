@@ -2,8 +2,6 @@ import type { Metadata, Viewport } from 'next';
 import { Plus_Jakarta_Sans, Geist_Mono } from 'next/font/google';
 import './globals.css';
 import '../styles/print.css';
-import { SessionProvider } from '@/components/providers/SessionProvider';
-import { QueryProvider } from '@/components/providers/QueryProvider';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Analytics } from '@vercel/analytics/next';
 import { SpeedInsights } from '@vercel/speed-insights/next';
@@ -63,11 +61,7 @@ export default function RootLayout({
             "var(--font-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif",
         }}
       >
-        <ErrorBoundary>
-          <QueryProvider>
-            <SessionProvider>{children}</SessionProvider>
-          </QueryProvider>
-        </ErrorBoundary>
+        <ErrorBoundary>{children}</ErrorBoundary>
         <Analytics />
         <SpeedInsights />
         <Script id="register-sw" strategy="afterInteractive">
