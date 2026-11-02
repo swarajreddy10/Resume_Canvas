@@ -180,6 +180,32 @@ describe('connection', () => {
       autoCreate: true,
     });
   });
+
+  test('connecting to an unreachable server fails within serverSelectionTimeoutMS', async () => {
+    const { connectionOptions } = await import('@/lib/db/connection');
+    const { default: mongoose } = await import('mongoose');
+    const options = connectionOptions('production');
+    const conn = mongoose.createConnection('mongodb://127.0.0.1:1/x', options);
+    const started = Date.now();
+    await expect(conn.asPromise()).rejects.toThrow();
+    const elapsed = Date.now() - started;
+    await conn.close();
+    expect(elapsed).toBeLessThan(options.serverSelectionTimeoutMS! + 1500);
+  }, 10_000);
+
+  test('pool is sized for serverless: one warm connection, idle ones close quickly', async () => {
+    const { connectionOptions } = await import('@/lib/db/connection');
+    const o = connectionOptions('production');
+    expect(o.minPoolSize).toBe(1);
+    expect(o.maxIdleTimeMS).toBeGreaterThan(0);
+    expect(o.maxIdleTimeMS).toBeLessThanOrEqual(5000);
+  });
+
+  test('getMongoClient() is the client Mongoose already holds (one pool per instance)', async () => {
+    const { getMongoClient } = await import('@/lib/db/connection');
+    const { default: mongoose } = await import('mongoose');
+    expect(await getMongoClient()).toBe(mongoose.connection.getClient());
+  });
 });
 
 describe('scripts/sync-indexes', () => {
