@@ -1,48 +1,32 @@
 import { NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
 import connectDB from '@/lib/db/connection';
 import { Resume } from '@/lib/db/models/Resume';
-import { resumeCache } from '@/lib/cache/memory-cache';
+import { withAuth } from '@/lib/middleware/withAuth';
 
-export async function GET() {
+// Counted in MongoDB (one round trip on the userEmail index, one document back) and
+// never cached: a per-instance cache showed counts up to five minutes old.
+export const GET = withAuth(async (_request, { session }) => {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const cacheKey = `stats:${session.user.email}`;
-    const cached = resumeCache.get(cacheKey);
-    if (cached) {
-      return NextResponse.json(cached, {
-        headers: { 'Cache-Control': 'public, max-age=300' },
-      });
-    }
-
     await connectDB();
-    const resumes = await Resume.find(
-      { userEmail: session.user.email },
-      'viewCount isPublic'
-    ).lean();
-
-    const stats = {
-      resumeCount: resumes.length,
-      totalViews: resumes.reduce(
-        (sum, resume) => sum + (resume.viewCount || 0),
-        0
-      ),
-      publicResumes: resumes.filter((resume) => resume.isPublic).length,
-    };
-
-    resumeCache.set(cacheKey, stats, 300000); // 5 min cache
-    return NextResponse.json(stats, {
-      headers: { 'Cache-Control': 'public, max-age=300' },
-    });
+    const [stats] = await Resume.aggregate<{
+      resumeCount: number;
+      totalViews: number;
+      publicResumes: number;
+    }>([
+      { $match: { userEmail: session.user.email } },
+      {
+        $group: {
+          _id: null,
+          resumeCount: { $sum: 1 },
+          totalViews: { $sum: '$viewCount' },
+          publicResumes: { $sum: { $cond: ['$isPublic', 1, 0] } },
+        },
+      },
+      { $project: { _id: 0 } },
+    ]);
+    return NextResponse.json(stats ?? { resumeCount: 0, totalViews: 0, publicResumes: 0 });
   } catch (error) {
-    console.error('Error fetching user stats:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch stats' },
-      { status: 500 }
-    );
+    console.error('Failed to fetch user stats:', error);
+    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
   }
-}
+});
