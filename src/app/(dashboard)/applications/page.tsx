@@ -24,22 +24,20 @@ export default function ApplicationsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchApplications();
-  }, []);
-
-  const fetchApplications = async () => {
-    try {
-      const response = await fetch('/api/applications');
-      if (response.ok) {
-        const data = await response.json();
-        setApplications(data.applications);
+    (async () => {
+      try {
+        const response = await fetch('/api/applications');
+        if (response.ok) {
+          const data = await response.json();
+          setApplications(data.applications);
+        }
+      } catch (error) {
+        console.error('Failed to fetch applications:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch applications:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    })();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {
