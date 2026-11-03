@@ -37,6 +37,7 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+  --color-rc-muted: var(--rc-text-2);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -57,7 +58,10 @@
   --rc-border-hover: #c7d2fe; /* indigo-200  */
   --rc-accent: #818cf8; /* indigo-400  */
   --rc-text: #11101d; /* near-black  */
-  --rc-text-2: #64748b; /* slate-500   */
+  /* Muted body text (`text-rc-muted`). #64748b measured 4.33:1 on --rc-surface; this value
+     keeps at least 4.5:1 (WCAG 2.2 SC 1.4.3) on every light surface used: white 5.44,
+     #f8fafc 5.20, --rc-surface 4.96, --rc-surface-alt 4.87. */
+  --rc-text-2: #5b6b80;
 
   /* shadcn tokens — remapped to indigo */
   --background: oklch(0.988 0.006 280);
@@ -214,4 +218,43 @@
   50% {
     background-position: 100% 50%;
   }
+}
+
+/* ============================================================
+   LANDING MOTION (CSS only; no animation library on first load)
+   ============================================================ */
+
+/* Floating hero badges. Runs only when the user has not asked for reduced motion, and
+   stops when the hero's "Pause animations" control sets data-motion-paused (WCAG 2.2.2). */
+@keyframes rc-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(var(--rc-float-y, -6px));
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .rc-float {
+    animation: rc-float var(--rc-float-duration, 4s) ease-in-out infinite;
+    animation-delay: var(--rc-float-delay, 0s);
+  }
+}
+[data-motion-paused] .rc-float {
+  animation-play-state: paused;
+}
+
+/* Scroll reveal (src/components/landing/Reveal.tsx). The server sends content visible; the
+   client hides only elements that start below the viewport, then fades them in on entry. */
+[data-reveal='pending'] {
+  opacity: 0;
+  transform: translateY(24px);
+}
+[data-reveal='shown'] {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.6s ease,
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
