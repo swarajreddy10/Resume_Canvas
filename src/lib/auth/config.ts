@@ -1,24 +1,14 @@
-import NextAuth from 'next-auth';
+import NextAuth, { CredentialsSignin, type NextAuthConfig } from 'next-auth';
 import Google from 'next-auth/providers/google';
 import Credentials from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
-import { MongoClient } from 'mongodb';
 import { appConfig } from '@/lib/config/app.config';
 import bcrypt from 'bcryptjs';
-
-declare global {
-  var _mongoClientPromise: Promise<MongoClient> | undefined;
-}
-
-if (!global._mongoClientPromise) {
-  const client = new MongoClient(appConfig.mongodb.uri, {
-    maxPoolSize: 5,
-    minPoolSize: 1,
-  });
-  global._mongoClientPromise = client.connect();
-}
-
-const clientPromise = global._mongoClientPromise as Promise<MongoClient>;
+import { z } from 'zod';
+import { authAttemptKey, authRateLimit } from '@/lib/security/rateLimit';
+// Auth.js uses the same MongoClient (and pool) as Mongoose, so each server instance holds
+// one connection pool. The adapter accepts a client factory and never closes it.
+import { getMongoClient } from '@/lib/db/connection';
 
 const hasGoogleConfig =
   appConfig.auth.google.clientId &&
@@ -29,8 +19,62 @@ if (!hasGoogleConfig) {
   console.warn('Google OAuth not configured - provider will be disabled');
 }
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
-  adapter: MongoDBAdapter(clientPromise),
+const credentialsSchema = z.object({
+  email: z.string().trim().toLowerCase().email().max(255),
+  password: z.string().min(1).max(128),
+});
+
+// bcrypt hash (cost 12, as hashPassword uses) of a random value no one knows. Comparing
+// against it when there is no stored password keeps the work, and so the response time,
+// the same whether or not the account exists.
+const NO_PASSWORD_HASH = '$2b$12$yxuP.kabfYx732/CEX7qReSb/yef1ltpDFP3GOn85IGTUSSYoM6xe';
+
+// Auth.js puts `code` in the sign-in error URL; this one says only that the client is
+// being slowed down, which is true whether or not the account exists.
+class RateLimitedSignIn extends CredentialsSignin {
+  code = 'rate_limited';
+}
+
+/**
+ * Every failure returns null, which Auth.js reports as the one generic CredentialsSignin
+ * error, so a response never says whether the email has an account or how it signs in.
+ * https://cheatsheetseries.owasp.org/cheatsheets/Authentication_Cheat_Sheet.html#authentication-and-error-messages
+ * Attempts are limited per client IP and email like every other auth endpoint; Auth.js
+ * passes the incoming request's headers as the second argument.
+ */
+export async function authorizeCredentials(
+  credentials: Partial<Record<'email' | 'password', unknown>>,
+  request: Request
+) {
+  const limit = await authRateLimit.check(
+    authAttemptKey('signin', request, credentials?.email),
+    request
+  );
+  if (!limit.success) throw new RateLimitedSignIn();
+
+  const parsed = credentialsSchema.safeParse(credentials);
+  if (!parsed.success) return null;
+  const { email, password } = parsed.data;
+
+  const client = await getMongoClient();
+  const user = await client
+    .db()
+    .collection('users')
+    .findOne({ email }, { projection: { _id: 1, email: 1, name: 1, password: 1 } });
+
+  const storedHash = typeof user?.password === 'string' ? user.password : null;
+  const valid = await bcrypt.compare(password, storedHash ?? NO_PASSWORD_HASH);
+  if (!user || !storedHash || !valid) return null;
+
+  return {
+    id: user._id.toString(),
+    email: user.email as string,
+    name: user.name as string,
+  };
+}
+
+export const authConfig: NextAuthConfig = {
+  adapter: MongoDBAdapter(getMongoClient),
   providers: [
     ...(hasGoogleConfig
       ? [
@@ -55,69 +99,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: 'Password', type: 'password' },
         name: { label: 'Name', type: 'text' },
       },
-      async authorize(credentials) {
-        try {
-          if (!credentials?.email || !credentials?.password) {
-            throw new Error('Email and password required');
-          }
-
-          if (
-            typeof credentials.email !== 'string' ||
-            typeof credentials.password !== 'string'
-          ) {
-            throw new Error('Invalid credentials format');
-          }
-
-          const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          if (
-            !emailRegex.test(credentials.email) ||
-            credentials.email.length > 255
-          ) {
-            throw new Error('Invalid email format');
-          }
-
-          if (
-            credentials.password.length < 8 ||
-            credentials.password.length > 128
-          ) {
-            throw new Error('Invalid password length');
-          }
-
-          const client = await clientPromise;
-          const db = client.db();
-          const user = await db
-            .collection('users')
-            .findOne(
-              { email: credentials.email.toLowerCase() },
-              { projection: { _id: 1, email: 1, name: 1, password: 1 } }
-            );
-
-          if (!user) {
-            throw new Error('No account found with this email');
-          }
-
-          if (!user.password) {
-            throw new Error('Please sign in with Google');
-          }
-
-          const valid = await bcrypt.compare(
-            credentials.password as string,
-            user.password
-          );
-          if (!valid) {
-            throw new Error('Incorrect password');
-          }
-
-          return {
-            id: user._id.toString(),
-            email: user.email as string,
-            name: user.name as string,
-          };
-        } catch (error) {
-          console.error('Auth error:', error);
-          throw error;
-        }
-      },
+      authorize: authorizeCredentials,
     }),
   ],
   pages: {
@@ -171,32 +153,31 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     },
   },
   callbacks: {
-    async signIn({ user, account }) {
-      try {
-        // Always allow sign in - handle errors gracefully
-        if (account?.provider === 'google') {
-          const client = await clientPromise;
-          const db = client.db();
-
-          const existingUser = await db
-            .collection('users')
-            .findOne({ email: user.email?.toLowerCase() });
-
-          if (existingUser && !existingUser.emailVerified) {
-            await db
-              .collection('users')
-              .updateOne(
-                { email: user.email?.toLowerCase() },
-                { $set: { emailVerified: new Date() } }
-              );
-          }
-        }
-        return true;
-      } catch (error) {
-        console.error('SignIn callback error:', error);
-        // Still allow sign in even if DB update fails
-        return true;
+    // Google sign-in links to an existing user with the same email
+    // (allowDangerousEmailAccountLinking), which Auth.js supports only when the provider
+    // "has securely verified the email address" (authjs.dev/reference/core/providers).
+    // Google reports that as `email_verified`, so an unverified profile is refused.
+    // Registration never verifies an email, so a password on an unverified account may
+    // have been set by someone who registered the address first; the Google sign-in is
+    // the first proof of ownership, so that password is removed in the same write that
+    // records the verification. The owner can set a new one through forgot-password.
+    // A failed write throws, which Auth.js turns into AccessDenied: linking must never
+    // proceed with the unproven password still valid.
+    async signIn({ account, profile }) {
+      if (account?.provider !== 'google') return true;
+      if (profile?.email_verified !== true || typeof profile.email !== 'string') {
+        return false;
       }
+
+      const client = await getMongoClient();
+      await client
+        .db()
+        .collection('users')
+        .updateOne(
+          { email: profile.email.toLowerCase(), emailVerified: null },
+          { $set: { emailVerified: new Date() }, $unset: { password: '' } }
+        );
+      return true;
     },
     async jwt({ token, user, account, trigger, session }) {
       if (user) {
@@ -241,6 +222,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return `${baseUrl}/dashboard`;
     },
   },
+  events: {
+    // Auth.js creates a user from an OAuth profile with emailVerified: null. Record the
+    // Google verification at link time, so a password the owner sets later through
+    // forgot-password is not removed by their next Google sign-in.
+    async linkAccount({ user, account }) {
+      if (account.provider !== 'google' || !user.email) return;
+      const client = await getMongoClient();
+      await client
+        .db()
+        .collection('users')
+        .updateOne(
+          { email: user.email.toLowerCase(), emailVerified: null },
+          { $set: { emailVerified: new Date() } }
+        );
+    },
+  },
   debug: false,
   trustHost: true,
-});
+};
+
+export const { handlers, auth, signIn, signOut } = NextAuth(authConfig);

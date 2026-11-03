@@ -1,0 +1,7 @@
+{
+  "*.{js,jsx,mjs,ts,tsx}": [
+    "bun eslint --max-warnings=0 --fix",
+    "bun prettier --write --config config/.prettierrc"
+  ],
+  "*.{json,md,yml,yaml}": ["bun prettier --write --config config/.prettierrc"]
+}
