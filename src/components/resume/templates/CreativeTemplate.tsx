@@ -1,4 +1,9 @@
+import type { CSSProperties } from 'react';
 import { ResumeData } from '@/types/resume.unified';
+import BulletList from './BulletList';
+import DateColumn from './DateColumn';
+import EntrySection from './EntrySection';
+import TextSection from './TextSection';
 
 interface CreativeTemplateProps {
   data: ResumeData;
@@ -10,6 +15,9 @@ const PURPLE = '#9333ea';
 const SIDEBAR_BG = '#fdf2f8';
 
 const STAR_RATINGS = [5, 5, 4, 5, 4, 3, 5, 4];
+
+// Experience and education entries: the date column, then the entry's content.
+const ENTRY_ROW: CSSProperties = { display: 'flex', gap: '12px' };
 
 function getInitials(name: string): string {
   return name
@@ -205,178 +213,128 @@ export default function CreativeTemplate({ data }: CreativeTemplateProps) {
           }}
         >
           {/* Profile */}
-          {personalInfo?.summary && (
-            <div style={{ marginBottom: '24px' }}>
-              <MainSectionHeader title="Profile" />
-              <p
-                style={{
-                  fontSize: '12px',
-                  color: '#374151',
-                  lineHeight: '1.7',
-                  margin: 0,
-                }}
-              >
-                {personalInfo.summary}
-              </p>
-            </div>
-          )}
+          <TextSection
+            text={personalInfo?.summary}
+            heading={<MainSectionHeader title="Profile" />}
+            marginBottom="24px"
+            textStyle={{
+              fontSize: '12px',
+              color: '#374151',
+              lineHeight: '1.7',
+              margin: 0,
+            }}
+          />
 
           {/* Employment History */}
-          {experience && experience.length > 0 && (
-            <div style={{ marginBottom: '24px' }}>
-              <MainSectionHeader title="Employment History" />
-              {experience.map((exp, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    gap: '12px',
-                    marginBottom: i < experience.length - 1 ? '18px' : 0,
-                  }}
-                >
-                  {/* Date column */}
+          <EntrySection
+            items={experience}
+            heading={<MainSectionHeader title="Employment History" />}
+            marginBottom="24px"
+            itemGap="18px"
+            itemStyle={ENTRY_ROW}
+          >
+            {(exp) => (
+              <>
+                <DateColumn width="70px" color="#9ca3af" lineHeight={1.45}>
+                  {exp.startDate}–
+                  <br />
+                  {exp.endDate}
+                </DateColumn>
+                {/* Content */}
+                <div style={{ flex: 1 }}>
                   <div
                     style={{
-                      width: '70px',
-                      flexShrink: 0,
-                      textAlign: 'right' as const,
-                      fontSize: '10px',
-                      color: '#9ca3af',
-                      fontStyle: 'italic',
-                      paddingTop: '2px',
-                      lineHeight: 1.45,
+                      fontSize: '13px',
+                      fontWeight: 700,
+                      color: '#0f172a',
+                      lineHeight: 1.2,
+                      marginBottom: '1px',
                     }}
                   >
-                    {exp.startDate}–
-                    <br />
-                    {exp.endDate}
+                    {exp.position}
                   </div>
-                  {/* Content */}
-                  <div style={{ flex: 1 }}>
+                  <div
+                    style={{
+                      fontSize: '11.5px',
+                      fontWeight: 700,
+                      color: PINK,
+                      marginBottom: '2px',
+                    }}
+                  >
+                    {exp.company}
+                  </div>
+                  {exp.location && (
                     <div
                       style={{
-                        fontSize: '13px',
-                        fontWeight: 700,
-                        color: '#0f172a',
-                        lineHeight: 1.2,
-                        marginBottom: '1px',
+                        fontSize: '10px',
+                        color: '#9ca3af',
+                        marginBottom: '5px',
                       }}
                     >
-                      {exp.position}
+                      {exp.location}
                     </div>
-                    <div
-                      style={{
-                        fontSize: '11.5px',
-                        fontWeight: 700,
-                        color: PINK,
-                        marginBottom: '2px',
-                      }}
-                    >
-                      {exp.company}
-                    </div>
-                    {exp.location && (
-                      <div
-                        style={{
-                          fontSize: '10px',
-                          color: '#9ca3af',
-                          marginBottom: '5px',
-                        }}
-                      >
-                        {exp.location}
-                      </div>
-                    )}
-                    {exp.bullets && exp.bullets.length > 0 && (
-                      <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                        {exp.bullets.map((b, j) => (
-                          <li
-                            key={j}
-                            style={{
-                              display: 'flex',
-                              gap: '6px',
-                              fontSize: '11px',
-                              color: '#374151',
-                              lineHeight: '1.6',
-                              marginBottom: '3px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                color: PINK,
-                                fontWeight: 700,
-                                flexShrink: 0,
-                              }}
-                            >
-                              →
-                            </span>
-                            <span>{b}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
+                  )}
+                  <BulletList
+                    bullets={exp.bullets}
+                    look={{
+                      symbol: '→',
+                      marker: { color: PINK, fontWeight: 700 },
+                      item: {
+                        gap: '6px',
+                        fontSize: '11px',
+                        color: '#374151',
+                        lineHeight: '1.6',
+                        marginBottom: '3px',
+                      },
+                    }}
+                  />
                 </div>
-              ))}
-            </div>
-          )}
+              </>
+            )}
+          </EntrySection>
 
           {/* Education */}
-          {education && education.length > 0 && (
-            <div style={{ marginBottom: '24px' }}>
-              <MainSectionHeader title="Education" />
-              {education.map((edu, i) => (
-                <div
-                  key={i}
-                  style={{
-                    display: 'flex',
-                    gap: '12px',
-                    marginBottom: i < education.length - 1 ? '14px' : 0,
-                  }}
-                >
-                  {/* Date column */}
+          <EntrySection
+            items={education}
+            heading={<MainSectionHeader title="Education" />}
+            marginBottom="24px"
+            itemGap="14px"
+            itemStyle={ENTRY_ROW}
+          >
+            {(edu) => (
+              <>
+                <DateColumn width="70px" color="#9ca3af" lineHeight={1.45}>
+                  {edu.startDate}–{edu.endDate}
+                </DateColumn>
+                <div style={{ flex: 1 }}>
                   <div
                     style={{
-                      width: '70px',
-                      flexShrink: 0,
-                      textAlign: 'right' as const,
-                      fontSize: '10px',
-                      color: '#9ca3af',
-                      fontStyle: 'italic',
-                      paddingTop: '2px',
-                      lineHeight: 1.45,
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      color: '#0f172a',
                     }}
                   >
-                    {edu.startDate}–{edu.endDate}
+                    {edu.degree} in {edu.field}
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div
-                      style={{
-                        fontSize: '12px',
-                        fontWeight: 700,
-                        color: '#0f172a',
-                      }}
-                    >
-                      {edu.degree} in {edu.field}
-                    </div>
-                    <div
-                      style={{
-                        fontSize: '11px',
-                        color: PINK,
-                        fontWeight: 600,
-                      }}
-                    >
-                      {edu.school}
-                      {edu.location ? `, ${edu.location}` : ''}
-                    </div>
-                    {edu.gpa && (
-                      <div style={{ fontSize: '10.5px', color: '#9ca3af' }}>
-                        GPA: {edu.gpa}
-                      </div>
-                    )}
+                  <div
+                    style={{
+                      fontSize: '11px',
+                      color: PINK,
+                      fontWeight: 600,
+                    }}
+                  >
+                    {edu.school}
+                    {edu.location ? `, ${edu.location}` : ''}
                   </div>
+                  {edu.gpa && (
+                    <div style={{ fontSize: '10.5px', color: '#9ca3af' }}>
+                      GPA: {edu.gpa}
+                    </div>
+                  )}
                 </div>
-              ))}
-            </div>
-          )}
+              </>
+            )}
+          </EntrySection>
         </div>
 
         {/* RIGHT SIDEBAR */}
