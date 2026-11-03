@@ -1,102 +1,118 @@
-export interface RateLimitConfig {
+/**
+ * Fixed-window rate limiting behind one store interface.
+ *
+ * The only store today is in memory, so on Vercel every function instance counts on its
+ * own and a client spread across instances gets more than the limit. Vercel's shared
+ * limiter (@vercel/firewall checkRateLimit) needs a rule created in the project's
+ * Firewall dashboard first, so it cannot be switched on from code: the edge rule the
+ * owner configures there is the cross-instance limit, and these in-process counts are
+ * the per-account layer under it.
+ * https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting-sdk
+ *
+ * A Firewall-backed store implements RateLimitStore by calling
+ * checkRateLimit(rule.id, { request, rateLimitKey: key }); nothing else changes.
+ */
+import { appConfig } from '@/lib/config/app.config';
+
+export interface RateLimitRule {
+  /** Names the counter; for a Vercel Firewall store, the rule's Rate limit ID. */
+  id: string;
   windowMs: number;
   maxRequests: number;
 }
 
-interface RateLimitStore {
-  [key: string]: {
-    count: number;
-    resetTime: number;
-  };
+export interface RateLimitResult {
+  success: boolean;
+  remaining: number;
+  resetTime: number;
 }
 
-export class RateLimiter {
-  private store: RateLimitStore = {};
-  private maxStoreSize = 10000;
-  public readonly config: RateLimitConfig;
-  private cleanupInterval: NodeJS.Timeout;
+export interface RateLimitStore {
+  hit(rule: RateLimitRule, key: string, request: Request): Promise<RateLimitResult>;
+}
 
-  constructor(config: RateLimitConfig) {
-    this.config = config;
-    this.cleanupInterval = setInterval(() => this.cleanup(), 60000);
-  }
+/** Per-process counters. Keys whose window has ended are dropped when the map is full. */
+export class MemoryRateLimitStore implements RateLimitStore {
+  private readonly windows = new Map<string, { count: number; resetTime: number }>();
 
-  private cleanup(): void {
+  constructor(private readonly maxKeys = 10_000) {}
+
+  async hit(rule: RateLimitRule, key: string): Promise<RateLimitResult> {
     const now = Date.now();
-    const keys = Object.keys(this.store);
+    const id = `${rule.id}:${key}`;
+    let window = this.windows.get(id);
 
-    for (const key of keys) {
-      if (this.store[key].resetTime < now) {
-        delete this.store[key];
-      }
+    if (!window || window.resetTime <= now) {
+      this.windows.delete(id);
+      this.makeRoom(now);
+      window = { count: 0, resetTime: now + rule.windowMs };
+      this.windows.set(id, window);
     }
 
-    if (keys.length > this.maxStoreSize) {
-      const sortedKeys = keys.sort(
-        (a, b) => this.store[a].resetTime - this.store[b].resetTime
-      );
-      const toDelete = sortedKeys.slice(0, keys.length - this.maxStoreSize);
-      toDelete.forEach((key) => delete this.store[key]);
-    }
-  }
-
-  private getIdentifier(request: Request): string {
-    return (
-      request.headers.get('x-forwarded-for') ||
-      request.headers.get('x-real-ip') ||
-      'unknown'
-    );
-  }
-
-  async checkLimit(
-    request: Request | string
-  ): Promise<{ success: boolean; remaining: number; resetTime: number }> {
-    const identifier =
-      typeof request === 'string' ? request : this.getIdentifier(request);
-    const now = Date.now();
-
-    Object.keys(this.store).forEach((key) => {
-      if (this.store[key].resetTime < now) {
-        delete this.store[key];
-      }
-    });
-
-    if (!this.store[identifier] || this.store[identifier].resetTime < now) {
-      this.store[identifier] = {
-        count: 0,
-        resetTime: now + this.config.windowMs,
-      };
+    if (window.count >= rule.maxRequests) {
+      return { success: false, remaining: 0, resetTime: window.resetTime };
     }
 
-    const entry = this.store[identifier];
-
-    if (entry.count >= this.config.maxRequests) {
-      return {
-        success: false,
-        remaining: 0,
-        resetTime: entry.resetTime,
-      };
-    }
-
-    entry.count++;
-
+    window.count += 1;
     return {
       success: true,
-      remaining: this.config.maxRequests - entry.count,
-      resetTime: entry.resetTime,
+      remaining: rule.maxRequests - window.count,
+      resetTime: window.resetTime,
     };
   }
 
-  destroy(): void {
-    clearInterval(this.cleanupInterval);
-    this.store = {};
+  private makeRoom(now: number): void {
+    if (this.windows.size < this.maxKeys) return;
+    for (const [id, window] of this.windows) {
+      if (window.resetTime <= now) this.windows.delete(id);
+    }
+    // Still full of live windows: drop the oldest (a Map iterates in insertion order).
+    for (const id of this.windows.keys()) {
+      if (this.windows.size < this.maxKeys) break;
+      this.windows.delete(id);
+    }
   }
 }
 
-import { appConfig } from '@/lib/config/app.config';
+const memoryStore = new MemoryRateLimitStore();
 
-export const apiRateLimit = new RateLimiter(appConfig.security.rateLimits.api);
-export const aiRateLimit = new RateLimiter(appConfig.security.rateLimits.ai);
-export const authRateLimit = new RateLimiter(
-  appConfig.security.rateLimits.auth
-);
+export class RateLimiter {
+  constructor(
+    public readonly rule: RateLimitRule,
+    private readonly store: RateLimitStore = memoryStore
+  ) {}
+
+  check(key: string, request: Request): Promise<RateLimitResult> {
+    return this.store.hit(this.rule, key, request);
+  }
+}
+
+/**
+ * The client address. On Vercel, x-forwarded-for is overwritten with the client's
+ * public IP, so a client cannot spoof it; x-real-ip is identical.
+ * https://vercel.com/docs/headers/request-headers#x-forwarded-for
+ */
+export function clientIp(request: Request): string {
+  const forwarded = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim();
+  return forwarded || request.headers.get('x-real-ip')?.trim() || 'unknown';
+}
+
+/** A signed-in user is counted as themselves wherever they connect from. */
+export function userOrIpKey(request: Request, userEmail?: string | null): string {
+  return userEmail ? `user:${userEmail.toLowerCase()}` : `ip:${clientIp(request)}`;
+}
+
+/**
+ * Auth endpoints count per client IP and email together, so one client cannot hammer
+ * one account, and a client cannot lock the owner out from the owner's own address.
+ * The IP never contains '|', so the key cannot be forged by an email that does.
+ */
+export function authAttemptKey(scope: string, request: Request, email?: unknown): string {
+  const account = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  return `${scope}:${clientIp(request)}|${account}`;
+}
+
+const { rateLimits } = appConfig.security;
+
+export const aiRateLimit = new RateLimiter({ id: 'ai', ...rateLimits.ai });
+export const authRateLimit = new RateLimiter({ id: 'auth', ...rateLimits.auth });
