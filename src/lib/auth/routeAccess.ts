@@ -19,6 +19,8 @@ const PUBLIC_PREFIXES = [
   '/favicon.ico',
   '/manifest.json',
   '/sw.js',
+  '/robots.txt', // app/robots.ts
+  '/sitemap.xml', // app/sitemap.ts
 ];
 
 function underPrefix(pathname: string, prefix: string): boolean {

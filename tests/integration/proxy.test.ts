@@ -43,6 +43,8 @@ describe('anonymous page requests', () => {
     '/resume/my-public-slug',
     '/manifest.json',
     '/sw.js',
+    '/robots.txt',
+    '/sitemap.xml',
   ])('%s is public', (path) => {
     expect(passesThrough(gate(path))).toBe(true);
   });
