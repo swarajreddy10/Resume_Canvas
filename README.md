@@ -288,18 +288,27 @@ bun run lint:check   # ESLint, no fixes, fails on any warning (CI)
 bun format           # Prettier
 bun type-check       # tsc --noEmit
 bun run test         # Unit tests
-bun run test:coverage     # Unit tests with coverage (threshold in bunfig.toml)
+bun run test:coverage     # Unit tests with coverage (coverage/lcov.info)
 bun run test:integration  # API routes against an in-memory MongoDB
+bun run test:integration:coverage  # The same, writing coverage-integration/lcov.info
 bun run test:e2e     # Playwright: builds, then serves against an in-memory MongoDB
 bun run verify       # format + lint + type-check
 bun run db:sync-indexes  # make MongoDB indexes match the Mongoose schemas
 bun run db:migrate-slugs # rewrite legacy name/N resume slugs to one URL segment
 ```
 
-CI (`.github/workflows/ci.yml`) runs type-check, lint, unit tests with coverage,
-integration tests, the production build and the Playwright suite on every push and
-pull request to `main` and `dev`. Run `bun run test:e2e:browsers` once before the first
-local `test:e2e`.
+CI (`.github/workflows/ci.yml`) runs type-check, lint, unit and integration tests with
+coverage, the production build and the Playwright suite on every push and pull request to
+`main` and `dev`. Run `bun run test:e2e:browsers` once before the first local `test:e2e`.
+
+Coverage is gated on new code, not as a project-wide number. The `sonar` job sends both
+LCOV reports to SonarQube Cloud (CI-based analysis, configured in
+`sonar-project.properties`), whose Sonar way quality gate requires at least 80% coverage on
+the code a change adds. Bun counts only the files a test run loads, so its own percentages
+are not project coverage. The job needs a `SONAR_TOKEN` repository secret and Automatic
+Analysis switched off in SonarQube Cloud (Administration → Analysis Method); automatic
+analysis cannot import coverage. Bumping `version` in `package.json` starts a new "new code"
+period for the main branch.
 
 ### Database indexes
 

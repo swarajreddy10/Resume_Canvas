@@ -1,6 +1,6 @@
 {
   "name": "ResumeCanvas",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "license": "MIT",
   "packageManager": "bun@1.4.3",
@@ -23,6 +23,7 @@
     "test:coverage": "bun test tests/unit --coverage",
     "test:unit": "bun test tests/unit",
     "test:integration": "bun test tests/integration",
+    "test:integration:coverage": "bun test tests/integration --coverage --coverage-dir=coverage-integration",
     "test:e2e": "playwright test --config=config/playwright.config.ts",
     "test:e2e:browsers": "playwright install --with-deps chromium && puppeteer browsers install chrome",
     "prepare": "husky",

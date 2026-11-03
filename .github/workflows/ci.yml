@@ -50,12 +50,12 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun ci
-      # Fails below the per-file threshold in bunfig.toml; writes coverage/lcov.info.
+      # Writes coverage/lcov.info for the sonar job.
       - run: bun run test:coverage
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ !cancelled() }}
         with:
-          name: coverage-lcov
+          name: coverage-unit
           path: coverage/lcov.info
           if-no-files-found: error
 
@@ -68,8 +68,46 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun ci
-      # Route handlers against a real in-memory MongoDB (mongodb-memory-server).
-      - run: bun run test:integration
+      # Route handlers against a real in-memory MongoDB (mongodb-memory-server); writes
+      # coverage-integration/lcov.info for the sonar job.
+      - run: bun run test:integration:coverage
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage-integration
+          path: coverage-integration/lcov.info
+          if-no-files-found: error
+
+  # SonarQube Cloud CI-based analysis with both coverage reports; its quality gate (Sonar
+  # way) requires at least 80% coverage on new code. Automatic analysis cannot import
+  # coverage and must be off, or this job fails.
+  # https://docs.sonarsource.com/sonarqube-cloud/advanced-setup/ci-based-analysis/github-actions-for-sonarcloud/
+  sonar:
+    needs: [unit, integration]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Full history for blame and new-code detection.
+          fetch-depth: 0
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage-unit
+          path: coverage
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: coverage-integration
+          path: coverage-integration
+      # package.json's version is the project version, so a version bump starts a new
+      # "new code" period under the project's Previous version definition.
+      - id: version
+        run: echo "value=$(jq -r .version package.json)" >> "$GITHUB_OUTPUT"
+      - uses: SonarSource/sonarqube-scan-action@d209202bc7d53ff1cc128f7f907dac145c9d6ae9 # v8.3.0
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: -Dsonar.projectVersion=${{ steps.version.outputs.value }}
 
   build:
     runs-on: ubuntu-latest

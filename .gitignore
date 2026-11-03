@@ -8,11 +8,10 @@
 
 # Testing
 /coverage
+/coverage-integration
 *.lcov
 test-results.xml
 /tests/coverage/
-/playwright-report/
-/test-results/
 /playwright-report/
 /test-results/
 

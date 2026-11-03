@@ -1,24 +1,15 @@
 /**
- * Server-HTML checks for the public pages, run against a production server:
- *
- *   bun run build && bun run start -p 3310
- *   RC_BASE_URL=http://127.0.0.1:3310 bun test tests/ui
- *
- * Each check reads the HTML the server sends, before any JavaScript runs, because that is
- * what paints first (LCP) and what crawlers and no-JS clients see.
+ * The public pages' server HTML, read without running any JavaScript: it is what paints
+ * first (LCP) and what crawlers and no-JS clients see. Runs against the same production
+ * server as the browser specs (config/playwright.config.ts).
  */
-import { describe, expect, test } from 'bun:test';
+import { test, expect, type APIRequestContext } from '@playwright/test';
 
-const BASE = process.env.RC_BASE_URL;
 const SITE = 'https://resumecanvas.vercel.app';
 
-async function get(path: string) {
-  const res = await fetch(`${BASE}${path}`, { redirect: 'manual' });
-  return {
-    status: res.status,
-    type: res.headers.get('content-type') ?? '',
-    body: await res.text(),
-  };
+async function get(request: APIRequestContext, path: string) {
+  const res = await request.get(path, { maxRedirects: 0 });
+  return { status: res.status(), body: await res.text() };
 }
 
 // The hero is everything before the first section that follows it; nothing in it may be
@@ -31,9 +22,11 @@ function heroHtml(html: string) {
   return html.slice(html.lastIndexOf('<section', start), end);
 }
 
-describe.skipIf(!BASE)('public pages (server HTML)', () => {
-  test('landing renders the hero heading and paragraph visibly', async () => {
-    const { status, body } = await get('/');
+test.describe('public pages (server HTML)', () => {
+  test('landing renders the hero heading and paragraph visibly', async ({
+    request,
+  }) => {
+    const { status, body } = await get(request, '/');
     expect(status).toBe(200);
     const hero = heroHtml(body);
     expect(hero).toContain('A resume builder');
@@ -42,8 +35,10 @@ describe.skipIf(!BASE)('public pages (server HTML)', () => {
     expect(body).toMatch(/<main[\s>]/);
   });
 
-  test('landing metadata: canonical, Open Graph, one theme colour, zoom allowed', async () => {
-    const { body } = await get('/');
+  test('landing metadata: canonical, Open Graph, one theme colour, zoom allowed', async ({
+    request,
+  }) => {
+    const { body } = await get(request, '/');
     const head = body.slice(0, body.indexOf('</head>'));
     expect(head).toContain(`<link rel="canonical" href="${SITE}"`);
     expect(head).toContain('<meta property="og:title"');
@@ -54,18 +49,22 @@ describe.skipIf(!BASE)('public pages (server HTML)', () => {
     expect(head).not.toContain('maximum-scale');
   });
 
-  test('manifest theme_color matches the page theme-color', async () => {
-    const { body } = await get('/');
+  test('manifest theme_color matches the page theme-color', async ({
+    request,
+  }) => {
+    const { body } = await get(request, '/');
     const themeColor = body.match(
       /<meta name="theme-color" content="([^"]+)"/
     )?.[1];
-    const manifest = JSON.parse((await get('/manifest.json')).body);
+    const manifest = JSON.parse((await get(request, '/manifest.json')).body);
     expect(themeColor).toBeDefined();
     expect(manifest.theme_color).toBe(themeColor);
   });
 
-  test('sign-in sends the form in server HTML with its own title', async () => {
-    const { status, body } = await get('/auth/signin');
+  test('sign-in sends the form in server HTML with its own title', async ({
+    request,
+  }) => {
+    const { status, body } = await get(request, '/auth/signin');
     expect(status).toBe(200);
     expect(body).toMatch(/<input[^>]*id="email"/);
     expect(body).toMatch(/<input[^>]*id="password"/);
@@ -75,26 +74,28 @@ describe.skipIf(!BASE)('public pages (server HTML)', () => {
     expect(body).toMatch(/<main[\s>]/);
   });
 
-  test('robots.txt and sitemap.xml are served', async () => {
-    const robots = await get('/robots.txt');
+  test('robots.txt and sitemap.xml are served', async ({ request }) => {
+    const robots = await get(request, '/robots.txt');
     expect(robots.status).toBe(200);
     expect(robots.body).toContain(`Sitemap: ${SITE}/sitemap.xml`);
-    const sitemap = await get('/sitemap.xml');
+    const sitemap = await get(request, '/sitemap.xml');
     expect(sitemap.status).toBe(200);
     expect(sitemap.body).toContain(`<loc>${SITE}</loc>`);
     expect(sitemap.body).toContain(`<loc>${SITE}/auth/signin</loc>`);
   });
 
-  test('sw.js is a self-unregistering no-op with no fetch handler', async () => {
-    const sw = await get('/sw.js');
+  test('sw.js is a self-unregistering no-op with no fetch handler', async ({
+    request,
+  }) => {
+    const sw = await get(request, '/sw.js');
     expect(sw.status).toBe(200);
     expect(sw.body).toContain('registration.unregister()');
     expect(sw.body).not.toMatch(/addEventListener\(\s*['"]fetch['"]/);
   });
 
-  test('pages no longer register a service worker', async () => {
+  test('pages no longer register a service worker', async ({ request }) => {
     for (const path of ['/', '/auth/signin']) {
-      const { body } = await get(path);
+      const { body } = await get(request, path);
       expect(body).not.toContain('serviceWorker.register');
     }
   });
