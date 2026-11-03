@@ -4,6 +4,7 @@ import Credentials from 'next-auth/providers/credentials';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { appConfig } from '@/lib/config/app.config';
 import bcrypt from 'bcryptjs';
+import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { authAttemptKey, authRateLimit } from '@/lib/security/rateLimit';
 // Auth.js uses the same MongoClient (and pool) as Mongoose, so each server instance holds
@@ -24,10 +25,17 @@ const credentialsSchema = z.object({
   password: z.string().min(1).max(128),
 });
 
-// bcrypt hash (cost 12, as hashPassword uses) of a random value no one knows. Comparing
-// against it when there is no stored password keeps the work, and so the response time,
-// the same whether or not the account exists.
-const NO_PASSWORD_HASH = '$2b$12$yxuP.kabfYx732/CEX7qReSb/yef1ltpDFP3GOn85IGTUSSYoM6xe';
+// bcrypt hash (cost 12, as hashPassword uses) of 32 random bytes, made once per server
+// instance on first use and never stored or logged. Comparing against it when there is
+// no stored password keeps the work, and so the response time, the same whether or not
+// the account exists. Generated rather than written into the source, so no password
+// hash lives in the repository; made lazily so cold starts that never sign anyone in
+// (the proxy imports this module) do not pay for it.
+let noPasswordHash: Promise<string> | undefined;
+function getNoPasswordHash(): Promise<string> {
+  noPasswordHash ??= bcrypt.hash(randomBytes(32).toString('hex'), 12);
+  return noPasswordHash;
+}
 
 // Auth.js puts `code` in the sign-in error URL; this one says only that the client is
 // being slowed down, which is true whether or not the account exists.
@@ -60,10 +68,16 @@ export async function authorizeCredentials(
   const user = await client
     .db()
     .collection('users')
-    .findOne({ email }, { projection: { _id: 1, email: 1, name: 1, password: 1 } });
+    .findOne(
+      { email },
+      { projection: { _id: 1, email: 1, name: 1, password: 1 } }
+    );
 
   const storedHash = typeof user?.password === 'string' ? user.password : null;
-  const valid = await bcrypt.compare(password, storedHash ?? NO_PASSWORD_HASH);
+  const valid = await bcrypt.compare(
+    password,
+    storedHash ?? (await getNoPasswordHash())
+  );
   if (!user || !storedHash || !valid) return null;
 
   return {
@@ -165,7 +179,10 @@ export const authConfig: NextAuthConfig = {
     // proceed with the unproven password still valid.
     async signIn({ account, profile }) {
       if (account?.provider !== 'google') return true;
-      if (profile?.email_verified !== true || typeof profile.email !== 'string') {
+      if (
+        profile?.email_verified !== true ||
+        typeof profile.email !== 'string'
+      ) {
         return false;
       }
 
