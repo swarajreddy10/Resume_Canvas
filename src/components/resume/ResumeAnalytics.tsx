@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, Share2, Download } from 'lucide-react';
 
@@ -13,12 +12,6 @@ export default function ResumeAnalytics({
   viewCount,
   isPublic,
 }: ResumeAnalyticsProps) {
-  const [realViews, setRealViews] = useState(viewCount);
-
-  useEffect(() => {
-    setRealViews(viewCount);
-  }, [viewCount]);
-
   return (
     <Card>
       <CardHeader>
@@ -30,7 +23,7 @@ export default function ResumeAnalytics({
             <Eye className="h-4 w-4 text-blue-600" />
             <span className="text-sm">Total Views</span>
           </div>
-          <span className="font-semibold">{realViews}</span>
+          <span className="font-semibold">{viewCount}</span>
         </div>
 
         <div className="flex items-center justify-between">
@@ -38,7 +31,7 @@ export default function ResumeAnalytics({
             <Download className="h-4 w-4 text-purple-600" />
             <span className="text-sm">Downloads</span>
           </div>
-          <span className="font-semibold">{Math.floor(realViews * 0.3)}</span>
+          <span className="font-semibold">{Math.floor(viewCount * 0.3)}</span>
         </div>
 
         <div className="flex items-center justify-between">

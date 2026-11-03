@@ -143,8 +143,11 @@ export default function ResumeBuilderPage() {
     });
   }, [resumeData, selectedTemplate]);
 
-  const loadResumeData = useCallback(
-    async (id: string) => {
+  // Load existing resume data
+  useEffect(() => {
+    const id = params.id as string;
+    if (!id || id === 'new') return;
+    (async () => {
       try {
         // Try slug first, fallback to ID
         let response = await fetch(`/api/resumes/slug/${id}`);
@@ -195,16 +198,8 @@ export default function ResumeBuilderPage() {
       } finally {
         setLoading(false);
       }
-    },
-    [router]
-  );
-
-  // Load existing resume data
-  useEffect(() => {
-    if (params.id && params.id !== 'new') {
-      loadResumeData(params.id as string);
-    }
-  }, [params.id, loadResumeData]);
+    })();
+  }, [params.id, router]);
 
   // Unsaved changes warning
   useEffect(() => {
@@ -225,13 +220,10 @@ export default function ResumeBuilderPage() {
     setHasUnsavedChanges(true);
   };
 
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, string[]>
-  >({});
-  const [hasValidationErrors, setHasValidationErrors] = useState(false);
-
-  // Check validation status across all forms
-  const checkValidationStatus = useCallback(() => {
+  // Validation is derived from the resume data during render, so the errors shown and
+  // the save check always match the current data.
+  // https://react.dev/learn/you-might-not-need-an-effect#updating-state-based-on-props-or-state
+  const { validationErrors, hasValidationErrors } = useMemo(() => {
     const errors: Record<string, string[]> = {};
     let hasErrors = false;
 
@@ -337,15 +329,8 @@ export default function ResumeBuilderPage() {
       }
     }
 
-    setValidationErrors(errors);
-    setHasValidationErrors(hasErrors);
-    return !hasErrors;
+    return { validationErrors: errors, hasValidationErrors: hasErrors };
   }, [resumeData]);
-
-  // Check validation whenever resume data changes
-  useEffect(() => {
-    checkValidationStatus();
-  }, [checkValidationStatus]);
 
   const saveResume = useCallback(
     async (isDraft = false) => {
@@ -353,8 +338,7 @@ export default function ResumeBuilderPage() {
       try {
         // For final save, check validation
         if (!isDraft) {
-          const isValid = checkValidationStatus();
-          if (!isValid) {
+          if (hasValidationErrors) {
             const errorSections = Object.keys(validationErrors);
             showDetailedError(
               'Cannot save resume - Please fix validation errors',
@@ -460,7 +444,7 @@ export default function ResumeBuilderPage() {
       resumeData,
       selectedTemplate,
       validationErrors,
-      checkValidationStatus,
+      hasValidationErrors,
     ]
   );
 

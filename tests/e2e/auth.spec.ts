@@ -67,4 +67,14 @@ test.describe('Authentication', () => {
 
     await expect(page.getByText('Check your email')).toBeVisible();
   });
+
+  test('a reset link without a token is invalid', async ({ page }) => {
+    await page.goto('/auth/reset-password');
+    await expect(page.getByText('Invalid Reset Link')).toBeVisible();
+  });
+
+  test('a reset link with an unknown token is invalid', async ({ page }) => {
+    await page.goto(`/auth/reset-password?token=${'a'.repeat(64)}`);
+    await expect(page.getByText('Invalid Reset Link')).toBeVisible();
+  });
 });

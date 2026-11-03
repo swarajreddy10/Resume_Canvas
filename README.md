@@ -25,7 +25,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 | **Resume Review**           | Section-by-section AI analysis with actionable feedback                                                                 |
 | **Keyword Optimizer**       | Industry-specific keyword extraction and gap analysis                                                                   |
 | **Cover Letter Generator**  | Context-aware AI cover letters tailored to job descriptions                                                             |
-| **PDF Export**              | Server-side Puppeteer rendering with browser pool management                                                            |
+| **PDF Export**              | Server-side Puppeteer rendering, one headless Chromium per request                                                      |
 | **Public Sharing**          | Public resume URLs with custom slugs and view count tracking                                                            |
 | **Clone Resumes**           | One-click resume duplication with full data copy                                                                        |
 | **Job Application Tracker** | Kanban-style status tracking with notes and follow-ups                                                                  |
@@ -40,7 +40,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 
 | Package           | Version | Role                                                 |
 | ----------------- | ------- | ---------------------------------------------------- |
-| Next.js           | 16.2.0  | App Router, RSC, API routes, middleware              |
+| Next.js           | 16.4.4  | App Router, RSC, API routes, middleware              |
 | React             | 19.2.4  | UI with Server + Client Components                   |
 | TypeScript        | 5.9.3   | Strict mode throughout                               |
 | Tailwind CSS      | 4.2.2   | Utility-first styling with custom design tokens      |
@@ -48,7 +48,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 | Shadcn/ui + Radix | latest  | Accessible component primitives                      |
 | TanStack Query    | 5.91.3  | Server state, caching, background refetch            |
 | React Hook Form   | 7.71.2  | Performant forms with controlled validation          |
-| Zod               | 4.3.6   | Schema validation (client + server)                  |
+| Zod               | 4.6.6   | Schema validation (client + server)                  |
 | Zustand           | 5.0.12  | Lightweight client state                             |
 | Immer             | 11.1.4  | Immutable state updates                              |
 | Plus Jakarta Sans | —       | Primary UI typeface via next/font                    |
@@ -57,14 +57,14 @@ This project was built as a showcase of modern full-stack engineering combined w
 
 | Package     | Version       | Role                                    |
 | ----------- | ------------- | --------------------------------------- |
-| Bun         | 1.3.4         | Runtime, package manager, test runner   |
-| MongoDB     | 7.1.0         | Document database                       |
-| Mongoose    | 9.3.1         | ODM, schema validation, indexing        |
-| NextAuth.js | 5.0.0-beta.30 | JWT sessions, Google OAuth, credentials |
+| Bun         | 1.4.3         | Runtime, package manager, test runner   |
+| MongoDB     | 7.2.0         | Document database                       |
+| Mongoose    | 9.7.4         | ODM, schema validation, indexing        |
+| NextAuth.js | 5.0.0-beta.32 | JWT sessions, Google OAuth, credentials |
 | Groq SDK    | 1.1.1         | Llama 3.3 70B inference (AI features)   |
 | Puppeteer   | 24.40.0       | Headless Chrome for PDF generation      |
 | Resend      | 6.9.4         | Transactional email (password reset)    |
-| bcryptjs    | 3.0.3         | Password hashing (10 rounds)            |
+| bcryptjs    | 3.0.3         | Password hashing (cost 12)              |
 
 ### Tooling & Quality
 
@@ -86,7 +86,7 @@ src/
 │   ├── (auth)/                    # Sign in, forgot password, reset password
 │   ├── (dashboard)/               # Protected routes — layout with sidebar
 │   │   ├── dashboard/             # Resume list + usage overview
-│   │   ├── builder/[id]/          # Resume editor (856-line feature page)
+│   │   ├── builder/[id]/          # Resume editor
 │   │   ├── cover-letters/         # AI cover letter generator
 │   │   ├── applications/          # Job application tracker
 │   │   ├── analytics/             # Performance metrics
@@ -129,11 +129,11 @@ src/
 
 **Route Groups** — `(auth)` and `(dashboard)` share separate layouts with no nesting overhead. The dashboard layout owns the sidebar; auth pages are bare.
 
-**Templates as pure React** — all 5 templates render at 794×1123px (A4 at 96dpi) using only inline styles. No CSS-in-JS runtime, no Tailwind inside templates — ensures 1:1 fidelity between browser preview and Puppeteer PDF output.
+**Templates as pure React** — all 5 templates render at 794×1123px (A4 at 96dpi) using only inline styles. No CSS-in-JS runtime, no Tailwind inside templates.
 
 **TemplateShowcase + ResizeObserver** — a single component handles scaling the A4 canvas to any container using a ResizeObserver-driven `scale` transform. Used in the landing carousel, builder preview, and template selector — three different modes, one component.
 
-**Server-side PDF** — Puppeteer runs in a browser pool on the server. Each PDF request acquires a pooled Chromium instance, navigates to the resume's public URL, and captures a PDF — avoiding any client-side jank or font inconsistencies.
+**Server-side PDF** — each PDF request launches a headless Chromium, loads HTML built on the server (`src/features/resume/services/pdf.service.ts`) with `setContent`, prints A4 and closes the browser. That HTML is separate from the React templates: Executive and Tech have their own PDF layout, while Corporate, Creative and Academic share one standard layout in their accent colour.
 
 **Validation** — Zod on the client forms (React Hook Form) and on the auth and registration API routes; resume, application and cover-letter writes accept only an allow-list of fields, and Mongoose schema validation runs on every create and update (update validators are on globally).
 
@@ -207,7 +207,7 @@ const completion = await groq.chat.completions.create({
 - **Output encoding** — React escapes rendered text and the PDF service encodes its HTML; text is stored exactly as typed. AI routes strip markup and script patterns from their input before it reaches the model
 - **CSRF** — NextAuth built-in protection on all mutations
 - **Environment validation** — `src/lib/config/app.config.ts` throws on a missing required variable when the config loads
-- **Dependency security** — `bun audit` clean (zero vulnerabilities). Patched: Mongoose search injection (→ 9.3.1), Next.js DoS (→ 16.2.0), transitive overrides for `minimatch`, `flatted`, `basic-ftp`
+- **Dependency security** — `bun audit fix` applied; Next.js 16.4.4, Auth.js 5.0.0-beta.32 / `@auth/core` 0.41.3 and Mongoose 9.7.4 carry the fixes `bun audit` reported; overrides pin `minimatch`, `flatted` and `basic-ftp` (≥ 5.3.1). The advisories still reported have no fix inside their dependents' ranges: `basic-ftp` 6.x and `extract-zip` (Puppeteer's browser download), `zod` 3 (Puppeteer and the React hooks lint plugin), `minimatch` 3 (ESLint 9) and `uuid` 10 (Resend)
 
 ---
 
@@ -242,7 +242,7 @@ Consistent indigo palette applied across all pages, components, and templates:
 ### Prerequisites
 
 ```
-Bun 1.3.4+
+Bun 1.4.3+ (older Bun cannot run Next.js 16.4's production build)
 MongoDB Atlas cluster
 Google OAuth credentials (optional)
 Groq API key
