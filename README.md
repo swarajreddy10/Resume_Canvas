@@ -315,6 +315,13 @@ resolved);
 `docker compose up` runs it as the one-shot `db-sync-indexes` service before `app`
 starts. Development and tests keep Mongoose's automatic index builds.
 
+### Analytics
+
+Vercel Web Analytics and Speed Insights send nothing from a browser where
+`localStorage` holds `va-disable` (`src/lib/analytics/ownVisits.ts`). To leave your own
+visits out, run `localStorage.setItem('va-disable', '1')` once in the DevTools console on
+the production site, in each browser you use. Views already recorded stay in the dashboard.
+
 ---
 
 ## Development Approach — Agentic AI
