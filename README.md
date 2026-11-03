@@ -283,13 +283,21 @@ bun dev              # Development server (Turbopack)
 bun build            # Production build
 bun start            # Production server
 bun lint             # ESLint with auto-fix
+bun run lint:check   # ESLint, no fixes, fails on any warning (CI)
 bun format           # Prettier
 bun type-check       # tsc --noEmit
 bun run test         # Unit tests
+bun run test:coverage     # Unit tests with coverage (threshold in bunfig.toml)
+bun run test:integration  # API routes against an in-memory MongoDB
+bun run test:e2e     # Playwright: builds, then serves against an in-memory MongoDB
 bun run bench        # Cache micro-benchmarks (reported, not asserted)
-bun run test:e2e     # Playwright end-to-end
 bun run verify       # format + lint + type-check
 ```
+
+CI (`.github/workflows/ci.yml`) runs type-check, lint, unit tests with coverage,
+integration tests, the production build and the Playwright suite on every push and
+pull request to `main` and `dev`. Run `bunx playwright install chromium` once before
+the first local `test:e2e`.
 
 ---
 
