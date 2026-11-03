@@ -115,7 +115,6 @@ src/
 │   ├── auth/config.ts             # NextAuth config (JWT, MongoDB adapter, callbacks)
 │   ├── db/                        # Connection, models (User, Resume, JobApplication, CoverLetter)
 │   ├── middleware/                # withAuth (private, no-store), withRateLimit
-│   ├── cache/                     # In-memory cache classes (no route caches responses)
 │   ├── security/                  # Rate limiting, input sanitization
 │   └── email/                     # Resend integration
 │
@@ -292,7 +291,6 @@ bun run test         # Unit tests
 bun run test:coverage     # Unit tests with coverage (threshold in bunfig.toml)
 bun run test:integration  # API routes against an in-memory MongoDB
 bun run test:e2e     # Playwright: builds, then serves against an in-memory MongoDB
-bun run bench        # Cache micro-benchmarks (reported, not asserted)
 bun run verify       # format + lint + type-check
 bun run db:sync-indexes  # make MongoDB indexes match the Mongoose schemas
 bun run db:migrate-slugs # rewrite legacy name/N resume slugs to one URL segment

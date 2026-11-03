@@ -23,7 +23,6 @@
     "test:coverage": "bun test tests/unit --coverage",
     "test:unit": "bun test tests/unit",
     "test:integration": "bun test tests/integration",
-    "bench": "bun scripts/bench-cache.ts",
     "test:e2e": "playwright test --config=config/playwright.config.ts",
     "prepare": "husky",
     "verify": "bun run format && bun run lint && bun run type-check"

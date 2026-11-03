@@ -2,7 +2,7 @@
  * Server-HTML checks for the public pages, run against a production server:
  *
  *   bun run build && bun run start -p 3310
- *   RC_BASE_URL=http://127.0.0.1:3310 bun test tests/ui --config config/bunfig.toml
+ *   RC_BASE_URL=http://127.0.0.1:3310 bun test tests/ui
  *
  * Each check reads the HTML the server sends, before any JavaScript runs, because that is
  * what paints first (LCP) and what crawlers and no-JS clients see.
