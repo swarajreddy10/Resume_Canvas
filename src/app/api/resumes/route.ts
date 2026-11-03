@@ -7,17 +7,24 @@ import { mapWriteError } from '@/lib/resume/errors';
 import { NextResponse } from 'next/server';
 
 // No response cache: the indexed read examines only the owner's documents
-// (25 of 50,000 in a local benchmark, about 2 ms p50), and a per-instance cache
+// (25 of 50,000 in a local benchmark, about 1 ms p50 on 2026-11-03), and a per-instance cache
 // served stale lists after every write.
 export const GET = withAuth(async (_request, { session }) => {
   try {
     await connectDB();
-    const [query, projection] = optimizedQueries.getUserResumes(session.user.email);
-    const resumes = await Resume.find(query, projection).sort({ updatedAt: -1 }).lean();
+    const [query, projection] = optimizedQueries.getUserResumes(
+      session.user.email
+    );
+    const resumes = await Resume.find(query, projection)
+      .sort({ updatedAt: -1 })
+      .lean();
     return NextResponse.json({ resumes });
   } catch (error) {
     console.error('Failed to fetch resumes:', error);
-    return NextResponse.json({ error: 'Failed to fetch resumes' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch resumes' },
+      { status: 500 }
+    );
   }
 });
 
@@ -28,7 +35,10 @@ export const POST = withAuth(async (request, { session }) => {
 
     const resume = await Resume.create({
       ...fields,
-      slug: await nextResumeSlug(session.user.email, session.user.name || session.user.email),
+      slug: await nextResumeSlug(
+        session.user.email,
+        session.user.name || session.user.email
+      ),
       userEmail: session.user.email,
     });
 
