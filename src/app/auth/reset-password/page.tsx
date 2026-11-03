@@ -17,9 +17,9 @@ import { passwordSchema } from '@/lib/validation/password.schema';
 
 export default function ResetPasswordPage({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
+}>) {
   // A client page reads the query through `use`; a link without a token is invalid
   // from the first render. https://nextjs.org/docs/app/api-reference/file-conventions/page#searchparams-optional
   const queryToken = use(searchParams).token;
