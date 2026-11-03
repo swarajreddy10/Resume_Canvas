@@ -66,10 +66,10 @@ const jobApplicationSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-jobApplicationSchema.index({ userEmail: 1, appliedDate: -1 });
-jobApplicationSchema.index({ userEmail: 1, status: 1 });
-jobApplicationSchema.index({ resumeId: 1 });
-jobApplicationSchema.index({ company: 1, jobTitle: 1 });
+// GET /api/applications filters on userEmail and sorts on createdAt; equality key first,
+// then the sort key, so the list streams from the index with no in-memory SORT.
+// https://www.mongodb.com/docs/manual/tutorial/equality-sort-range-guideline/
+jobApplicationSchema.index({ userEmail: 1, createdAt: -1 });
 
 export const JobApplication =
   mongoose.models.JobApplication ||

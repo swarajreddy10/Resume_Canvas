@@ -1,54 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { withRateLimit } from '@/lib/middleware/withRateLimit';
-import { authRateLimit } from '@/lib/security/rateLimit';
-import { sanitizeInput } from '@/lib/security/sanitize';
+import { z } from 'zod';
+import { limitAuthAttempt } from '@/lib/middleware/withRateLimit';
 import connectDB from '@/lib/db/connection';
 import { User } from '@/lib/db/models/User';
 import { sendResetEmail } from '@/lib/email/resend.service';
-import crypto from 'crypto';
+import { createResetToken, RESET_TOKEN_TTL_MS } from '@/lib/auth/password';
 
-export const POST = withRateLimit(authRateLimit)(async (
-  request: NextRequest
-) => {
+const bodySchema = z.object({ email: z.string().trim().toLowerCase().email() });
+
+// Same answer whether or not the account exists, so the endpoint cannot enumerate users.
+const GENERIC_REPLY = { message: 'If email exists, reset link sent' };
+
+export async function POST(request: NextRequest) {
   try {
-    const { email } = sanitizeInput(await request.json());
+    const body = await request.json().catch(() => null);
+    const limited = await limitAuthAttempt('forgot-password', request, body?.email);
+    if (limited) return limited;
 
-    if (!email) {
+    const parsed = bodySchema.safeParse(body);
+    if (!parsed.success) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
+    const { email } = parsed.data;
 
     await connectDB();
-    const user = await User.findOne({ email: email.toLowerCase() });
 
-    // Always return success (security: don't reveal if email exists)
-    if (!user) {
-      return NextResponse.json({
-        message: 'If email exists, reset link sent',
-      });
+    // One write replaces any earlier token; only the token's hash is stored.
+    const { token, tokenHash } = createResetToken();
+    const user = await User.findOneAndUpdate(
+      { email },
+      {
+        $set: {
+          resetToken: tokenHash,
+          resetExpiry: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+        },
+      },
+      { projection: { _id: 1 } }
+    );
+
+    if (user) {
+      await sendResetEmail(email, token);
     }
 
-    // Clear any existing reset token first
-    await User.findByIdAndUpdate(user._id, {
-      resetToken: undefined,
-      resetExpiry: undefined,
-    });
-
-    // Generate secure reset token
-    const resetToken = crypto.randomBytes(32).toString('hex');
-    const resetExpiry = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-
-    // Set new reset token
-    await User.findByIdAndUpdate(user._id, {
-      resetToken,
-      resetExpiry,
-    });
-
-    // Send reset email
-    await sendResetEmail(email, resetToken);
-
-    return NextResponse.json({
-      message: 'If email exists, reset link sent',
-    });
+    return NextResponse.json(GENERIC_REPLY);
   } catch (error) {
     console.error('Password reset error:', error);
     return NextResponse.json(
@@ -56,4 +50,4 @@ export const POST = withRateLimit(authRateLimit)(async (
       { status: 500 }
     );
   }
-});
+}

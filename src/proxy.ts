@@ -1,55 +1,15 @@
-import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { auth } from '@/lib/auth/config';
-
-const publicPaths = [
-  '/',
-  '/auth/signin',
-  '/auth/signup',
-  '/auth/forgot-password',
-  '/api/auth',
-  '/api/user/register',
-  '/api/test-db',
-];
-
-const publicPatterns = [
-  /^\/resume\/[^/]+$/,
-  /^\/api\/resume\/public\/.+$/,
-  /^\/api\/resumes\/slug\/.+$/,
-  /^\/_next\/.+$/,
-  /^\/favicon\.ico$/,
-  /^\/manifest\.json$/,
-  /^\/sw\.js$/,
-];
-
-function isPublicPath(pathname: string): boolean {
-  if (publicPaths.some((path) => pathname.startsWith(path))) {
-    return true;
-  }
-
-  return publicPatterns.some((pattern) => pattern.test(pathname));
-}
+import { isPublicPath, routeAccess } from '@/lib/auth/routeAccess';
 
 export default async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (isPublicPath(pathname)) {
-    return NextResponse.next();
+  // Public paths skip the session read entirely.
+  if (isPublicPath(request.nextUrl.pathname)) {
+    return routeAccess(request, false);
   }
 
   const session = await auth();
-
-  if (!session?.user) {
-    const signInUrl = new URL('/auth/signin', request.url);
-    signInUrl.searchParams.set('callbackUrl', pathname);
-    return NextResponse.redirect(signInUrl);
-  }
-
-  const response = NextResponse.next();
-
-  response.headers.set('x-user-email', session.user.email || '');
-
-  return response;
+  return routeAccess(request, Boolean(session?.user));
 }
 
 export const config = {

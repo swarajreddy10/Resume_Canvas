@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/card';
 import { AlertCircle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
+import { passwordSchema } from '@/lib/validation/password.schema';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
@@ -103,8 +104,9 @@ export default function ResetPasswordPage() {
       return;
     }
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
+    const policy = passwordSchema.safeParse(password);
+    if (!policy.success) {
+      setError(policy.error.issues[0]?.message ?? 'Password does not meet the policy');
       return;
     }
 
@@ -239,7 +241,7 @@ export default function ResetPasswordPage() {
             <div>
               <Input
                 type="password"
-                placeholder="New password (min 6 characters)"
+                placeholder="New password (8+ characters, upper, lower, number)"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
