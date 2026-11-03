@@ -86,7 +86,7 @@ src/
 │   ├── (auth)/                    # Sign in, forgot password, reset password
 │   ├── (dashboard)/               # Protected routes — layout with sidebar
 │   │   ├── dashboard/             # Resume list + usage overview
-│   │   ├── builder/[id]/          # Resume editor (856-line feature page)
+│   │   ├── builder/[id]/          # Resume editor
 │   │   ├── cover-letters/         # AI cover letter generator
 │   │   ├── applications/          # Job application tracker
 │   │   ├── analytics/             # Performance metrics
