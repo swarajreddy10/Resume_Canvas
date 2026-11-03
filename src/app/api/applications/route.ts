@@ -1,52 +1,50 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
+import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db/connection';
 import { JobApplication } from '@/lib/db/models/JobApplication';
+import { withAuth } from '@/lib/middleware/withAuth';
+import { mapWriteError } from '@/lib/resume/errors';
+import { ownsResume } from '@/lib/resume/ownership';
+import { pickFields } from '@/lib/security/allowList';
 
-export async function GET() {
+/** The fields a user may set; the server sets the owner (userEmail) and timestamps. */
+const EDITABLE_FIELDS = [
+  'resumeId',
+  'jobTitle',
+  'company',
+  'location',
+  'jobUrl',
+  'description',
+  'salary',
+  'status',
+  'appliedDate',
+  'notes',
+  'contacts',
+  'interviews',
+] as const;
+
+export const GET = withAuth(async (_request, { session }) => {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
     await connectDB();
-    const applications = await JobApplication.find({
-      userEmail: session.user.email,
-    }).sort({ createdAt: -1 });
-
+    const applications = await JobApplication.find({ userEmail: session.user.email })
+      .sort({ createdAt: -1 })
+      .lean();
     return NextResponse.json({ applications });
   } catch (error) {
-    console.error('Error fetching applications:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch applications' },
-      { status: 500 }
-    );
+    console.error('Failed to fetch applications:', error);
+    return NextResponse.json({ error: 'Failed to fetch applications' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, { session }) => {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const body = await request.json();
+    const fields = pickFields(await request.json().catch(() => null), EDITABLE_FIELDS);
     await connectDB();
-
-    const application = new JobApplication({
-      userEmail: session.user.email,
-      ...body,
-    });
-
-    await application.save();
+    if (fields.resumeId != null && !(await ownsResume(fields.resumeId, session.user.email))) {
+      return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
+    }
+    const application = await JobApplication.create({ ...fields, userEmail: session.user.email });
     return NextResponse.json({ application });
   } catch (error) {
-    console.error('Error creating application:', error);
-    return NextResponse.json(
-      { error: 'Failed to create application' },
-      { status: 500 }
-    );
+    return mapWriteError(error, 'Failed to create application');
   }
-}
+});

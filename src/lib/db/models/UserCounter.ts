@@ -15,8 +15,6 @@ const userCounterSchema = new mongoose.Schema({
   },
 });
 
-userCounterSchema.index({ userEmail: 1 }, { unique: true });
-
 export const UserCounter =
   mongoose.models.UserCounter ||
   mongoose.model('UserCounter', userCounterSchema);

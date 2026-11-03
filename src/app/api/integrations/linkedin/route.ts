@@ -1,21 +1,15 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
+import { NextResponse } from 'next/server';
+import { withAuth } from '@/lib/middleware/withAuth';
 import { LinkedInIntegration } from '@/lib/integrations/linkedin';
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request) => {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const { linkedinUrl } = ((await request.json().catch(() => null)) ?? {}) as {
+      linkedinUrl?: unknown;
+    };
 
-    const { linkedinUrl } = await request.json();
-
-    if (!linkedinUrl || !linkedinUrl.includes('linkedin.com/in/')) {
-      return NextResponse.json(
-        { error: 'Invalid LinkedIn URL' },
-        { status: 400 }
-      );
+    if (typeof linkedinUrl !== 'string' || !linkedinUrl.includes('linkedin.com/in/')) {
+      return NextResponse.json({ error: 'Invalid LinkedIn URL' }, { status: 400 });
     }
 
     // Mock LinkedIn integration
@@ -23,10 +17,7 @@ export async function POST(request: NextRequest) {
     const profile = await integration.getProfile();
 
     if (!profile) {
-      return NextResponse.json(
-        { error: 'Failed to fetch LinkedIn profile' },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: 'Failed to fetch LinkedIn profile' }, { status: 500 });
     }
 
     const resumeData = integration.convertToResumeFormat(profile);
@@ -36,4 +27,4 @@ export async function POST(request: NextRequest) {
     console.error('LinkedIn integration error:', error);
     return NextResponse.json({ error: 'Integration failed' }, { status: 500 });
   }
-}
+});

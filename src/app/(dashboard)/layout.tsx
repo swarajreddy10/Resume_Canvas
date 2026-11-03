@@ -1,145 +1,18 @@
-'use client';
+import type { ReactNode } from 'react';
+import DashboardShell from '@/components/layout/DashboardShell';
+import { QueryProvider } from '@/components/providers/QueryProvider';
+import { SessionProvider } from '@/components/providers/SessionProvider';
 
-import { ReactNode, useState, useEffect } from 'react';
-import Link from 'next/link';
-import { useSession, signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetTitle,
-  SheetTrigger,
-} from '@/components/ui/sheet';
-import PWAInstallPrompt from '@/components/mobile/PWAInstallPrompt';
-import Sidebar from '@/components/layout/Sidebar';
-import { useSidebar } from '@/hooks/useSidebar';
-import { User, ChevronDown, LogOut, Menu } from 'lucide-react';
-import { cn } from '@/lib/utils';
-
-interface DashboardLayoutProps {
-  children: ReactNode;
-}
-
-export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const { collapsed } = useSidebar();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  useEffect(() => {
-    if (status === 'unauthenticated') {
-      router.push('/auth/signin');
-    }
-  }, [status, router]);
-
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#4f46e5] border-t-transparent" />
-      </div>
-    );
-  }
-
-  if (!session) {
-    return null;
-  }
-
+// The session and query providers live here, not in the root layout: useSession and
+// useQuery are used only under the dashboard, and a root-level SessionProvider fetched
+// /api/auth/session on every public page (twice on landing and sign-in) for nothing.
+// signIn() on the sign-in page posts to the auth API directly and needs no provider.
+export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-[#f5f3ff]">
-      <Sidebar />
-      <div
-        className={cn(
-          'transition-all duration-300',
-          collapsed ? 'md:pl-16' : 'md:pl-64'
-        )}
-      >
-        <header className="sticky top-0 z-30 bg-white border-b border-[#e2e8f0]">
-          <div className="flex h-16 items-center justify-between px-6">
-            <div className="flex items-center gap-3">
-              <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="md:hidden"
-                    aria-label="Open menu"
-                  >
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64">
-                  <SheetTitle className="sr-only">
-                    Mobile navigation menu
-                  </SheetTitle>
-                  <SheetDescription className="sr-only">
-                    Navigate between dashboard sections
-                  </SheetDescription>
-                  <Sidebar mobile onNavigate={() => setMobileMenuOpen(false)} />
-                </SheetContent>
-              </Sheet>
-              <Link href="/dashboard" className="flex items-center gap-2">
-                <span className="text-xl font-extrabold tracking-tight">
-                  <span className="text-[#11101d]">Resume</span>
-                  <span className="text-canvas-gradient">Canvas</span>
-                </span>
-                <span className="hidden sm:inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#eef2ff] text-[#4f46e5] tracking-wide">
-                  AI
-                </span>
-              </Link>
-            </div>
-
-            {session && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="gap-2">
-                    <div className="h-8 w-8 rounded-full bg-[#eef2ff] flex items-center justify-center">
-                      <User className="h-4 w-4 text-[#4f46e5]" />
-                    </div>
-                    <span className="hidden sm:inline">
-                      {session.user?.name?.split(' ')[0]}
-                    </span>
-                    <ChevronDown className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">{session.user?.name}</p>
-                    <p className="text-xs text-[#64748b]">
-                      {session.user?.email}
-                    </p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/profile">
-                      <User className="mr-2 h-4 w-4" />
-                      Profile
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onClick={() => signOut({ callbackUrl: '/' })}
-                    className="text-red-600"
-                  >
-                    <LogOut className="mr-2 h-4 w-4" />
-                    Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </header>
-        <main className="p-6">{children}</main>
-      </div>
-      <PWAInstallPrompt />
-    </div>
+    <QueryProvider>
+      <SessionProvider>
+        <DashboardShell>{children}</DashboardShell>
+      </SessionProvider>
+    </QueryProvider>
   );
 }

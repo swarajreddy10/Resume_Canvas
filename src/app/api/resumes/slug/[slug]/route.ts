@@ -1,35 +1,19 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
+import { NextResponse } from 'next/server';
 import connectDB from '@/lib/db/connection';
 import { Resume } from '@/lib/db/models/Resume';
+import { withAuth } from '@/lib/middleware/withAuth';
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ slug: string }> }
-) {
+// One read scoped to the owner: another user's slug is a 404.
+export const GET = withAuth<{ slug: string }>(async (_request, { session, params }) => {
   try {
-    const session = await auth();
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    await connectDB();
     const { slug } = await params;
-    const resume = await Resume.findOne({
-      slug,
-      userEmail: session.user.email,
-    });
-
-    if (!resume) {
-      return NextResponse.json({ error: 'Resume not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({ resume });
+    await connectDB();
+    const resume = await Resume.findOne({ slug, userEmail: session.user.email }).lean();
+    return resume
+      ? NextResponse.json({ resume })
+      : NextResponse.json({ error: 'Resume not found' }, { status: 404 });
   } catch (error) {
-    console.error('Error fetching resume:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch resume' },
-      { status: 500 }
-    );
+    console.error('Failed to fetch resume:', error);
+    return NextResponse.json({ error: 'Failed to fetch resume' }, { status: 500 });
   }
-}
+});
