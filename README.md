@@ -298,8 +298,8 @@ bun run db:migrate-slugs # rewrite legacy name/N resume slugs to one URL segment
 
 CI (`.github/workflows/ci.yml`) runs type-check, lint, unit tests with coverage,
 integration tests, the production build and the Playwright suite on every push and
-pull request to `main` and `dev`. Run `bunx playwright install chromium` once before
-the first local `test:e2e`.
+pull request to `main` and `dev`. Run `bun run test:e2e:browsers` once before the first
+local `test:e2e`.
 
 ### Database indexes
 

@@ -5,6 +5,7 @@
  * The account is created through the app's own registration API, then signed in through
  * the sign-in page; the resulting cookies are saved once per worker and reused.
  */
+import { randomUUID } from 'node:crypto';
 import { test as base, expect, type Page } from '@playwright/test';
 import fs from 'fs';
 import path from 'path';
@@ -15,7 +16,7 @@ export type Account = { name: string; email: string; password: string };
 
 /** A fresh account no other test or worker uses. */
 export function newAccount(label: string): Account {
-  const id = `${label}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const id = `${label}-${randomUUID()}`;
   return {
     name: 'E2E Tester',
     email: `e2e-${id}@example.com`,
