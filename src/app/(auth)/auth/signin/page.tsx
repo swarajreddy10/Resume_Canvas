@@ -142,16 +142,15 @@ function SignInContent() {
             password,
           }),
         });
-        const data = await res.json();
         if (!res.ok) {
-          setError(
-            data.suggestion ? `${data.error}. ${data.suggestion}.` : data.error
-          );
+          const data = await res.json().catch(() => ({}));
+          setError(data.error || 'Registration failed. Please try again.');
           setLoading(false);
           return;
         }
-        setSuccess('Account created! Signing you in...');
-        await new Promise((r) => setTimeout(r, 800));
+        // Registration answers the same for a new and a taken email, so whether an
+        // account was created shows only in whether this password signs in.
+        setSuccess('Signing you in...');
       }
 
       const result = await signIn('credentials', {
@@ -162,16 +161,20 @@ function SignInContent() {
       });
 
       if (result?.error) {
-        const msg = result.error;
-        if (msg.includes('No account'))
-          setError('No account found. Please sign up first.');
-        else if (msg.includes('Google'))
+        // One message for every failure: the server never says whether the email has
+        // an account or which sign-in method it uses.
+        setSuccess('');
+        if (result.code === 'rate_limited') {
           setError(
-            'This account uses Google sign-in. Use the Google button above.'
+            'Too many sign-in attempts. Please wait a few minutes, or reset your password.'
           );
-        else if (msg.includes('password'))
-          setError('Incorrect password. Please try again.');
-        else setError('Sign in failed. Please check your credentials.');
+        } else {
+          setError(
+            isSignUp
+              ? 'We could not sign you in. If this email already has an account, sign in with its password or Google, or reset the password.'
+              : 'Sign in failed. Please check your credentials.'
+          );
+        }
         setLoading(false);
         return;
       }

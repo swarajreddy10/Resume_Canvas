@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import connectDB from '@/lib/db/connection';
+import { limitAuthAttempt } from '@/lib/middleware/withRateLimit';
 import { User } from '@/lib/db/models/User';
 import { hashResetToken, resetTokenSchema } from '@/lib/auth/password';
 
@@ -8,6 +9,9 @@ const bodySchema = z.object({ token: resetTokenSchema });
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await limitAuthAttempt('validate-reset-token', request);
+    if (limited) return limited;
+
     const parsed = bodySchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
       return NextResponse.json(

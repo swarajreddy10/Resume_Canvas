@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { z } from 'zod';
 import connectDB from '@/lib/db/connection';
+import { limitAuthAttempt } from '@/lib/middleware/withRateLimit';
 import { User } from '@/lib/db/models/User';
 import {
   hashPassword,
@@ -14,6 +15,9 @@ const bodySchema = z.object({ token: resetTokenSchema, password: passwordSchema 
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = await limitAuthAttempt('reset-password', request);
+    if (limited) return limited;
+
     const parsed = bodySchema.safeParse(await request.json().catch(() => null));
     if (!parsed.success) {
       return NextResponse.json(
