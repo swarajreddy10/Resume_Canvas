@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+# Read-only token for every job.
+# https://docs.github.com/en/actions/reference/security/secure-use
+permissions:
+  contents: read
+
+# A newer push to the same ref cancels the run still in progress.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+# Actions are pinned to full commit SHAs; the comment names the release.
+# setup-bun reads the Bun version from package.json (packageManager).
+jobs:
+  type-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun ci
+      - run: bun run type-check
+
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun ci
+      - run: bun run lint:check
+
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun ci
+      # Fails below the per-file threshold in bunfig.toml; writes coverage/lcov.info.
+      - run: bun run test:coverage
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: coverage-lcov
+          path: coverage/lcov.info
+          if-no-files-found: error
+
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun ci
+      # Route handlers against a real in-memory MongoDB (mongodb-memory-server).
+      - run: bun run test:integration
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # The build evaluates server modules that read these at import time
+    # (src/lib/config/app.config.ts, src/lib/email/resend.service.ts). Placeholders only;
+    # the deployed app gets real values from Vercel.
+    env:
+      MONGODB_URI: mongodb://127.0.0.1:1/build-placeholder
+      NEXTAUTH_URL: http://localhost:3000
+      NEXTAUTH_SECRET: build-placeholder-secret-0123456789abcdef
+      GOOGLE_CLIENT_ID: build-placeholder
+      GOOGLE_CLIENT_SECRET: build-placeholder
+      GROQ_API_KEY: build-placeholder
+      RESEND_API_KEY: re_build_placeholder
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun ci
+      - run: bun run build
+
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun ci
+      - run: bunx playwright install --with-deps chromium
+      # The PDF route renders with Puppeteer's own Chrome, sandboxed under NODE_ENV
+      # production. Ubuntu 23.10+ blocks the user namespaces that sandbox needs
+      # (https://pptr.dev/troubleshooting); lift it on this throwaway runner
+      # (https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md).
+      - run: bunx puppeteer browsers install chrome
+      - run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
+      # Builds the app and serves it against an in-memory MongoDB with placeholder
+      # configuration (config/playwright.config.ts, scripts/e2e-server.ts).
+      - run: bun run test:e2e
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: ${{ !cancelled() }}
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
