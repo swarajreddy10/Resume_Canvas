@@ -15,7 +15,10 @@ import {
 import { NextRequest } from 'next/server';
 import { jsonRequest, startMongo, stopMongo } from '../helpers/mongo';
 
-let session: { user: { email: string; name: string } } | null = null;
+let session:
+  | { user: { email: string; name: string } }
+  | { message: string }
+  | null = null;
 mock.module('@/lib/auth/session', () => ({ getSession: async () => session }));
 
 let aiCalls = 0;
@@ -313,6 +316,16 @@ describe('AI bullets', () => {
     expect(second.headers.get('cache-control') ?? '').toMatch(PRIVATE);
     expect(aiCalls).toBe(2);
     expect((await second.json()).bulletPoints).toEqual(['bullet 2']);
+  });
+});
+
+describe('session guard', () => {
+  // next-auth up to 5.0.0-beta.31 returned an error object instead of null when the
+  // session could not be read, so a check like `!!session` let the request through
+  // (GHSA-8fpg-xm3f-6cx3). The guard must need a user, not just a truthy value.
+  test('an Auth.js error object is not a session', async () => {
+    session = { message: 'There was a problem with the server configuration.' };
+    expect((await routes.stats(get())).status).toBe(401);
   });
 });
 
