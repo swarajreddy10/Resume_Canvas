@@ -222,7 +222,7 @@ Consistent indigo palette applied across all pages, components, and templates:
 | Surface alt | `#eef2ff` | Icon boxes, badge backgrounds, progress tracks |
 | Border hover | `#c7d2fe` | Card/input hover borders |
 | Text primary | `#11101d` | Headings, strong text |
-| Text secondary | `#64748b` | Body copy, labels, metadata |
+| Text secondary | `#5b6b80` (`text-rc-muted`) | Body copy, labels, metadata; at least 4.5:1 on every light surface above |
 | Font | Plus Jakarta Sans | 400/500/600/700/800 via next/font |
 
 ---
