@@ -104,7 +104,7 @@ src/
 │   └── resume/[id]/               # Public resume view page
 │
 ├── components/
-│   ├── resume/templates/          # 5 A4 templates (inline styles, print-safe)
+│   ├── resume/templates/          # 5 A4 templates and the sections they share (inline styles, print-safe)
 │   ├── resume/                    # TemplateRenderer, TemplateSelector, TemplateShowcase
 │   ├── forms/                     # Per-section form components
 │   ├── dashboard/                 # UsageLimits, stats widgets
