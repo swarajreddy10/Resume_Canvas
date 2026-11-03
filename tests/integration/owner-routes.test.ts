@@ -3,12 +3,20 @@
  * MongoDB. Mocked: the session (`auth()`), the Groq-backed AI service and the
  * Puppeteer-backed PDF renderer.
  */
-import { afterAll, beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  test,
+} from 'bun:test';
 import { NextRequest } from 'next/server';
 import { jsonRequest, startMongo, stopMongo } from '../helpers/mongo';
 
 let session: { user: { email: string; name: string } } | null = null;
-mock.module('@/lib/auth/config', () => ({ auth: async () => session }));
+mock.module('@/lib/auth/session', () => ({ getSession: async () => session }));
 
 let aiCalls = 0;
 mock.module('@/services/ai.service', () => ({
@@ -37,14 +45,19 @@ let CoverLetter: typeof import('@/lib/db/models/CoverLetter').default;
 const ALICE = { email: 'alice@example.com', name: 'Alice' };
 const BOB = { email: 'bob@example.com', name: 'Bob' };
 
-const ctx = (params: Record<string, string>) => ({ params: Promise.resolve(params) });
+const ctx = (params: Record<string, string>) => ({
+  params: Promise.resolve(params),
+});
 // Next.js hands route handlers a NextRequest; the PDF route reads `nextUrl` from it.
 const get = (url = 'http://test/api') => new NextRequest(url);
 const post = (body: unknown) => jsonRequest('http://test/api', body);
 const PRIVATE = /^private, no-store$/;
 
 let slugCounter = 0;
-async function resumeOf(user: typeof ALICE, extra: Record<string, unknown> = {}) {
+async function resumeOf(
+  user: typeof ALICE,
+  extra: Record<string, unknown> = {}
+) {
   return Resume.create({
     userEmail: user.email,
     title: `${user.name} resume`,
@@ -56,7 +69,8 @@ async function resumeOf(user: typeof ALICE, extra: Record<string, unknown> = {})
 
 beforeAll(async () => {
   await startMongo();
-  const load = async (path: string) => (await import(path)) as Record<string, Handler>;
+  const load = async (path: string) =>
+    (await import(path)) as Record<string, Handler>;
   routes.applicationsGet = (await load('@/app/api/applications/route')).GET;
   routes.applicationsPost = (await load('@/app/api/applications/route')).POST;
   routes.coverLettersGet = (await load('@/app/api/cover-letters/route')).GET;
@@ -81,7 +95,11 @@ beforeEach(async () => {
   session = { user: ALICE };
   aiCalls = 0;
   pdfFailure = null;
-  await Promise.all([Resume.deleteMany({}), JobApplication.deleteMany({}), CoverLetter.deleteMany({})]);
+  await Promise.all([
+    Resume.deleteMany({}),
+    JobApplication.deleteMany({}),
+    CoverLetter.deleteMany({}),
+  ]);
 });
 
 describe('job applications', () => {
@@ -97,7 +115,11 @@ describe('job applications', () => {
   test('a create cannot link a resume the user does not own', async () => {
     const bobs = await resumeOf(BOB);
     const res = await routes.applicationsPost(
-      post({ jobTitle: 'Engineer', company: 'Acme', resumeId: String(bobs._id) })
+      post({
+        jobTitle: 'Engineer',
+        company: 'Acme',
+        resumeId: String(bobs._id),
+      })
     );
     expect(res.status).toBe(404);
     expect(await JobApplication.countDocuments()).toBe(0);
@@ -111,17 +133,30 @@ describe('job applications', () => {
   });
 
   test('the list holds only the caller’s applications and is private', async () => {
-    await JobApplication.create({ userEmail: BOB.email, jobTitle: 'X', company: 'Y' });
-    await routes.applicationsPost(post({ jobTitle: 'Engineer', company: 'Acme' }));
+    await JobApplication.create({
+      userEmail: BOB.email,
+      jobTitle: 'X',
+      company: 'Y',
+    });
+    await routes.applicationsPost(
+      post({ jobTitle: 'Engineer', company: 'Acme' })
+    );
     const res = await routes.applicationsGet(get());
     expect(res.headers.get('cache-control') ?? '').toMatch(PRIVATE);
     const { applications } = await res.json();
-    expect(applications.map((a: { company: string }) => a.company)).toEqual(['Acme']);
+    expect(applications.map((a: { company: string }) => a.company)).toEqual([
+      'Acme',
+    ]);
   });
 });
 
 describe('cover letters', () => {
-  const letter = (resumeId: string) => ({ resumeId, company: 'Acme', position: 'Engineer', content: 'Hi' });
+  const letter = (resumeId: string) => ({
+    resumeId,
+    company: 'Acme',
+    position: 'Engineer',
+    content: 'Hi',
+  });
 
   test('a cover letter cannot reference another user’s resume', async () => {
     const bobs = await resumeOf(BOB);
@@ -132,14 +167,18 @@ describe('cover letters', () => {
 
   test('a cover letter for the caller’s own resume is saved under the caller', async () => {
     const mine = await resumeOf(ALICE);
-    const res = await routes.coverLettersPost(post({ ...letter(String(mine._id)), userEmail: BOB.email }));
+    const res = await routes.coverLettersPost(
+      post({ ...letter(String(mine._id)), userEmail: BOB.email })
+    );
     expect(res.status).toBe(201);
     expect(res.headers.get('cache-control') ?? '').toMatch(PRIVATE);
     expect((await CoverLetter.findOne({}).lean())!.userEmail).toBe(ALICE.email);
   });
 
   test('a malformed resume id is a 404, not a server error', async () => {
-    expect((await routes.coverLettersPost(post(letter('not-an-id')))).status).toBe(404);
+    expect(
+      (await routes.coverLettersPost(post(letter('not-an-id')))).status
+    ).toBe(404);
   });
 });
 
@@ -168,21 +207,33 @@ describe('dashboard counts are fresh and private', () => {
       avgAtsScore: 0,
       topPerformingResume: null,
     });
-    await resumeOf(ALICE, { title: 'Top', isPublic: true, viewCount: 9, atsScore: 90 });
+    await resumeOf(ALICE, {
+      title: 'Top',
+      isPublic: true,
+      viewCount: 9,
+      atsScore: 90,
+    });
     await resumeOf(ALICE, { title: 'Other', viewCount: 1, atsScore: 71 });
     await resumeOf(BOB, { viewCount: 1000, atsScore: 10 });
     const body = await (await routes.analytics(get())).json();
     expect(body.totalViews).toBe(10);
     expect(body.totalShares).toBe(1);
     expect(body.avgAtsScore).toBe(81); // (90 + 71) / 2, rounded
-    expect(body.topPerformingResume).toEqual({ title: 'Top', views: 9, atsScore: 90 });
+    expect(body.topPerformingResume).toEqual({
+      title: 'Top',
+      views: 9,
+      atsScore: 90,
+    });
   });
 });
 
 describe('resume PDF', () => {
   test('a PDF is private to its owner and never stored by shared caches', async () => {
     const mine = await resumeOf(ALICE);
-    const res = await routes.pdf(get(`http://test/api/resumes/${mine._id}/pdf`), ctx({ id: String(mine._id) }));
+    const res = await routes.pdf(
+      get(`http://test/api/resumes/${mine._id}/pdf`),
+      ctx({ id: String(mine._id) })
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toBe('application/pdf');
     expect(res.headers.get('cache-control') ?? '').toMatch(PRIVATE);
@@ -191,14 +242,21 @@ describe('resume PDF', () => {
   test('another user’s resume and a malformed id are 404', async () => {
     const bobs = await resumeOf(BOB);
     const url = 'http://test/api/resumes/x/pdf';
-    expect((await routes.pdf(get(url), ctx({ id: String(bobs._id) }))).status).toBe(404);
-    expect((await routes.pdf(get(url), ctx({ id: 'not-an-id' }))).status).toBe(404);
+    expect(
+      (await routes.pdf(get(url), ctx({ id: String(bobs._id) }))).status
+    ).toBe(404);
+    expect((await routes.pdf(get(url), ctx({ id: 'not-an-id' }))).status).toBe(
+      404
+    );
   });
 
   test('a render failure does not reveal the error message', async () => {
     const mine = await resumeOf(ALICE);
     pdfFailure = new Error('Failed to launch chrome at /opt/internal/chromium');
-    const res = await routes.pdf(get('http://test/api/resumes/x/pdf'), ctx({ id: String(mine._id) }));
+    const res = await routes.pdf(
+      get('http://test/api/resumes/x/pdf'),
+      ctx({ id: String(mine._id) })
+    );
     expect(res.status).toBe(500);
     expect(await res.text()).not.toContain('/opt/internal');
   });
@@ -216,9 +274,13 @@ describe('ATS score', () => {
 
   test('another user’s resume and a malformed id are 404', async () => {
     const bobs = await resumeOf(BOB);
-    expect((await routes.atsScore(post({}), ctx({ id: String(bobs._id) }))).status).toBe(404);
+    expect(
+      (await routes.atsScore(post({}), ctx({ id: String(bobs._id) }))).status
+    ).toBe(404);
     expect((await Resume.findById(bobs._id).lean())!.atsScore).toBeUndefined();
-    expect((await routes.atsScore(post({}), ctx({ id: 'not-an-id' }))).status).toBe(404);
+    expect(
+      (await routes.atsScore(post({}), ctx({ id: 'not-an-id' }))).status
+    ).toBe(404);
   });
 });
 
@@ -229,12 +291,19 @@ describe('resume by slug', () => {
     const res = await routes.bySlug(get(), ctx({ slug: mine.slug }));
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control') ?? '').toMatch(PRIVATE);
-    expect((await routes.bySlug(get(), ctx({ slug: bobs.slug }))).status).toBe(404);
+    expect((await routes.bySlug(get(), ctx({ slug: bobs.slug }))).status).toBe(
+      404
+    );
   });
 });
 
 describe('AI bullets', () => {
-  const input = { jobTitle: 'Engineer', company: 'Acme', description: 'Built things', skills: ['Go'] };
+  const input = {
+    jobTitle: 'Engineer',
+    company: 'Acme',
+    description: 'Built things',
+    skills: ['Go'],
+  };
 
   test('each request is generated fresh and the response is private', async () => {
     const first = await routes.bullets(post(input));
@@ -250,9 +319,17 @@ describe('AI bullets', () => {
 describe('LinkedIn import', () => {
   test('anonymous callers are rejected and responses are private', async () => {
     session = null;
-    expect((await routes.linkedin(post({ linkedinUrl: 'https://linkedin.com/in/x' }))).status).toBe(401);
+    expect(
+      (
+        await routes.linkedin(
+          post({ linkedinUrl: 'https://linkedin.com/in/x' })
+        )
+      ).status
+    ).toBe(401);
     session = { user: ALICE };
-    const res = await routes.linkedin(post({ linkedinUrl: 'https://linkedin.com/in/x' }));
+    const res = await routes.linkedin(
+      post({ linkedinUrl: 'https://linkedin.com/in/x' })
+    );
     expect(res.status).toBe(200);
     expect(res.headers.get('cache-control') ?? '').toMatch(PRIVATE);
   });

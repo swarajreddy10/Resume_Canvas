@@ -2,14 +2,27 @@
  * Resume CRUD through the real route handlers and a real MongoDB. Only the session is
  * mocked: `auth()` returns whichever user the test sets.
  */
-import { afterAll, beforeAll, beforeEach, describe, expect, mock, test } from 'bun:test';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  mock,
+  test,
+} from 'bun:test';
 import { startMongo, stopMongo } from '../helpers/mongo';
 
 let session: { user: { email: string; name: string } } | null = null;
-mock.module('@/lib/auth/config', () => ({ auth: async () => session }));
+mock.module('@/lib/auth/session', () => ({ getSession: async () => session }));
 
 type Handler = (req: Request, ctx?: unknown) => Promise<Response>;
-let list: Handler, create: Handler, getOne: Handler, update: Handler, remove: Handler, clone: Handler;
+let list: Handler,
+  create: Handler,
+  getOne: Handler,
+  update: Handler,
+  remove: Handler,
+  clone: Handler;
 let Resume: typeof import('@/lib/db/models/Resume').Resume;
 
 const ALICE = { email: 'alice@example.com', name: 'John Alpha' };
@@ -32,14 +45,23 @@ const minimal = (title: string) => ({
 async function createAs(user: typeof ALICE, title: string) {
   session = { user };
   const res = await create(req('POST', minimal(title)));
-  return { res, body: (await res.json()) as { resume?: { _id: string; slug: string } } };
+  return {
+    res,
+    body: (await res.json()) as { resume?: { _id: string; slug: string } },
+  };
 }
 
 beforeAll(async () => {
   await startMongo();
-  ({ GET: list, POST: create } = (await import('@/app/api/resumes/route')) as never);
-  ({ GET: getOne, PUT: update, DELETE: remove } = (await import('@/app/api/resumes/[id]/route')) as never);
-  ({ POST: clone } = (await import('@/app/api/resumes/[id]/clone/route')) as never);
+  ({ GET: list, POST: create } =
+    (await import('@/app/api/resumes/route')) as never);
+  ({
+    GET: getOne,
+    PUT: update,
+    DELETE: remove,
+  } = (await import('@/app/api/resumes/[id]/route')) as never);
+  ({ POST: clone } =
+    (await import('@/app/api/resumes/[id]/clone/route')) as never);
   ({ Resume } = await import('@/lib/db/models/Resume'));
   const { default: connectDB } = await import('@/lib/db/connection');
   await connectDB();
@@ -67,8 +89,12 @@ describe('freshness and caching', () => {
     const { body } = await createAs(ALICE, 'Before');
     const id = body.resume!._id;
     await getOne(req('GET'), ctx(id));
-    expect((await update(req('PUT', { title: 'After' }), ctx(id))).status).toBe(200);
-    expect((await (await getOne(req('GET'), ctx(id))).json()).resume.title).toBe('After');
+    expect((await update(req('PUT', { title: 'After' }), ctx(id))).status).toBe(
+      200
+    );
+    expect(
+      (await (await getOne(req('GET'), ctx(id))).json()).resume.title
+    ).toBe('After');
     expect((await remove(req('DELETE'), ctx(id))).status).toBe(200);
     expect((await getOne(req('GET'), ctx(id))).status).toBe(404);
   });
@@ -85,7 +111,12 @@ describe('update boundary', () => {
     const { body } = await createAs(ALICE, 'Mine');
     const id = body.resume!._id;
     const res = await update(
-      req('PUT', { title: 'Renamed', userEmail: BOB.email, viewCount: 99999, slug: 'stolen/1' }),
+      req('PUT', {
+        title: 'Renamed',
+        userEmail: BOB.email,
+        viewCount: 99999,
+        slug: 'stolen/1',
+      }),
       ctx(id)
     );
     expect(res.status).toBe(200);
@@ -98,7 +129,10 @@ describe('update boundary', () => {
 
   test('an update that breaks the schema is rejected', async () => {
     const { body } = await createAs(ALICE, 'Mine');
-    const res = await update(req('PUT', { templateId: 'bogus' }), ctx(body.resume!._id));
+    const res = await update(
+      req('PUT', { templateId: 'bogus' }),
+      ctx(body.resume!._id)
+    );
     expect(res.status).toBe(400);
   });
 
@@ -106,7 +140,9 @@ describe('update boundary', () => {
     const { body } = await createAs(ALICE, "O'Brien & Co <R&D>");
     const id = body.resume!._id;
     await update(req('PUT', { title: "O'Brien & Co <R&D>" }), ctx(id));
-    expect((await Resume.findById(id).lean())!.title).toBe("O'Brien & Co <R&D>");
+    expect((await Resume.findById(id).lean())!.title).toBe(
+      "O'Brien & Co <R&D>"
+    );
   });
 
   test('a malformed id is a 404, not a server error', async () => {

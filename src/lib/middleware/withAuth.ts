@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
+import { getSession } from '@/lib/auth/session';
 
 export interface AuthSession {
   user: {
@@ -23,9 +23,14 @@ export type AuthenticatedHandler<P = Record<string, string>> = (
   context: { session: AuthSession; params: Promise<P> }
 ) => Promise<NextResponse>;
 
-export function withAuth<P = Record<string, string>>(handler: AuthenticatedHandler<P>) {
-  return async (request: NextRequest, routeContext?: { params: Promise<P> }) => {
-    const session = await auth();
+export function withAuth<P = Record<string, string>>(
+  handler: AuthenticatedHandler<P>
+) {
+  return async (
+    request: NextRequest,
+    routeContext?: { params: Promise<P> }
+  ) => {
+    const session = await getSession();
 
     const response = session?.user?.email
       ? await handler(request, {

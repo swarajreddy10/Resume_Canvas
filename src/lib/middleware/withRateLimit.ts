@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth/config';
+import { getSession } from '@/lib/auth/session';
 import { errorMessages } from '@/lib/constants/messages';
 import { PRIVATE_NO_STORE } from '@/lib/middleware/withAuth';
 import {
@@ -15,7 +15,10 @@ import {
  * from a signed-in route, which withAuth cannot mark because the limiter answers first.
  */
 export function rateLimitedResponse(result: RateLimitResult): NextResponse {
-  const retryAfter = Math.max(1, Math.ceil((result.resetTime - Date.now()) / 1000));
+  const retryAfter = Math.max(
+    1,
+    Math.ceil((result.resetTime - Date.now()) / 1000)
+  );
   return NextResponse.json(
     { error: errorMessages.rateLimit.exceeded, retryAfter },
     {
@@ -31,7 +34,7 @@ export function rateLimitedResponse(result: RateLimitResult): NextResponse {
 }
 
 async function sessionUserOrIp(request: NextRequest): Promise<string> {
-  const session = await auth();
+  const session = await getSession();
   return userOrIpKey(request, session?.user?.email);
 }
 
@@ -46,10 +49,7 @@ export function withRateLimit(
   return function <
     // `never[]` accepts any trailing parameters (such as an optional route context),
     // which `unknown[]` rejects under strict function types.
-    T extends (
-      request: NextRequest,
-      ...args: never[]
-    ) => Promise<NextResponse>,
+    T extends (request: NextRequest, ...args: never[]) => Promise<NextResponse>,
   >(handler: T): T {
     return (async (request: NextRequest, ...args: never[]) => {
       const result = await rateLimiter.check(await identify(request), request);
@@ -57,7 +57,10 @@ export function withRateLimit(
 
       const response = await handler(request, ...args);
       response.headers.set('Cache-Control', PRIVATE_NO_STORE);
-      response.headers.set('X-RateLimit-Remaining', result.remaining.toString());
+      response.headers.set(
+        'X-RateLimit-Remaining',
+        result.remaining.toString()
+      );
       response.headers.set('X-RateLimit-Reset', result.resetTime.toString());
       return response;
     }) as T;
@@ -74,6 +77,9 @@ export async function limitAuthAttempt(
   request: Request,
   email?: unknown
 ): Promise<NextResponse | null> {
-  const result = await authRateLimit.check(authAttemptKey(scope, request, email), request);
+  const result = await authRateLimit.check(
+    authAttemptKey(scope, request, email),
+    request
+  );
   return result.success ? null : rateLimitedResponse(result);
 }

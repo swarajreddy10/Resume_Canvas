@@ -28,10 +28,19 @@ export async function startMongo(): Promise<string> {
   return uri;
 }
 
-/** Leave the server running for the next file; just drop this file's data. */
+/**
+ * Leave the server running for the next file; just delete this file's documents.
+ * Collections and their indexes stay: Mongoose builds schema indexes once per process
+ * (when a model is compiled), so dropping the database would leave later files without
+ * the unique indexes the app relies on (for example one account per email).
+ */
 export async function stopMongo(): Promise<void> {
   const { default: mongoose } = await import('mongoose');
-  await mongoose.connection.db?.dropDatabase();
+  const db = mongoose.connection.db;
+  if (!db) return;
+  for (const collection of await db.collections()) {
+    await collection.deleteMany({});
+  }
 }
 
 let clientCounter = 0;
