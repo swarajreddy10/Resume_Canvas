@@ -1,151 +1,127 @@
-import { test, expect, describe, beforeEach } from 'bun:test';
+/**
+ * MemoryCache behaviour on fresh instances with an injected clock, so TTL tests neither
+ * sleep nor depend on timer precision.
+ */
+import { afterEach, describe, expect, test } from 'bun:test';
 import { MemoryCache } from '@/lib/cache/memory-cache';
 
-describe('MemoryCache - Core Functionality', () => {
-  let cache: MemoryCache<string>;
+const created: MemoryCache<unknown>[] = [];
 
-  beforeEach(() => {
-    cache = new MemoryCache<string>(3, 1000);
-  });
+function makeCache<T>(maxSize: number, ttlMs: number, start = 0) {
+  let t = start;
+  const cache = new MemoryCache<T>(maxSize, ttlMs, () => t);
+  created.push(cache as MemoryCache<unknown>);
+  return {
+    cache,
+    advance: (ms: number) => {
+      t += ms;
+    },
+  };
+}
 
-  test('sets and gets values', () => {
-    cache.set('key1', 'value1');
-    expect(cache.get('key1')).toBe('value1');
-  });
-
-  test('returns null for non-existent keys', () => {
-    expect(cache.get('nonexistent')).toBeNull();
-  });
-
-  test('respects max size (LRU eviction)', () => {
-    cache.set('key1', 'value1');
-    cache.set('key2', 'value2');
-    cache.set('key3', 'value3');
-    cache.set('key4', 'value4');
-
-    expect(cache.get('key1')).toBeNull();
-    expect(cache.get('key4')).toBe('value4');
-  });
-
-  test('expires entries after TTL', async () => {
-    cache.set('key1', 'value1', 100);
-    expect(cache.get('key1')).toBe('value1');
-
-    await Bun.sleep(150);
-    expect(cache.get('key1')).toBeNull();
-  });
-
-  test('deletes entries', () => {
-    cache.set('key1', 'value1');
-    cache.delete('key1');
-    expect(cache.get('key1')).toBeNull();
-  });
-
-  test('clears all entries', () => {
-    cache.set('key1', 'value1');
-    cache.set('key2', 'value2');
-    cache.clear();
-
-    expect(cache.get('key1')).toBeNull();
-    expect(cache.get('key2')).toBeNull();
-  });
-
-  test('has() checks existence correctly', () => {
-    cache.set('key1', 'value1');
-    expect(cache.has('key1')).toBe(true);
-    expect(cache.has('key2')).toBe(false);
-  });
-
-  test('has() returns false for expired entries', async () => {
-    cache.set('key1', 'value1', 100);
-    expect(cache.has('key1')).toBe(true);
-
-    await Bun.sleep(150);
-    expect(cache.has('key1')).toBe(false);
-  });
+afterEach(() => {
+  // Each cache owns a cleanup interval.
+  for (const cache of created.splice(0)) cache.destroy();
 });
 
-describe('MemoryCache - Edge Cases', () => {
-  test('handles empty string keys', () => {
-    const cache = new MemoryCache<string>();
-    cache.set('', 'empty-key');
-    expect(cache.get('')).toBe('empty-key');
-  });
-
-  test('handles special character keys', () => {
-    const cache = new MemoryCache<string>();
-    const specialKeys = [
-      'key:with:colons',
-      'key/with/slashes',
-      'key.with.dots',
-      'key-with-dashes',
-    ];
-
-    specialKeys.forEach((key) => {
-      cache.set(key, 'value');
-      expect(cache.get(key)).toBe('value');
-    });
-  });
-
-  test('handles null and undefined values', () => {
-    const cache = new MemoryCache<unknown>();
+describe('MemoryCache', () => {
+  test('returns what was stored, and null for a missing key', () => {
+    const { cache } = makeCache<unknown>(10, 1000);
+    const obj = { name: 'Résumé 科技 🚀', tags: [1, 2, 3] };
+    cache.set('', 'empty key');
+    cache.set('key:with/odd.chars', obj);
     cache.set('null', null);
-    cache.set('undefined', undefined);
 
-    expect(cache.get('null')).toBe(null);
-    expect(cache.get('undefined')).toBe(undefined);
+    expect(cache.get('')).toBe('empty key');
+    expect(cache.get('key:with/odd.chars')).toEqual(obj);
+    expect(cache.get('null')).toBeNull();
+    expect(cache.has('null')).toBe(true);
+    expect(cache.get('missing')).toBeNull();
+    expect(cache.has('missing')).toBe(false);
   });
 
-  test('handles object values', () => {
-    const cache = new MemoryCache<object>();
-    const obj = { name: 'test', value: 123 };
-    cache.set('obj', obj);
+  test('expires an entry after the default TTL', () => {
+    const { cache, advance } = makeCache<string>(10, 100);
+    cache.set('a', 'value');
 
-    expect(cache.get('obj')).toEqual(obj);
+    advance(100);
+    expect(cache.get('a')).toBe('value');
+
+    advance(1);
+    expect(cache.get('a')).toBeNull();
+    expect(cache.has('a')).toBe(false);
   });
 
-  test('handles array values', () => {
-    const cache = new MemoryCache<number[]>();
-    const arr = [1, 2, 3, 4, 5];
-    cache.set('arr', arr);
-
-    expect(cache.get('arr')).toEqual(arr);
-  });
-
-  test('overwrites existing keys', () => {
-    const cache = new MemoryCache<string>();
-    cache.set('key', 'value1');
-    cache.set('key', 'value2');
-
-    expect(cache.get('key')).toBe('value2');
-  });
-
-  test('custom TTL overrides default', async () => {
-    const cache = new MemoryCache<string>(10, 5000);
+  test('a per-entry TTL overrides the default', () => {
+    const { cache, advance } = makeCache<string>(10, 5000);
     cache.set('short', 'value', 100);
-    cache.set('long', 'value', 10000);
+    cache.set('long', 'value', 10_000);
 
-    await Bun.sleep(150);
+    advance(101);
+
     expect(cache.get('short')).toBeNull();
     expect(cache.get('long')).toBe('value');
   });
 
-  test('handles zero TTL', async () => {
-    const cache = new MemoryCache<string>(10, 1);
-    cache.set('key', 'value', 1);
-    await Bun.sleep(10);
-    expect(cache.get('key')).toBeNull();
+  test('a negative TTL stores an already-expired entry', () => {
+    const { cache, advance } = makeCache<string>(10, 1000);
+    cache.set('a', 'value', -1);
+    advance(0);
+
+    expect(cache.get('a')).toBeNull();
   });
 
-  test('handles negative TTL', async () => {
-    const cache = new MemoryCache<string>(10, 1000);
-    cache.set('key', 'value', -1);
-    await Bun.sleep(10);
-    expect(cache.get('key')).toBeNull();
+  test('evicts the least recently used entry when full', () => {
+    const { cache } = makeCache<string>(3, 1000);
+    cache.set('a', 'A');
+    cache.set('b', 'B');
+    cache.set('c', 'C');
+    cache.get('a');
+
+    cache.set('d', 'D');
+
+    expect(cache.get('b')).toBeNull();
+    expect(cache.get('a')).toBe('A');
+    expect(cache.get('c')).toBe('C');
+    expect(cache.get('d')).toBe('D');
   });
 
-  test('handles max size of 1', () => {
-    const cache = new MemoryCache<string>(1, 1000);
+  test('overwriting a key when full evicts nothing else', () => {
+    const { cache } = makeCache<string>(2, 1000);
+    cache.set('a', 'A');
+    cache.set('b', 'B');
+
+    cache.set('b', 'B2');
+
+    expect(cache.get('a')).toBe('A');
+    expect(cache.get('b')).toBe('B2');
+  });
+
+  test('holds exactly maxSize entries after many inserts', () => {
+    const { cache } = makeCache<string>(100, 60_000);
+    for (let i = 0; i < 250; i++) cache.set(`key${i}`, `value${i}`);
+
+    const kept = Array.from({ length: 250 }, (_, i) => cache.has(`key${i}`));
+    expect(kept.filter(Boolean)).toHaveLength(100);
+    expect(cache.get('key149')).toBeNull();
+    expect(cache.get('key150')).toBe('value150');
+    expect(cache.get('key249')).toBe('value249');
+  });
+
+  test('evicts an empty-string key like any other', () => {
+    const { cache } = makeCache<string>(2, 1000);
+    cache.set('', 'empty');
+    cache.set('b', 'B');
+
+    cache.set('c', 'C');
+
+    expect(cache.has('')).toBe(false);
+    expect(cache.get('b')).toBe('B');
+    expect(cache.get('c')).toBe('C');
+  });
+
+  test('a cache of size 1 keeps only the latest entry', () => {
+    const { cache } = makeCache<string>(1, 1000);
     cache.set('key1', 'value1');
     cache.set('key2', 'value2');
 
@@ -153,59 +129,17 @@ describe('MemoryCache - Edge Cases', () => {
     expect(cache.get('key2')).toBe('value2');
   });
 
-  test("delete non-existent key doesn't throw", () => {
-    const cache = new MemoryCache<string>();
-    expect(() => cache.delete('nonexistent')).not.toThrow();
-  });
+  test('delete and clear remove entries, and tolerate missing keys', () => {
+    const { cache } = makeCache<string>(10, 1000);
+    cache.set('a', 'A');
+    cache.set('b', 'B');
 
-  test("clear empty cache doesn't throw", () => {
-    const cache = new MemoryCache<string>();
-    expect(() => cache.clear()).not.toThrow();
-  });
+    cache.delete('a');
+    cache.delete('missing');
+    expect(cache.get('a')).toBeNull();
+    expect(cache.get('b')).toBe('B');
 
-  test('concurrent set operations', () => {
-    const cache = new MemoryCache<string>(100, 1000);
-
-    for (let i = 0; i < 50; i++) {
-      cache.set(`key${i}`, `value${i}`);
-    }
-
-    for (let i = 0; i < 50; i++) {
-      expect(cache.get(`key${i}`)).toBe(`value${i}`);
-    }
-  });
-});
-
-describe('MemoryCache - Memory Safety', () => {
-  test('handles large number of entries', () => {
-    const cache = new MemoryCache<string>(1000, 60000);
-
-    for (let i = 0; i < 1000; i++) {
-      cache.set(`key${i}`, `value${i}`);
-    }
-
-    expect(cache.get('key999')).toBe('value999');
-  });
-
-  test('handles large string values', () => {
-    const cache = new MemoryCache<string>();
-    const largeString = 'x'.repeat(10000);
-    cache.set('large', largeString);
-
-    expect(cache.get('large')).toBe(largeString);
-  });
-
-  test('properly cleans up expired entries', async () => {
-    const cache = new MemoryCache<string>(10, 100);
-
-    for (let i = 0; i < 5; i++) {
-      cache.set(`key${i}`, `value${i}`);
-    }
-
-    await Bun.sleep(150);
-
-    for (let i = 0; i < 5; i++) {
-      expect(cache.get(`key${i}`)).toBeNull();
-    }
+    cache.clear();
+    expect(cache.get('b')).toBeNull();
   });
 });

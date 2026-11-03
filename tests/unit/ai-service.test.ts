@@ -1,211 +1,199 @@
-import { test, expect, describe } from 'bun:test';
-import { generateBulletPoints, optimizeResume } from '@/services/ai.service';
+/**
+ * The AI service against a mocked Groq client (registered in tests/setup.ts): each test
+ * queues the model's reply, then checks how the service parses it or falls back.
+ */
+import { beforeEach, describe, expect, test } from 'bun:test';
+import {
+  aiService,
+  generateBulletPoints,
+  generateCoverLetter,
+  optimizeResume,
+} from '@/services/ai.service';
+import {
+  failWith,
+  groqCreate,
+  lastPrompt,
+  replyWith,
+  resetGroq,
+} from '../helpers/groq';
 
-describe('AI Service - generateBulletPoints', () => {
-  test('returns array of bullet points', async () => {
-    const request = {
-      jobTitle: 'Software Engineer',
-      company: 'Tech Corp',
-      description: 'Developed web applications',
-      skills: ['React', 'Node.js'],
-    };
+const FALLBACK_BULLETS = [
+  'Led cross-functional teams to deliver high-impact projects',
+  'Improved system performance by implementing best practices',
+  'Collaborated with stakeholders to define requirements',
+];
 
-    const result = await generateBulletPoints(request);
+const request = {
+  jobTitle: 'Software Engineer & Architect',
+  company: 'Tech Corp 科技公司',
+  description: 'Built web applications with React/Node.js 🚀',
+  skills: ['C++', 'C#', '.NET'],
+};
 
-    expect(Array.isArray(result)).toBe(true);
-    expect(result.length).toBeGreaterThan(0);
-    expect(result.length).toBeLessThanOrEqual(5);
+beforeEach(resetGroq);
+
+describe('generateBulletPoints', () => {
+  test('returns the model lines trimmed, without blanks, capped at five', async () => {
+    replyWith(
+      '  Led A  \n\nBuilt B\nCut C\n   \nShipped D\nScaled E\nOwned F\n'
+    );
+
+    const bullets = await generateBulletPoints(request);
+
+    expect(bullets).toEqual([
+      'Led A',
+      'Built B',
+      'Cut C',
+      'Shipped D',
+      'Scaled E',
+    ]);
+    expect(groqCreate).toHaveBeenCalledTimes(1);
   });
 
-  test('handles missing skills gracefully', async () => {
-    const request = {
-      jobTitle: 'Software Engineer',
-      company: 'Tech Corp',
-      description: 'Developed web applications',
-    };
+  test('sends the role, company, description and skills to the model', async () => {
+    replyWith('Led A');
 
-    const result = await generateBulletPoints(request);
+    await generateBulletPoints(request);
 
-    expect(Array.isArray(result)).toBe(true);
+    const prompt = lastPrompt();
+    expect(prompt).toContain('Role: Software Engineer & Architect');
+    expect(prompt).toContain('Company: Tech Corp 科技公司');
+    expect(prompt).toContain(
+      'Description: Built web applications with React/Node.js 🚀'
+    );
+    expect(prompt).toContain('Key Skills: C++, C#, .NET');
   });
 
-  test('returns fallback on error', async () => {
-    const request = {
-      jobTitle: '',
-      company: '',
-      description: '',
-    };
+  test('omits the skills line when no skills are given', async () => {
+    replyWith('Led A');
 
-    const result = await generateBulletPoints(request);
+    await generateBulletPoints({ ...request, skills: undefined });
 
-    expect(Array.isArray(result)).toBe(true);
-    expect(result.length).toBeGreaterThan(0);
+    expect(lastPrompt()).not.toContain('Key Skills:');
   });
 
-  test('handles special characters in input', async () => {
-    const request = {
-      jobTitle: 'Software Engineer & Architect',
-      company: 'Tech Corp (USA)',
-      description: 'Developed web applications with React/Node.js',
-      skills: ['C++', 'C#', '.NET'],
-    };
+  test('returns the fixed fallback bullets when the API call fails', async () => {
+    failWith();
 
-    const result = await generateBulletPoints(request);
-
-    expect(Array.isArray(result)).toBe(true);
+    expect(await generateBulletPoints(request)).toEqual(FALLBACK_BULLETS);
   });
 
-  test('handles long descriptions', async () => {
-    const request = {
-      jobTitle: 'Software Engineer',
-      company: 'Tech Corp',
-      description: 'x'.repeat(500),
-    };
+  test('returns an empty list when the model returns no content', async () => {
+    groqCreate.mockResolvedValueOnce({ choices: [] });
 
-    const result = await generateBulletPoints(request);
-
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  test('handles unicode characters', async () => {
-    const request = {
-      jobTitle: 'Software Engineer',
-      company: 'Tech Corp 科技公司',
-      description: 'Developed applications with émojis 🚀',
-    };
-
-    const result = await generateBulletPoints(request);
-
-    expect(Array.isArray(result)).toBe(true);
-  });
-
-  test('returns unique bullet points', async () => {
-    const request = {
-      jobTitle: 'Software Engineer',
-      company: 'Tech Corp',
-      description: 'Developed web applications',
-    };
-
-    const result = await generateBulletPoints(request);
-    const uniqueResults = new Set(result);
-
-    expect(uniqueResults.size).toBe(result.length);
+    expect(await generateBulletPoints(request)).toEqual([]);
   });
 });
 
-describe('AI Service - optimizeResume', () => {
-  test('returns optimization results with score', async () => {
-    const resumeContent = `
-      John Doe
-      Software Engineer
-      Experience: Worked on various projects
-    `;
+describe('optimizeResume', () => {
+  test('parses the JSON object out of a well-formed model reply', async () => {
+    replyWith(
+      'Here is the analysis:\n{"atsScore": 72, "suggestions": ["Add metrics"], "keywords": ["Go", "AWS"]}\nThanks'
+    );
 
-    const result = await optimizeResume(resumeContent);
+    const result = await optimizeResume('Software Engineer with experience');
 
-    expect(result).toHaveProperty('atsScore');
-    expect(result).toHaveProperty('suggestions');
-    expect(result).toHaveProperty('keywords');
-    expect(typeof result.atsScore).toBe('number');
-    expect(result.atsScore).toBeGreaterThanOrEqual(0);
-    expect(result.atsScore).toBeLessThanOrEqual(100);
-    expect(Array.isArray(result.suggestions)).toBe(true);
-    expect(Array.isArray(result.keywords)).toBe(true);
+    expect(result).toEqual({
+      atsScore: 72,
+      suggestions: ['Add metrics'],
+      keywords: ['Go', 'AWS'],
+    });
+    expect(lastPrompt()).toContain('Software Engineer with experience');
   });
 
-  test('handles empty content gracefully', async () => {
-    const result = await optimizeResume('');
+  test('returns the default assessment when the reply holds no JSON', async () => {
+    replyWith('I cannot score this resume.');
 
-    expect(result).toHaveProperty('atsScore');
-    expect(result.atsScore).toBeGreaterThanOrEqual(0);
+    const result = await optimizeResume('x');
+
+    expect(result.atsScore).toBe(65);
+    expect(result.suggestions).toHaveLength(4);
+    expect(result.keywords).toContain('stakeholder management');
   });
 
-  test('handles very long content', async () => {
-    const longContent = 'Experience: ' + 'x'.repeat(10000);
-    const result = await optimizeResume(longContent);
+  test('returns the error fallback when the reply holds malformed JSON', async () => {
+    replyWith('{"atsScore": 72, "suggestions": [unquoted text]}');
 
-    expect(result).toHaveProperty('atsScore');
+    const result = await optimizeResume('x');
+
+    expect(result).toEqual({
+      atsScore: 65,
+      suggestions: [
+        'Add specific metrics and numbers to quantify your achievements',
+        'Include more relevant industry keywords',
+      ],
+      keywords: ['leadership', 'teamwork', 'problem-solving'],
+    });
   });
 
-  test('handles special characters', async () => {
-    const content = 'John Doe\nEmail: john@example.com\nPhone: +1-234-567-8900';
-    const result = await optimizeResume(content);
+  test('returns the error fallback when the API call fails', async () => {
+    failWith('503 Service Unavailable');
 
-    expect(result).toHaveProperty('atsScore');
-  });
+    const result = await optimizeResume('x');
 
-  test('returns valid suggestions array', async () => {
-    const content = 'Software Engineer with experience';
-    const result = await optimizeResume(content);
-
-    expect(Array.isArray(result.suggestions)).toBe(true);
-    expect(result.suggestions.length).toBeGreaterThan(0);
-  });
-
-  test('returns valid keywords array', async () => {
-    const content = 'Software Engineer with experience';
-    const result = await optimizeResume(content);
-
-    expect(Array.isArray(result.keywords)).toBe(true);
-    expect(result.keywords.length).toBeGreaterThan(0);
-  });
-
-  test('handles malformed content', async () => {
-    const malformed = '{{{}}}[[[]]]<<<>>>';
-    const result = await optimizeResume(malformed);
-
-    expect(result).toHaveProperty('atsScore');
-  });
-
-  test('handles null bytes and control characters', async () => {
-    const content = 'Resume\x00Content\x01Test';
-    const result = await optimizeResume(content);
-
-    expect(result).toHaveProperty('atsScore');
+    expect(result.atsScore).toBe(65);
+    expect(result.keywords).toEqual([
+      'leadership',
+      'teamwork',
+      'problem-solving',
+    ]);
   });
 });
 
-describe('AI Service - Error Handling', () => {
-  test('generateBulletPoints handles network errors', async () => {
-    const request = {
-      jobTitle: 'Test',
-      company: 'Test',
-      description: 'Test',
-    };
+describe('generateCoverLetter', () => {
+  const input = {
+    resumeData: { name: 'Jane Smith', skills: ['Go', 'Postgres'] },
+    jobTitle: 'Backend Engineer',
+    companyName: 'Acme',
+  };
 
-    const result = await generateBulletPoints(request);
+  test('returns the model text and sends the job and resume details', async () => {
+    replyWith('Dear Acme team,\n\nI am applying...');
 
-    expect(Array.isArray(result)).toBe(true);
+    expect(
+      await generateCoverLetter({ ...input, jobDescription: 'Build APIs' })
+    ).toBe('Dear Acme team,\n\nI am applying...');
+    const prompt = lastPrompt();
+    expect(prompt).toContain('Job Title: Backend Engineer');
+    expect(prompt).toContain('Company: Acme');
+    expect(prompt).toContain('Job Description: Build APIs');
+    expect(prompt).toContain('"name": "Jane Smith"');
   });
 
-  test('optimizeResume handles API failures', async () => {
-    const result = await optimizeResume('test content');
+  test('omits the job description line when none is given', async () => {
+    replyWith('Letter');
 
-    expect(result).toHaveProperty('atsScore');
-    expect(typeof result.atsScore).toBe('number');
+    await generateCoverLetter(input);
+
+    expect(lastPrompt()).not.toContain('Job Description:');
   });
-});
 
-describe('AI Service - Performance', () => {
-  test('generateBulletPoints completes within timeout', async () => {
-    const start = performance.now();
-
-    await generateBulletPoints({
-      jobTitle: 'Engineer',
-      company: 'Tech',
-      description: 'Built software',
+  test('returns a failure message when the model returns no content', async () => {
+    groqCreate.mockResolvedValueOnce({
+      choices: [{ message: { content: '' } }],
     });
 
-    const duration = performance.now() - start;
-    expect(duration).toBeLessThan(5000);
+    expect(await generateCoverLetter(input)).toBe(
+      'Failed to generate cover letter'
+    );
   });
 
-  test('optimizeResume completes within timeout', async () => {
-    const start = performance.now();
+  test('rethrows when the API call fails', async () => {
+    failWith('429 Rate limit');
 
-    await optimizeResume('Test resume content');
+    await expect(generateCoverLetter(input)).rejects.toThrow('429 Rate limit');
+  });
+});
 
-    const duration = performance.now() - start;
-    expect(duration).toBeLessThan(5000);
+describe('AIService', () => {
+  test('delegates to the module functions', async () => {
+    replyWith('Led A');
+    replyWith('{"overallScore": 80}');
+    replyWith('{"atsScore": 90, "suggestions": [], "keywords": []}');
+
+    expect(await aiService.generateBulletPoints(request)).toEqual(['Led A']);
+    expect((await aiService.analyzeResume({})).overallScore).toBe(80);
+    expect((await aiService.optimizeResume('x')).atsScore).toBe(90);
+    expect(groqCreate).toHaveBeenCalledTimes(3);
   });
 });
