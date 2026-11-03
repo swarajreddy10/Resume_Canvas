@@ -10,8 +10,7 @@ import {
   SITE_TITLE,
   SITE_URL,
 } from '@/lib/config/site.config';
-import { Analytics } from '@vercel/analytics/next';
-import { SpeedInsights } from '@vercel/speed-insights/next';
+import { SiteAnalytics } from '@/components/analytics/SiteAnalytics';
 
 const jakarta = Plus_Jakarta_Sans({
   variable: '--font-jakarta',
@@ -72,8 +71,7 @@ export default function RootLayout({
         }}
       >
         <ErrorBoundary>{children}</ErrorBoundary>
-        <Analytics />
-        <SpeedInsights />
+        <SiteAnalytics />
       </body>
     </html>
   );
