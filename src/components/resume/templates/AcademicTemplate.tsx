@@ -1,4 +1,5 @@
 import { ResumeData } from '@/types/resume.unified';
+import BulletList from './BulletList';
 
 interface AcademicTemplateProps {
   data: ResumeData;
@@ -358,34 +359,18 @@ export default function AcademicTemplate({ data }: AcademicTemplateProps) {
                       {exp.description}
                     </p>
                   )}
-                  {exp.bullets && exp.bullets.length > 0 && (
-                    <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                      {exp.bullets.map((b, j) => (
-                        <li
-                          key={j}
-                          style={{
-                            display: 'flex',
-                            gap: '7px',
-                            fontSize: '11.5px',
-                            color: '#374151',
-                            lineHeight: '1.65',
-                            marginBottom: '3px',
-                          }}
-                        >
-                          <span
-                            style={{
-                              color: TEAL,
-                              fontWeight: 900,
-                              flexShrink: 0,
-                            }}
-                          >
-                            ›
-                          </span>
-                          <span>{b}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
+                  <BulletList
+                    bullets={exp.bullets}
+                    look={{
+                      marker: '›',
+                      markerColor: TEAL,
+                      markerWeight: 900,
+                      gap: '7px',
+                      fontSize: '11.5px',
+                      lineHeight: '1.65',
+                      spacing: '3px',
+                    }}
+                  />
                 </div>
               </div>
             ))}

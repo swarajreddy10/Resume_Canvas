@@ -1,4 +1,6 @@
 import { ResumeData } from '@/types/resume.unified';
+import BulletList from './BulletList';
+import DatedRow from './DatedRow';
 
 interface ExecutiveTemplateProps {
   data: ResumeData;
@@ -315,37 +317,28 @@ export default function ExecutiveTemplate({ data }: ExecutiveTemplateProps) {
                 style={{ marginBottom: i < experience.length - 1 ? '20px' : 0 }}
               >
                 {/* Position + Date */}
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start',
-                    marginBottom: '2px',
+                <DatedRow
+                  startDate={exp.startDate}
+                  endDate={exp.endDate}
+                  titleStyle={{
+                    fontSize: '13.5px',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    lineHeight: 1.2,
                   }}
+                  dateStyle={{
+                    fontSize: '10.5px',
+                    color: '#64748b',
+                    fontStyle: 'italic',
+                    whiteSpace: 'nowrap',
+                    marginLeft: '10px',
+                    marginTop: '2px',
+                  }}
+                  align="flex-start"
+                  marginBottom="2px"
                 >
-                  <span
-                    style={{
-                      fontSize: '13.5px',
-                      fontWeight: 800,
-                      color: '#0f172a',
-                      lineHeight: 1.2,
-                    }}
-                  >
-                    {exp.position}
-                  </span>
-                  <span
-                    style={{
-                      fontSize: '10.5px',
-                      color: '#64748b',
-                      fontStyle: 'italic',
-                      whiteSpace: 'nowrap',
-                      marginLeft: '10px',
-                      marginTop: '2px',
-                    }}
-                  >
-                    {exp.startDate} – {exp.endDate}
-                  </span>
-                </div>
+                  {exp.position}
+                </DatedRow>
                 {/* Company + Location */}
                 <div
                   style={{
@@ -371,35 +364,19 @@ export default function ExecutiveTemplate({ data }: ExecutiveTemplateProps) {
                     {exp.description}
                   </p>
                 )}
-                {exp.bullets && exp.bullets.length > 0 && (
-                  <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                    {exp.bullets.map((b, j) => (
-                      <li
-                        key={j}
-                        style={{
-                          display: 'flex',
-                          gap: '8px',
-                          fontSize: '11.5px',
-                          color: '#374151',
-                          lineHeight: '1.6',
-                          marginBottom: '4px',
-                        }}
-                      >
-                        <span
-                          style={{
-                            color: SIDEBAR_BG,
-                            fontWeight: 700,
-                            flexShrink: 0,
-                            marginTop: '1px',
-                          }}
-                        >
-                          •
-                        </span>
-                        <span>{b}</span>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                <BulletList
+                  bullets={exp.bullets}
+                  look={{
+                    marker: '•',
+                    markerColor: SIDEBAR_BG,
+                    markerWeight: 700,
+                    markerOffset: '1px',
+                    gap: '8px',
+                    fontSize: '11.5px',
+                    lineHeight: '1.6',
+                    spacing: '4px',
+                  }}
+                />
               </div>
             ))}
           </div>

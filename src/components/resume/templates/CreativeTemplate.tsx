@@ -1,4 +1,5 @@
 import { ResumeData } from '@/types/resume.unified';
+import BulletList from './BulletList';
 
 interface CreativeTemplateProps {
   data: ResumeData;
@@ -285,34 +286,18 @@ export default function CreativeTemplate({ data }: CreativeTemplateProps) {
                         {exp.location}
                       </div>
                     )}
-                    {exp.bullets && exp.bullets.length > 0 && (
-                      <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                        {exp.bullets.map((b, j) => (
-                          <li
-                            key={j}
-                            style={{
-                              display: 'flex',
-                              gap: '6px',
-                              fontSize: '11px',
-                              color: '#374151',
-                              lineHeight: '1.6',
-                              marginBottom: '3px',
-                            }}
-                          >
-                            <span
-                              style={{
-                                color: PINK,
-                                fontWeight: 700,
-                                flexShrink: 0,
-                              }}
-                            >
-                              →
-                            </span>
-                            <span>{b}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                    <BulletList
+                      bullets={exp.bullets}
+                      look={{
+                        marker: '→',
+                        markerColor: PINK,
+                        markerWeight: 700,
+                        gap: '6px',
+                        fontSize: '11px',
+                        lineHeight: '1.6',
+                        spacing: '3px',
+                      }}
+                    />
                   </div>
                 </div>
               ))}

@@ -1,4 +1,32 @@
+import type { CSSProperties } from 'react';
 import { ResumeData } from '@/types/resume.unified';
+import BulletList, { type BulletLook } from './BulletList';
+import DatedRow from './DatedRow';
+
+const ENTRY_TITLE: CSSProperties = {
+  fontSize: '13px',
+  fontWeight: 800,
+  color: '#0f172a',
+};
+
+const ENTRY_DATES: CSSProperties = {
+  fontSize: '11px',
+  color: '#64748b',
+  fontStyle: 'italic',
+  whiteSpace: 'nowrap',
+  marginLeft: '8px',
+};
+
+const BULLETS: BulletLook = {
+  marker: '›',
+  markerColor: '#2563eb',
+  markerWeight: 700,
+  markerOffset: '1px',
+  gap: '7px',
+  fontSize: '11.5px',
+  lineHeight: '1.55',
+  spacing: '3px',
+};
 
 interface TechTemplateProps {
   data: ResumeData;
@@ -175,35 +203,15 @@ export default function TechTemplate({ data }: TechTemplateProps) {
               key={i}
               style={{ marginBottom: i < experience.length - 1 ? '16px' : 0 }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                  marginBottom: '1px',
-                }}
+              <DatedRow
+                startDate={exp.startDate}
+                endDate={exp.endDate}
+                titleStyle={ENTRY_TITLE}
+                dateStyle={ENTRY_DATES}
+                marginBottom="1px"
               >
-                <span
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    color: '#0f172a',
-                  }}
-                >
-                  {exp.position}
-                </span>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    color: '#64748b',
-                    fontStyle: 'italic',
-                    whiteSpace: 'nowrap',
-                    marginLeft: '8px',
-                  }}
-                >
-                  {exp.startDate} – {exp.endDate}
-                </span>
-              </div>
+                {exp.position}
+              </DatedRow>
               <div
                 style={{
                   fontSize: '11.5px',
@@ -228,35 +236,7 @@ export default function TechTemplate({ data }: TechTemplateProps) {
                   {exp.description}
                 </p>
               )}
-              {exp.bullets && exp.bullets.length > 0 && (
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
-                  {exp.bullets.map((b, j) => (
-                    <li
-                      key={j}
-                      style={{
-                        display: 'flex',
-                        gap: '7px',
-                        fontSize: '11.5px',
-                        color: '#374151',
-                        lineHeight: '1.55',
-                        marginBottom: '3px',
-                      }}
-                    >
-                      <span
-                        style={{
-                          color: '#2563eb',
-                          fontWeight: 700,
-                          flexShrink: 0,
-                          marginTop: '1px',
-                        }}
-                      >
-                        ›
-                      </span>
-                      <span>{b}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
+              <BulletList bullets={exp.bullets} look={BULLETS} />
             </div>
           ))}
         </div>
@@ -271,34 +251,14 @@ export default function TechTemplate({ data }: TechTemplateProps) {
               key={i}
               style={{ marginBottom: i < education.length - 1 ? '12px' : 0 }}
             >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'baseline',
-                }}
+              <DatedRow
+                startDate={edu.startDate}
+                endDate={edu.endDate}
+                titleStyle={ENTRY_TITLE}
+                dateStyle={ENTRY_DATES}
               >
-                <span
-                  style={{
-                    fontSize: '13px',
-                    fontWeight: 800,
-                    color: '#0f172a',
-                  }}
-                >
-                  {edu.degree} in {edu.field}
-                </span>
-                <span
-                  style={{
-                    fontSize: '11px',
-                    color: '#64748b',
-                    fontStyle: 'italic',
-                    whiteSpace: 'nowrap',
-                    marginLeft: '8px',
-                  }}
-                >
-                  {edu.startDate} – {edu.endDate}
-                </span>
-              </div>
+                {edu.degree} in {edu.field}
+              </DatedRow>
               <div
                 style={{
                   fontSize: '11.5px',
