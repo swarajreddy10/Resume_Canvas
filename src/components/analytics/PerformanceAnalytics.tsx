@@ -22,35 +22,22 @@ export default function PerformanceAnalytics() {
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // A failed request leaves `analytics` empty, which renders "No analytics data
+  // available"; it never shows invented figures.
   useEffect(() => {
-    fetchAnalytics();
-  }, []);
-
-  const fetchAnalytics = async () => {
-    try {
-      const response = await fetch('/api/analytics/performance');
-      if (response.ok) {
-        const data = await response.json();
-        setAnalytics(data);
+    (async () => {
+      try {
+        const response = await fetch('/api/analytics/performance');
+        if (response.ok) {
+          setAnalytics(await response.json());
+        }
+      } catch (error) {
+        console.error('Failed to fetch analytics:', error);
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch analytics:', error);
-      // Mock data for demo
-      setAnalytics({
-        totalViews: 1247,
-        totalDownloads: 89,
-        totalShares: 23,
-        avgAtsScore: 78,
-        topPerformingResume: {
-          title: 'Software Engineer Resume',
-          views: 456,
-          atsScore: 85,
-        },
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+    })();
+  }, []);
 
   if (loading) {
     return (

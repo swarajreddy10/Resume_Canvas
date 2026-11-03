@@ -64,6 +64,9 @@ export class ErrorBoundary extends Component<Props, State> {
                 </Button>
                 <Button
                   variant="outline"
+                  // A full reload is intended: it discards the React tree that threw,
+                  // which a client-side navigation under this boundary would keep.
+                  // eslint-disable-next-line @next/next/no-location-assign-relative-destination
                   onClick={() => (window.location.href = '/dashboard')}
                   className="flex-1"
                 >

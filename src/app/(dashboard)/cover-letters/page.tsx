@@ -27,25 +27,23 @@ export default function CoverLettersPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchData();
+    (async () => {
+      try {
+        const [resumesRes, lettersRes] = await Promise.all([
+          fetch('/api/resumes'),
+          fetch('/api/cover-letters'),
+        ]);
+        const resumesData = await resumesRes.json();
+        const lettersData = await lettersRes.json();
+        setResumes(resumesData.resumes || []);
+        setCoverLetters(lettersData.coverLetters || []);
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+      } finally {
+        setLoading(false);
+      }
+    })();
   }, []);
-
-  const fetchData = async () => {
-    try {
-      const [resumesRes, lettersRes] = await Promise.all([
-        fetch('/api/resumes'),
-        fetch('/api/cover-letters'),
-      ]);
-      const resumesData = await resumesRes.json();
-      const lettersData = await lettersRes.json();
-      setResumes(resumesData.resumes || []);
-      setCoverLetters(lettersData.coverLetters || []);
-    } catch (error) {
-      console.error('Failed to fetch data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {

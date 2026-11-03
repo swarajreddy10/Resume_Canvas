@@ -1,31 +1,3 @@
-'use client';
-
-import { motion, AnimatePresence } from 'motion/react';
-import { usePathname } from 'next/navigation';
-import type { ReactNode } from 'react';
-
-interface PageTransitionProps {
-  children: ReactNode;
-}
-
-export function PageTransition({ children }: PageTransitionProps) {
-  const pathname = usePathname();
-
-  return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        key={pathname}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{
-          type: 'spring',
-          stiffness: 300,
-          damping: 30,
-        }}
-      >
-        {children}
-      </motion.div>
-    </AnimatePresence>
-  );
-}
+// Re-export from shared directory for backward compatibility
+// TODO: Update imports to use @/shared/components/ui/animation/page-transition
+export * from '@/shared/components/ui/animation/page-transition';
