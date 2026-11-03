@@ -1,7 +1,7 @@
 'use client';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, Share2, Download } from 'lucide-react';
+import { Eye, Share2 } from 'lucide-react';
 
 interface ResumeAnalyticsProps {
   viewCount: number;
@@ -24,14 +24,6 @@ export default function ResumeAnalytics({
             <span className="text-sm">Total Views</span>
           </div>
           <span className="font-semibold">{viewCount}</span>
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Download className="h-4 w-4 text-purple-600" />
-            <span className="text-sm">Downloads</span>
-          </div>
-          <span className="font-semibold">{Math.floor(viewCount * 0.3)}</span>
         </div>
 
         <div className="flex items-center justify-between">

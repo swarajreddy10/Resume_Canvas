@@ -18,21 +18,26 @@ function passesThrough(res: Response): boolean {
 }
 
 describe('anonymous page requests', () => {
-  test.each(['/dashboard', '/settings', '/builder/new', '/profile', '/premium'])(
-    '%s redirects to sign-in with the callback URL',
-    (path) => {
-      const res = gate(path);
-      expect(res.status).toBe(307);
-      const location = new URL(res.headers.get('location')!);
-      expect(location.pathname).toBe('/auth/signin');
-      expect(location.searchParams.get('callbackUrl')).toBe(path);
-    }
-  );
+  test.each([
+    '/dashboard',
+    '/settings',
+    '/builder/new',
+    '/profile',
+    '/analytics',
+  ])('%s redirects to sign-in with the callback URL', (path) => {
+    const res = gate(path);
+    expect(res.status).toBe(307);
+    const location = new URL(res.headers.get('location')!);
+    expect(location.pathname).toBe('/auth/signin');
+    expect(location.searchParams.get('callbackUrl')).toBe(path);
+  });
 
   test('the callback URL keeps the query string', () => {
     const res = gate('/builder/abc?tab=preview');
     const location = new URL(res.headers.get('location')!);
-    expect(location.searchParams.get('callbackUrl')).toBe('/builder/abc?tab=preview');
+    expect(location.searchParams.get('callbackUrl')).toBe(
+      '/builder/abc?tab=preview'
+    );
   });
 
   test.each([
@@ -57,15 +62,18 @@ describe('anonymous page requests', () => {
 });
 
 describe('anonymous API requests', () => {
-  test.each(['/api/resumes', '/api/user/stats', '/api/resumes/abc/view', '/api/test-db', '/api/authx'])(
-    '%s gets a 401 JSON body, not a redirect',
-    async (path) => {
-      const res = gate(path);
-      expect(res.status).toBe(401);
-      expect(res.headers.get('location')).toBeNull();
-      expect(await res.json()).toEqual({ error: 'Unauthorized' });
-    }
-  );
+  test.each([
+    '/api/resumes',
+    '/api/user/stats',
+    '/api/resumes/abc/view',
+    '/api/test-db',
+    '/api/authx',
+  ])('%s gets a 401 JSON body, not a redirect', async (path) => {
+    const res = gate(path);
+    expect(res.status).toBe(401);
+    expect(res.headers.get('location')).toBeNull();
+    expect(await res.json()).toEqual({ error: 'Unauthorized' });
+  });
 
   test.each([
     '/api/auth/session',

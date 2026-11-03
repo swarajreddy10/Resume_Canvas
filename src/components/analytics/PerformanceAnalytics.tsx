@@ -4,18 +4,19 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { TrendingUp, Eye, Download, Share2, Target } from 'lucide-react';
+import { TrendingUp, Eye, Share2, Target } from 'lucide-react';
 
+// Only figures the app measures: views are counted per public visit, shares are published
+// resumes, and an ATS score exists once a resume has been scored (null until then).
 interface AnalyticsData {
   totalViews: number;
-  totalDownloads: number;
   totalShares: number;
-  avgAtsScore: number;
+  avgAtsScore: number | null;
   topPerformingResume: {
     title: string;
     views: number;
-    atsScore: number;
-  };
+    atsScore: number | null;
+  } | null;
 }
 
 export default function PerformanceAnalytics() {
@@ -41,8 +42,8 @@ export default function PerformanceAnalytics() {
 
   if (loading) {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {[...Array(4)].map((_, i) => (
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        {[...Array(3)].map((_, i) => (
           <Card key={i} className="animate-pulse">
             <CardHeader className="pb-2">
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
@@ -67,7 +68,7 @@ export default function PerformanceAnalytics() {
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Views</CardTitle>
@@ -77,20 +78,6 @@ export default function PerformanceAnalytics() {
             <div className="text-2xl font-bold">
               {analytics.totalViews.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">
-              +12% from last month
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Downloads</CardTitle>
-            <Download className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{analytics.totalDownloads}</div>
-            <p className="text-xs text-muted-foreground">+8% from last month</p>
           </CardContent>
         </Card>
 
@@ -101,9 +88,6 @@ export default function PerformanceAnalytics() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{analytics.totalShares}</div>
-            <p className="text-xs text-muted-foreground">
-              +15% from last month
-            </p>
           </CardContent>
         </Card>
 
@@ -113,10 +97,16 @@ export default function PerformanceAnalytics() {
             <Target className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {analytics.avgAtsScore}/100
-            </div>
-            <Progress value={analytics.avgAtsScore} className="mt-2" />
+            {analytics.avgAtsScore === null ? (
+              <div className="text-2xl font-bold">Not scored</div>
+            ) : (
+              <>
+                <div className="text-2xl font-bold">
+                  {analytics.avgAtsScore}/100
+                </div>
+                <Progress value={analytics.avgAtsScore} className="mt-2" />
+              </>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -141,12 +131,14 @@ export default function PerformanceAnalytics() {
               </div>
               <Badge
                 variant={
-                  analytics.topPerformingResume.atsScore >= 80
+                  (analytics.topPerformingResume.atsScore ?? 0) >= 80
                     ? 'default'
                     : 'secondary'
                 }
               >
-                ATS: {analytics.topPerformingResume.atsScore}/100
+                {analytics.topPerformingResume.atsScore === null
+                  ? 'ATS: not scored'
+                  : `ATS: ${analytics.topPerformingResume.atsScore}/100`}
               </Badge>
             </div>
           </CardContent>

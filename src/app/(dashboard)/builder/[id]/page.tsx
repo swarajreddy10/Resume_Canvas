@@ -120,7 +120,7 @@ export default function ResumeBuilderPage() {
   const [selectedTemplate, setSelectedTemplate] =
     useState<TemplateType>(DEFAULT_TEMPLATE);
   const [isPublic, setIsPublic] = useState(false);
-  const [viewCount] = useState(0);
+  const [viewCount, setViewCount] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
 
   const resumePreviewData = useMemo<ResumeData>(() => {
@@ -186,6 +186,7 @@ export default function ResumeBuilderPage() {
           });
           setSelectedTemplate(normalizeTemplateId(resume.templateId));
           setIsPublic(resume.isPublic || false);
+          setViewCount(resume.viewCount ?? 0);
           setResumeId(resume._id);
 
           // Redirect to slug URL if available and different
@@ -796,12 +797,18 @@ export default function ResumeBuilderPage() {
 
           {/* Analytics */}
           {resumeId && (
-            <div className="border-t pt-4 sm:pt-6">
-              <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-[#11101d]">
+            <section
+              aria-labelledby="resume-analytics-heading"
+              className="border-t pt-4 sm:pt-6"
+            >
+              <h3
+                id="resume-analytics-heading"
+                className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-[#11101d]"
+              >
                 Analytics
               </h3>
               <ResumeAnalytics viewCount={viewCount} isPublic={isPublic} />
-            </div>
+            </section>
           )}
         </div>
       )}
