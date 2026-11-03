@@ -70,7 +70,7 @@ test.describe('Resume journey', () => {
     expect(visit.status()).toBe(200);
 
     await page.goto(`/builder/${resume._id}`);
-    const views = page.getByRole('region', { name: 'Analytics' });
+    const views = page.getByRole('region', { name: 'Resume Analytics' });
     await expect(views).toContainText(/Total Views\s*1(?!\d)/);
     await expect(views).not.toContainText('Downloads');
 

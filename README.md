@@ -283,7 +283,7 @@ bun lint             # ESLint with auto-fix
 bun run lint:check   # ESLint, no fixes, fails on any warning (CI)
 bun format           # Prettier
 bun type-check       # tsc --noEmit
-bun run test         # Unit tests
+bun run test         # Unit tests, client components included (happy-dom + Testing Library)
 bun run test:coverage     # Unit tests with coverage (coverage/lcov.info)
 bun run test:integration  # API routes against an in-memory MongoDB
 bun run test:integration:coverage  # The same, writing coverage-integration/lcov.info

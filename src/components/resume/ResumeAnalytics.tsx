@@ -1,5 +1,6 @@
 'use client';
 
+import { useId } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Eye, Share2 } from 'lucide-react';
 
@@ -12,10 +13,13 @@ export default function ResumeAnalytics({
   viewCount,
   isPublic,
 }: ResumeAnalyticsProps) {
+  const titleId = useId();
   return (
-    <Card>
+    <Card role="region" aria-labelledby={titleId}>
       <CardHeader>
-        <CardTitle className="text-lg">Resume Analytics</CardTitle>
+        <CardTitle id={titleId} className="text-lg">
+          Resume Analytics
+        </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex items-center justify-between">

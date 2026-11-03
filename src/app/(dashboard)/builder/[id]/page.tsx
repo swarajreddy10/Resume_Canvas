@@ -797,18 +797,12 @@ export default function ResumeBuilderPage() {
 
           {/* Analytics */}
           {resumeId && (
-            <section
-              aria-labelledby="resume-analytics-heading"
-              className="border-t pt-4 sm:pt-6"
-            >
-              <h3
-                id="resume-analytics-heading"
-                className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-[#11101d]"
-              >
+            <div className="border-t pt-4 sm:pt-6">
+              <h3 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold text-[#11101d]">
                 Analytics
               </h3>
               <ResumeAnalytics viewCount={viewCount} isPublic={isPublic} />
-            </section>
+            </div>
           )}
         </div>
       )}

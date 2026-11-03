@@ -10,6 +10,7 @@ import {
   describe,
   expect,
   mock,
+  spyOn,
   test,
 } from 'bun:test';
 import { NextRequest } from 'next/server';
@@ -226,6 +227,16 @@ describe('dashboard counts are fresh and private', () => {
       views: 9,
       atsScore: 90,
     });
+  });
+
+  test('a failed analytics read is a 500 that does not reveal the database error', async () => {
+    const aggregate = spyOn(Resume, 'aggregate').mockImplementationOnce(() => {
+      throw new Error('connect ECONNREFUSED 127.0.0.1:27017');
+    });
+    const res = await routes.analytics(get());
+    aggregate.mockRestore();
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Failed to fetch analytics' });
   });
 
   test('resumes never scored give no ATS figure rather than an assumed one', async () => {
