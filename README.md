@@ -40,7 +40,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 
 | Package           | Version | Role                                                 |
 | ----------------- | ------- | ---------------------------------------------------- |
-| Next.js           | 16.2.0  | App Router, RSC, API routes, middleware              |
+| Next.js           | 16.4.4  | App Router, RSC, API routes, middleware              |
 | React             | 19.2.4  | UI with Server + Client Components                   |
 | TypeScript        | 5.9.3   | Strict mode throughout                               |
 | Tailwind CSS      | 4.2.2   | Utility-first styling with custom design tokens      |
@@ -207,7 +207,7 @@ const completion = await groq.chat.completions.create({
 - **Output encoding** — React escapes rendered text and the PDF service encodes its HTML; text is stored exactly as typed. AI routes strip markup and script patterns from their input before it reaches the model
 - **CSRF** — NextAuth built-in protection on all mutations
 - **Environment validation** — `src/lib/config/app.config.ts` throws on a missing required variable when the config loads
-- **Dependency security** — `bun audit` clean (zero vulnerabilities). Patched: Mongoose search injection (→ 9.3.1), Next.js DoS (→ 16.2.0), transitive overrides for `minimatch`, `flatted`, `basic-ftp`
+- **Dependency security** — patched: Mongoose search injection (→ 9.3.1), every Next.js advisory `bun audit` reports for 16.2.0 (→ 16.4.4), transitive overrides for `minimatch`, `flatted`, `basic-ftp`
 
 ---
 
