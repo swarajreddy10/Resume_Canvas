@@ -102,12 +102,13 @@ jobs:
         with:
           bun-version-file: package.json
       - run: bun ci
-      - run: bunx playwright install --with-deps chromium
+      # Both browser installers come from the lockfile-pinned packages through the
+      # package script, never a registry lookup by bare name.
+      - run: bun run test:e2e:browsers
       # The PDF route renders with Puppeteer's own Chrome, sandboxed under NODE_ENV
       # production. Ubuntu 23.10+ blocks the user namespaces that sandbox needs
       # (https://pptr.dev/troubleshooting); lift it on this throwaway runner
       # (https://chromium.googlesource.com/chromium/src/+/main/docs/security/apparmor-userns-restrictions.md).
-      - run: bunx puppeteer browsers install chrome
       - run: echo 0 | sudo tee /proc/sys/kernel/apparmor_restrict_unprivileged_userns
       # Builds the app and serves it against an in-memory MongoDB with placeholder
       # configuration (config/playwright.config.ts, scripts/e2e-server.ts).
