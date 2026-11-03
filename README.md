@@ -135,7 +135,7 @@ src/
 
 **Server-side PDF** — Puppeteer runs in a browser pool on the server. Each PDF request acquires a pooled Chromium instance, navigates to the resume's public URL, and captures a PDF — avoiding any client-side jank or font inconsistencies.
 
-**Three-layer validation** — Zod on the client (React Hook Form), Zod again on the API route, and Mongoose schema validation at the database layer.
+**Validation** — Zod on the client forms (React Hook Form) and on the auth and registration API routes; resume, application and cover-letter writes accept only an allow-list of fields, and Mongoose schema validation runs on every create and update (update validators are on globally).
 
 ---
 
@@ -204,9 +204,9 @@ const completion = await groq.chat.completions.create({
 - **Rate limiting** — in-process fixed windows behind one store interface (`src/lib/security/rateLimit.ts`), so on Vercel each function instance counts separately. The shared limit across instances needs one Vercel Firewall rule set up in the dashboard (all plans; Hobby allows one): Firewall → Configure → New Rule, _If_ Request Path starts with `/api/auth/` **or** equals `/api/user/register`, _Then_ Rate Limit, Fixed Window, 60 s, 30 requests (the session endpoint under `/api/auth/` is polled by every open tab), keyed by IP, action 429, then Review Changes → Publish ([docs](https://vercel.com/docs/vercel-firewall/vercel-waf/rate-limiting))
 - **Account enumeration** — sign-in, registration and password reset give the same answer whether or not an account exists
 - **Content-Security-Policy** — same-origin only, set in `next.config.ts` without nonces so pages stay statically rendered
-- **Input sanitization** — XSS prevention on all user-submitted fields
+- **Output encoding** — React escapes rendered text and the PDF service encodes its HTML; text is stored exactly as typed. AI routes strip markup and script patterns from their input before it reaches the model
 - **CSRF** — NextAuth built-in protection on all mutations
-- **Environment validation** — `@t3-oss/env-nextjs` with Zod at startup
+- **Environment validation** — `src/lib/config/app.config.ts` throws on a missing required variable when the config loads
 - **Dependency security** — `bun audit` clean (zero vulnerabilities). Patched: Mongoose search injection (→ 9.3.1), Next.js DoS (→ 16.2.0), transitive overrides for `minimatch`, `flatted`, `basic-ftp`
 
 ---
