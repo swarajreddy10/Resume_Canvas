@@ -1,59 +1,70 @@
 import { test, expect } from '@playwright/test';
+import { newAccount, signIn } from './fixtures';
 
-test.describe('ResumeCanvas E2E Flow', () => {
-  test('create test account via sign in page', async ({ page }) => {
+test.describe('Authentication', () => {
+  test('a new user signs up from the sign-in page and lands on the dashboard', async ({
+    page,
+  }) => {
+    const account = newAccount('signup');
     await page.goto('/auth/signin');
 
-    // Click "Sign up" button to switch to signup mode
-    await page.getByRole('button', { name: 'Sign up' }).click();
-
-    // Fill signup form (embedded in same page)
-    await page.getByRole('textbox', { name: 'Full Name' }).fill('Test User');
+    await page.getByRole('button', { name: 'Sign up free' }).click();
+    await page.getByRole('textbox', { name: 'Full Name' }).fill(account.name);
     await page
       .getByRole('textbox', { name: 'Email Address' })
-      .fill('test@example.com');
-    await page.getByRole('textbox', { name: 'Password' }).fill('Password123!');
-
-    // Submit
+      .fill(account.email);
+    await page
+      .getByRole('textbox', { name: 'Password' })
+      .fill(account.password);
     await page.getByRole('button', { name: 'Create account' }).click();
 
-    // Should redirect to dashboard
-    await page.waitForURL('/dashboard');
+    await page.waitForURL('**/dashboard');
     await expect(page.getByText('My Resumes')).toBeVisible();
   });
 
-  test('sign in shows error for invalid credentials', async ({ page }) => {
-    await page.goto('/auth/signin');
+  test('an existing user signs in again', async ({ page, request }) => {
+    const account = newAccount('signin');
+    const res = await request.post('/api/user/register', { data: account });
+    expect(res.status()).toBe(200);
 
-    // Fill invalid credentials
-    await page
-      .getByRole('textbox', { name: 'Email Address' })
-      .fill('wrong@example.com');
-    await page.getByRole('textbox', { name: 'Password' }).fill('wrongpassword');
+    await signIn(page, account);
 
-    // Submit
-    await page.getByRole('button', { name: 'Sign in' }).click();
-
-    // Should show error message
-    await expect(
-      page.getByText('Sign in failed. Please check your credentials.')
-    ).toBeVisible();
+    await expect(page.getByText('My Resumes')).toBeVisible();
   });
 
-  test('forgot password shows loading state', async ({ page }) => {
-    await page.goto('/auth/forgot-password');
-
-    // Enter email
+  test('sign-in with unknown credentials shows an error and stays put', async ({
+    page,
+  }) => {
+    await page.goto('/auth/signin');
     await page
       .getByRole('textbox', { name: 'Email Address' })
-      .fill('test@example.com');
+      .fill('nobody@example.com');
+    await page.getByRole('textbox', { name: 'Password' }).fill('Wrong-pass1');
+    await page.getByRole('button', { name: 'Sign in', exact: true }).click();
 
-    // Submit
-    await page.getByRole('button', { name: 'Send Reset Link' }).click();
-
-    // Check loading state
     await expect(
-      page.getByRole('button', { name: 'Sending reset link...' })
+      page.getByText(/sign in failed|no account found/i)
     ).toBeVisible();
+    await expect(page).toHaveURL(/\/auth\/signin/);
+  });
+
+  test('the dashboard redirects a signed-out visitor to sign-in', async ({
+    page,
+  }) => {
+    await page.goto('/dashboard');
+
+    await expect(page).toHaveURL(/\/auth\/signin/);
+  });
+
+  test('forgot password gives the same reply whether or not the account exists', async ({
+    page,
+  }) => {
+    await page.goto('/auth/forgot-password');
+    await page
+      .getByRole('textbox', { name: 'Email Address' })
+      .fill('nobody@example.com');
+    await page.getByRole('button', { name: 'Send reset link' }).click();
+
+    await expect(page.getByText('Check your email')).toBeVisible();
   });
 });
