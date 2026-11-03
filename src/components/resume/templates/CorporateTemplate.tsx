@@ -1,7 +1,8 @@
-import type { CSSProperties } from 'react';
 import { ResumeData } from '@/types/resume.unified';
-import BulletList, { type BulletLook } from './BulletList';
-import DatedRow from './DatedRow';
+import DatedRow, { type DatedRowLook } from './DatedRow';
+import EntrySection from './EntrySection';
+import ExperienceSection, { type ExperienceLook } from './ExperienceSection';
+import TextSection from './TextSection';
 
 interface CorporateTemplateProps {
   data: ResumeData;
@@ -10,29 +11,50 @@ interface CorporateTemplateProps {
 
 const INDIGO = '#4f46e5';
 
-const ENTRY_TITLE: CSSProperties = {
-  fontSize: '13px',
-  fontWeight: 800,
-  color: '#0f172a',
-  fontFamily: "'Georgia', serif",
+const HEADING: DatedRowLook = {
+  title: {
+    fontSize: '13px',
+    fontWeight: 800,
+    color: '#0f172a',
+    fontFamily: "'Georgia', serif",
+  },
+  dates: {
+    fontSize: '10.5px',
+    color: '#64748b',
+    fontStyle: 'italic',
+    whiteSpace: 'nowrap',
+    marginLeft: '10px',
+  },
 };
 
-const ENTRY_DATES: CSSProperties = {
-  fontSize: '10.5px',
-  color: '#64748b',
-  fontStyle: 'italic',
-  whiteSpace: 'nowrap',
-  marginLeft: '10px',
-};
-
-const BULLETS: BulletLook = {
-  marker: '◆',
-  markerColor: INDIGO,
-  markerWeight: 900,
-  gap: '8px',
-  fontSize: '11.5px',
-  lineHeight: '1.6',
-  spacing: '3px',
+const EXPERIENCE: ExperienceLook = {
+  ...HEADING,
+  row: { marginBottom: '1px' },
+  company: {
+    fontSize: '11.5px',
+    fontWeight: 700,
+    color: INDIGO,
+    marginBottom: '6px',
+  },
+  locationSeparator: ' | ',
+  description: {
+    fontSize: '11px',
+    color: '#4b5563',
+    lineHeight: '1.6',
+    margin: '0 0 5px',
+    fontStyle: 'italic',
+  },
+  bullets: {
+    symbol: '◆',
+    marker: { fontWeight: 900, color: INDIGO },
+    item: {
+      gap: '8px',
+      fontSize: '11.5px',
+      color: '#374151',
+      lineHeight: '1.6',
+      marginBottom: '3px',
+    },
+  },
 };
 
 function SectionHeader({ title }: { title: string }) {
@@ -144,21 +166,17 @@ export default function CorporateTemplate({ data }: CorporateTemplateProps) {
       </div>
 
       {/* ── Professional Summary ───────────────────── */}
-      {personalInfo?.summary && (
-        <div style={{ marginBottom: '22px' }}>
-          <SectionHeader title="Professional Summary" />
-          <p
-            style={{
-              fontSize: '11.5px',
-              color: '#374151',
-              lineHeight: '1.7',
-              margin: 0,
-            }}
-          >
-            {personalInfo.summary}
-          </p>
-        </div>
-      )}
+      <TextSection
+        text={personalInfo?.summary}
+        heading={<SectionHeader title="Professional Summary" />}
+        marginBottom="22px"
+        textStyle={{
+          fontSize: '11.5px',
+          color: '#374151',
+          lineHeight: '1.7',
+          margin: 0,
+        }}
+      />
 
       {/* ── Core Competencies ─────────────────────── */}
       {skills && skills.length > 0 && (
@@ -200,89 +218,44 @@ export default function CorporateTemplate({ data }: CorporateTemplateProps) {
       )}
 
       {/* ── Professional Experience ────────────────── */}
-      {experience && experience.length > 0 && (
-        <div style={{ marginBottom: '22px' }}>
-          <SectionHeader title="Professional Experience" />
-          {experience.map((exp, i) => (
-            <div
-              key={i}
-              style={{ marginBottom: i < experience.length - 1 ? '18px' : 0 }}
-            >
-              <DatedRow
-                startDate={exp.startDate}
-                endDate={exp.endDate}
-                titleStyle={ENTRY_TITLE}
-                dateStyle={ENTRY_DATES}
-                marginBottom="1px"
-              >
-                {exp.position}
-              </DatedRow>
-              <div
-                style={{
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  color: INDIGO,
-                  marginBottom: '6px',
-                }}
-              >
-                {exp.company}
-                {exp.location ? ` | ${exp.location}` : ''}
-              </div>
-              {exp.description && (
-                <p
-                  style={{
-                    fontSize: '11px',
-                    color: '#4b5563',
-                    lineHeight: '1.6',
-                    margin: '0 0 5px',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  {exp.description}
-                </p>
-              )}
-              <BulletList bullets={exp.bullets} look={BULLETS} />
-            </div>
-          ))}
-        </div>
-      )}
+      <ExperienceSection
+        items={experience}
+        heading={<SectionHeader title="Professional Experience" />}
+        marginBottom="22px"
+        itemGap="18px"
+        look={EXPERIENCE}
+      />
 
       {/* ── Education ─────────────────────────────── */}
-      {education && education.length > 0 && (
-        <div style={{ marginBottom: '22px' }}>
-          <SectionHeader title="Education" />
-          {education.map((edu, i) => (
+      <EntrySection
+        items={education}
+        heading={<SectionHeader title="Education" />}
+        marginBottom="22px"
+        itemGap="12px"
+      >
+        {(edu) => (
+          <>
+            <DatedRow entry={edu} look={HEADING}>
+              {edu.degree}, {edu.field}
+            </DatedRow>
             <div
-              key={i}
-              style={{ marginBottom: i < education.length - 1 ? '12px' : 0 }}
+              style={{
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: INDIGO,
+              }}
             >
-              <DatedRow
-                startDate={edu.startDate}
-                endDate={edu.endDate}
-                titleStyle={ENTRY_TITLE}
-                dateStyle={ENTRY_DATES}
-              >
-                {edu.degree}, {edu.field}
-              </DatedRow>
-              <div
-                style={{
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  color: INDIGO,
-                }}
-              >
-                {edu.school}
-                {edu.location ? ` | ${edu.location}` : ''}
-              </div>
-              {edu.gpa && (
-                <div style={{ fontSize: '10.5px', color: '#64748b' }}>
-                  GPA: {edu.gpa}/4.0
-                </div>
-              )}
+              {edu.school}
+              {edu.location ? ` | ${edu.location}` : ''}
             </div>
-          ))}
-        </div>
-      )}
+            {edu.gpa && (
+              <div style={{ fontSize: '10.5px', color: '#64748b' }}>
+                GPA: {edu.gpa}/4.0
+              </div>
+            )}
+          </>
+        )}
+      </EntrySection>
 
       {/* ── Certifications ────────────────────────── */}
       {certifications && certifications.length > 0 && (

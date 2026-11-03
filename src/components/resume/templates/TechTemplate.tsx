@@ -1,31 +1,54 @@
-import type { CSSProperties } from 'react';
 import { ResumeData } from '@/types/resume.unified';
-import BulletList, { type BulletLook } from './BulletList';
-import DatedRow from './DatedRow';
+import DatedRow, { type DatedRowLook } from './DatedRow';
+import EntrySection from './EntrySection';
+import ExperienceSection, { type ExperienceLook } from './ExperienceSection';
+import TextSection from './TextSection';
 
-const ENTRY_TITLE: CSSProperties = {
-  fontSize: '13px',
-  fontWeight: 800,
-  color: '#0f172a',
+const BLUE = '#2563eb';
+
+const HEADING: DatedRowLook = {
+  title: {
+    fontSize: '13px',
+    fontWeight: 800,
+    color: '#0f172a',
+  },
+  dates: {
+    fontSize: '11px',
+    color: '#64748b',
+    fontStyle: 'italic',
+    whiteSpace: 'nowrap',
+    marginLeft: '8px',
+  },
 };
 
-const ENTRY_DATES: CSSProperties = {
-  fontSize: '11px',
-  color: '#64748b',
-  fontStyle: 'italic',
-  whiteSpace: 'nowrap',
-  marginLeft: '8px',
-};
-
-const BULLETS: BulletLook = {
-  marker: '›',
-  markerColor: '#2563eb',
-  markerWeight: 700,
-  markerOffset: '1px',
-  gap: '7px',
-  fontSize: '11.5px',
-  lineHeight: '1.55',
-  spacing: '3px',
+const EXPERIENCE: ExperienceLook = {
+  ...HEADING,
+  row: { marginBottom: '1px' },
+  company: {
+    fontSize: '11.5px',
+    fontWeight: 700,
+    color: BLUE,
+    marginBottom: '5px',
+  },
+  locationSeparator: ', ',
+  description: {
+    fontSize: '11px',
+    color: '#374151',
+    lineHeight: '1.55',
+    margin: '0 0 4px',
+    fontStyle: 'italic',
+  },
+  bullets: {
+    symbol: '›',
+    marker: { color: BLUE, fontWeight: 700, marginTop: '1px' },
+    item: {
+      gap: '7px',
+      fontSize: '11.5px',
+      color: '#374151',
+      lineHeight: '1.55',
+      marginBottom: '3px',
+    },
+  },
 };
 
 interface TechTemplateProps {
@@ -52,15 +75,13 @@ function SectionHeader({ title }: { title: string }) {
             fontWeight: 900,
             letterSpacing: '0.18em',
             textTransform: 'uppercase' as const,
-            color: '#2563eb',
+            color: BLUE,
           }}
         >
           {title}
         </span>
       </div>
-      <div
-        style={{ height: '1.5px', background: '#2563eb', marginTop: '4px' }}
-      />
+      <div style={{ height: '1.5px', background: BLUE, marginTop: '4px' }} />
     </div>
   );
 }
@@ -164,7 +185,7 @@ export default function TechTemplate({ data }: TechTemplateProps) {
             justifyContent: 'center',
             fontSize: '18px',
             fontWeight: 700,
-            color: '#2563eb',
+            color: BLUE,
             flexShrink: 0,
           }}
         >
@@ -173,107 +194,56 @@ export default function TechTemplate({ data }: TechTemplateProps) {
       </div>
 
       {/* Full-width blue rule */}
-      <div
-        style={{ height: '2px', background: '#2563eb', marginBottom: '20px' }}
-      />
+      <div style={{ height: '2px', background: BLUE, marginBottom: '20px' }} />
 
       {/* ── Summary ───────────────────────────────── */}
-      {personalInfo?.summary && (
-        <div style={{ marginBottom: '20px' }}>
-          <SectionHeader title="Summary" />
-          <p
-            style={{
-              fontSize: '12px',
-              color: '#374151',
-              lineHeight: '1.65',
-              margin: 0,
-            }}
-          >
-            {personalInfo.summary}
-          </p>
-        </div>
-      )}
+      <TextSection
+        text={personalInfo?.summary}
+        heading={<SectionHeader title="Summary" />}
+        marginBottom="20px"
+        textStyle={{
+          fontSize: '12px',
+          color: '#374151',
+          lineHeight: '1.65',
+          margin: 0,
+        }}
+      />
 
       {/* ── Professional Experience ────────────────── */}
-      {experience && experience.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <SectionHeader title="Professional Experience" />
-          {experience.map((exp, i) => (
-            <div
-              key={i}
-              style={{ marginBottom: i < experience.length - 1 ? '16px' : 0 }}
-            >
-              <DatedRow
-                startDate={exp.startDate}
-                endDate={exp.endDate}
-                titleStyle={ENTRY_TITLE}
-                dateStyle={ENTRY_DATES}
-                marginBottom="1px"
-              >
-                {exp.position}
-              </DatedRow>
-              <div
-                style={{
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  color: '#2563eb',
-                  marginBottom: '5px',
-                }}
-              >
-                {exp.company}
-                {exp.location ? `, ${exp.location}` : ''}
-              </div>
-              {exp.description && (
-                <p
-                  style={{
-                    fontSize: '11px',
-                    color: '#374151',
-                    lineHeight: '1.55',
-                    margin: '0 0 4px',
-                    fontStyle: 'italic',
-                  }}
-                >
-                  {exp.description}
-                </p>
-              )}
-              <BulletList bullets={exp.bullets} look={BULLETS} />
-            </div>
-          ))}
-        </div>
-      )}
+      <ExperienceSection
+        items={experience}
+        heading={<SectionHeader title="Professional Experience" />}
+        marginBottom="20px"
+        itemGap="16px"
+        look={EXPERIENCE}
+      />
 
       {/* ── Education ─────────────────────────────── */}
-      {education && education.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <SectionHeader title="Education" />
-          {education.map((edu, i) => (
+      <EntrySection
+        items={education}
+        heading={<SectionHeader title="Education" />}
+        marginBottom="20px"
+        itemGap="12px"
+      >
+        {(edu) => (
+          <>
+            <DatedRow entry={edu} look={HEADING}>
+              {edu.degree} in {edu.field}
+            </DatedRow>
             <div
-              key={i}
-              style={{ marginBottom: i < education.length - 1 ? '12px' : 0 }}
+              style={{
+                fontSize: '11.5px',
+                fontWeight: 700,
+                color: BLUE,
+              }}
             >
-              <DatedRow
-                startDate={edu.startDate}
-                endDate={edu.endDate}
-                titleStyle={ENTRY_TITLE}
-                dateStyle={ENTRY_DATES}
-              >
-                {edu.degree} in {edu.field}
-              </DatedRow>
-              <div
-                style={{
-                  fontSize: '11.5px',
-                  fontWeight: 700,
-                  color: '#2563eb',
-                }}
-              >
-                {edu.school}
-                {edu.location ? `, ${edu.location}` : ''}
-                {edu.gpa ? ` | GPA: ${edu.gpa}` : ''}
-              </div>
+              {edu.school}
+              {edu.location ? `, ${edu.location}` : ''}
+              {edu.gpa ? ` | GPA: ${edu.gpa}` : ''}
             </div>
-          ))}
-        </div>
-      )}
+          </>
+        )}
+      </EntrySection>
 
       {/* ── Technical Skills ──────────────────────── */}
       {skills && skills.length > 0 && (
@@ -303,62 +273,61 @@ export default function TechTemplate({ data }: TechTemplateProps) {
       )}
 
       {/* ── Projects ──────────────────────────────── */}
-      {projects && projects.length > 0 && (
-        <div style={{ marginBottom: '20px' }}>
-          <SectionHeader title="Projects" />
-          {projects.map((p, i) => (
-            <div
-              key={i}
-              style={{ marginBottom: i < projects.length - 1 ? '12px' : 0 }}
+      <EntrySection
+        items={projects}
+        heading={<SectionHeader title="Projects" />}
+        marginBottom="20px"
+        itemGap="12px"
+      >
+        {(p) => (
+          <>
+            <span
+              style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}
             >
-              <span
-                style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}
-              >
-                {p.name}
-              </span>
-              <p
+              {p.name}
+            </span>
+            <p
+              style={{
+                fontSize: '11.5px',
+                color: '#374151',
+                lineHeight: '1.55',
+                margin: '3px 0',
+              }}
+            >
+              {p.description}
+            </p>
+            {p.technologies && (
+              <div
                 style={{
-                  fontSize: '11.5px',
-                  color: '#374151',
-                  lineHeight: '1.55',
-                  margin: '3px 0',
+                  display: 'flex',
+                  flexWrap: 'wrap' as const,
+                  gap: '4px',
+                  marginTop: '4px',
                 }}
               >
-                {p.description}
-              </p>
-              {p.technologies && (
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap' as const,
-                    gap: '4px',
-                    marginTop: '4px',
-                  }}
-                >
-                  {(Array.isArray(p.technologies)
-                    ? p.technologies
-                    : [p.technologies]
-                  ).map((t, k) => (
-                    <span
-                      key={k}
-                      style={{
-                        fontSize: '10px',
-                        color: '#1d4ed8',
-                        background: '#eff6ff',
-                        padding: '1px 6px',
-                        borderRadius: '3px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      {t}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
+                {(Array.isArray(p.technologies)
+                  ? p.technologies
+                  : [p.technologies]
+                ).map((t, k) => (
+                  <span
+                    key={k}
+                    style={{
+                      fontSize: '10px',
+                      color: '#1d4ed8',
+                      background: '#eff6ff',
+                      padding: '1px 6px',
+                      borderRadius: '3px',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {t}
+                  </span>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </EntrySection>
 
       {/* ── Certifications ────────────────────────── */}
       {certifications && certifications.length > 0 && (

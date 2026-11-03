@@ -1,49 +1,28 @@
-/** How one template draws its bullet points; every template sets all of it. */
+import type { CSSProperties } from 'react';
+
+/** How one template draws its bullet points. */
 export interface BulletLook {
-  marker: string;
-  markerColor: string;
-  markerWeight: number;
-  /** Lowers the marker to the first line of text; omitted where the font needs none. */
-  markerOffset?: string;
-  gap: string;
-  fontSize: string;
-  lineHeight: string;
-  spacing: string;
+  symbol: string;
+  marker: CSSProperties;
+  item: CSSProperties;
 }
 
-/** An experience entry's bullet points, drawn with the template's own marker and type. */
+const LIST: CSSProperties = { margin: 0, padding: 0, listStyle: 'none' };
+
+/** An experience entry's bullet points, drawn with the template's own symbol and type. */
 export default function BulletList({
   bullets,
   look,
-}: {
-  bullets: string[] | undefined;
-  look: BulletLook;
-}) {
+}: Readonly<{ bullets: string[] | undefined; look: BulletLook }>) {
   if (!bullets || bullets.length === 0) return null;
+  // One style object per list, shared by its items.
+  const item: CSSProperties = { display: 'flex', ...look.item };
+  const marker: CSSProperties = { flexShrink: 0, ...look.marker };
   return (
-    <ul style={{ margin: 0, padding: 0, listStyle: 'none' }}>
+    <ul style={LIST}>
       {bullets.map((bullet, i) => (
-        <li
-          key={i}
-          style={{
-            display: 'flex',
-            gap: look.gap,
-            fontSize: look.fontSize,
-            color: '#374151',
-            lineHeight: look.lineHeight,
-            marginBottom: look.spacing,
-          }}
-        >
-          <span
-            style={{
-              color: look.markerColor,
-              fontWeight: look.markerWeight,
-              flexShrink: 0,
-              marginTop: look.markerOffset,
-            }}
-          >
-            {look.marker}
-          </span>
+        <li key={i} style={item}>
+          <span style={marker}>{look.symbol}</span>
           <span>{bullet}</span>
         </li>
       ))}
