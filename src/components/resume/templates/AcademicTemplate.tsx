@@ -1,5 +1,11 @@
+import type { CSSProperties } from 'react';
 import { ResumeData } from '@/types/resume.unified';
-import BulletList from './BulletList';
+import DateColumn from './DateColumn';
+import EntrySection from './EntrySection';
+import ExperienceDetails, {
+  type ExperienceDetailsLook,
+} from './ExperienceDetails';
+import TextSection from './TextSection';
 
 interface AcademicTemplateProps {
   data: ResumeData;
@@ -8,6 +14,37 @@ interface AcademicTemplateProps {
 
 const TEAL = '#0d9488';
 const DOT_RATINGS = [5, 4, 5, 3, 5, 4, 3, 5];
+
+// Experience and education entries: the date column, then the entry's content.
+const ENTRY_ROW: CSSProperties = { display: 'flex', gap: '14px' };
+
+const EXPERIENCE: ExperienceDetailsLook = {
+  company: {
+    fontSize: '11.5px',
+    fontWeight: 600,
+    color: TEAL,
+    marginBottom: '5px',
+  },
+  locationSeparator: ', ',
+  description: {
+    fontSize: '11.5px',
+    color: '#4b5563',
+    lineHeight: '1.65',
+    margin: '0 0 5px',
+    fontStyle: 'italic',
+  },
+  bullets: {
+    symbol: '›',
+    marker: { color: TEAL, fontWeight: 900 },
+    item: {
+      gap: '7px',
+      fontSize: '11.5px',
+      color: '#374151',
+      lineHeight: '1.65',
+      marginBottom: '3px',
+    },
+  },
+};
 
 function getInitials(name: string): string {
   return name
@@ -277,162 +314,93 @@ export default function AcademicTemplate({ data }: AcademicTemplateProps) {
         </div>
 
         {/* Research Interests / Profile */}
-        {personalInfo?.summary && (
-          <div style={{ marginBottom: '22px' }}>
-            <MainSectionHeader title="Research Interests" />
-            <p
-              style={{
-                fontSize: '11.5px',
-                color: '#374151',
-                lineHeight: '1.75',
-                margin: 0,
-                fontStyle: 'italic',
-              }}
-            >
-              {personalInfo.summary}
-            </p>
-          </div>
-        )}
+        <TextSection
+          text={personalInfo?.summary}
+          heading={<MainSectionHeader title="Research Interests" />}
+          marginBottom="22px"
+          textStyle={{
+            fontSize: '11.5px',
+            color: '#374151',
+            lineHeight: '1.75',
+            margin: 0,
+            fontStyle: 'italic',
+          }}
+        />
 
         {/* Employment History */}
-        {experience && experience.length > 0 && (
-          <div style={{ marginBottom: '22px' }}>
-            <MainSectionHeader title="Employment History" />
-            {experience.map((exp, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  gap: '14px',
-                  marginBottom: i < experience.length - 1 ? '18px' : 0,
-                }}
-              >
-                {/* Date column */}
+        <EntrySection
+          items={experience}
+          heading={<MainSectionHeader title="Employment History" />}
+          marginBottom="22px"
+          itemGap="18px"
+          itemStyle={ENTRY_ROW}
+        >
+          {(exp) => (
+            <>
+              <DateColumn width="90px" color="#64748b" lineHeight={1.4}>
+                {exp.startDate}–
+                <br />
+                {exp.endDate}
+              </DateColumn>
+              <div style={{ flex: 1 }}>
                 <div
                   style={{
-                    width: '90px',
-                    flexShrink: 0,
-                    textAlign: 'right' as const,
-                    fontSize: '10px',
-                    color: '#64748b',
-                    paddingTop: '2px',
-                    fontStyle: 'italic',
-                    lineHeight: 1.4,
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    color: '#0f172a',
+                    marginBottom: '1px',
                   }}
                 >
-                  {exp.startDate}–
-                  <br />
-                  {exp.endDate}
+                  {exp.position}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: '13px',
-                      fontWeight: 800,
-                      color: '#0f172a',
-                      marginBottom: '1px',
-                    }}
-                  >
-                    {exp.position}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '11.5px',
-                      fontWeight: 600,
-                      color: TEAL,
-                      marginBottom: '5px',
-                    }}
-                  >
-                    {exp.company}
-                    {exp.location ? `, ${exp.location}` : ''}
-                  </div>
-                  {exp.description && (
-                    <p
-                      style={{
-                        fontSize: '11.5px',
-                        color: '#4b5563',
-                        lineHeight: '1.65',
-                        margin: '0 0 5px',
-                        fontStyle: 'italic',
-                      }}
-                    >
-                      {exp.description}
-                    </p>
-                  )}
-                  <BulletList
-                    bullets={exp.bullets}
-                    look={{
-                      marker: '›',
-                      markerColor: TEAL,
-                      markerWeight: 900,
-                      gap: '7px',
-                      fontSize: '11.5px',
-                      lineHeight: '1.65',
-                      spacing: '3px',
-                    }}
-                  />
-                </div>
+                <ExperienceDetails entry={exp} look={EXPERIENCE} />
               </div>
-            ))}
-          </div>
-        )}
+            </>
+          )}
+        </EntrySection>
 
         {/* Education */}
-        {education && education.length > 0 && (
-          <div style={{ marginBottom: '22px' }}>
-            <MainSectionHeader title="Education" />
-            {education.map((edu, i) => (
-              <div
-                key={i}
-                style={{
-                  display: 'flex',
-                  gap: '14px',
-                  marginBottom: i < education.length - 1 ? '12px' : 0,
-                }}
-              >
+        <EntrySection
+          items={education}
+          heading={<MainSectionHeader title="Education" />}
+          marginBottom="22px"
+          itemGap="12px"
+          itemStyle={ENTRY_ROW}
+        >
+          {(edu) => (
+            <>
+              <DateColumn width="90px" color="#64748b">
+                {edu.startDate}–{edu.endDate}
+              </DateColumn>
+              <div style={{ flex: 1 }}>
                 <div
                   style={{
-                    width: '90px',
-                    flexShrink: 0,
-                    textAlign: 'right' as const,
-                    fontSize: '10px',
-                    color: '#64748b',
-                    paddingTop: '2px',
-                    fontStyle: 'italic',
+                    fontSize: '13px',
+                    fontWeight: 800,
+                    color: '#0f172a',
                   }}
                 >
-                  {edu.startDate}–{edu.endDate}
+                  {edu.degree} in {edu.field}
                 </div>
-                <div style={{ flex: 1 }}>
-                  <div
-                    style={{
-                      fontSize: '13px',
-                      fontWeight: 800,
-                      color: '#0f172a',
-                    }}
-                  >
-                    {edu.degree} in {edu.field}
-                  </div>
-                  <div
-                    style={{
-                      fontSize: '11.5px',
-                      fontWeight: 600,
-                      color: TEAL,
-                    }}
-                  >
-                    {edu.school}
-                    {edu.location ? `, ${edu.location}` : ''}
-                  </div>
-                  {edu.gpa && (
-                    <div style={{ fontSize: '11px', color: '#64748b' }}>
-                      GPA: {edu.gpa}/4.0
-                    </div>
-                  )}
+                <div
+                  style={{
+                    fontSize: '11.5px',
+                    fontWeight: 600,
+                    color: TEAL,
+                  }}
+                >
+                  {edu.school}
+                  {edu.location ? `, ${edu.location}` : ''}
                 </div>
+                {edu.gpa && (
+                  <div style={{ fontSize: '11px', color: '#64748b' }}>
+                    GPA: {edu.gpa}/4.0
+                  </div>
+                )}
               </div>
-            ))}
-          </div>
-        )}
+            </>
+          )}
+        </EntrySection>
 
         {/* Research Projects */}
         {projects && projects.length > 0 && (

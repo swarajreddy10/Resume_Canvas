@@ -1,6 +1,6 @@
 import { ResumeData } from '@/types/resume.unified';
-import BulletList from './BulletList';
-import DatedRow from './DatedRow';
+import ExperienceSection, { type ExperienceLook } from './ExperienceSection';
+import TextSection from './TextSection';
 
 interface ExecutiveTemplateProps {
   data: ResumeData;
@@ -15,6 +15,49 @@ const GREEN_PALE = '#d1fae5';
 const GREEN_TEXT = '#ecfdf5';
 
 const SKILL_BAR_WIDTHS = [92, 85, 88, 78, 90, 82, 75, 88, 80, 70];
+
+const EXPERIENCE: ExperienceLook = {
+  title: {
+    fontSize: '13.5px',
+    fontWeight: 800,
+    color: '#0f172a',
+    lineHeight: 1.2,
+  },
+  dates: {
+    fontSize: '10.5px',
+    color: '#64748b',
+    fontStyle: 'italic',
+    whiteSpace: 'nowrap',
+    marginLeft: '10px',
+    marginTop: '2px',
+  },
+  row: { alignItems: 'flex-start', marginBottom: '2px' },
+  company: {
+    fontSize: '12px',
+    fontWeight: 700,
+    color: SIDEBAR_BG,
+    marginBottom: '6px',
+  },
+  locationSeparator: ' · ',
+  description: {
+    fontSize: '11px',
+    color: '#4b5563',
+    lineHeight: '1.6',
+    margin: '0 0 6px',
+    fontStyle: 'italic',
+  },
+  bullets: {
+    symbol: '•',
+    marker: { color: SIDEBAR_BG, fontWeight: 700, marginTop: '1px' },
+    item: {
+      gap: '8px',
+      fontSize: '11.5px',
+      color: '#374151',
+      lineHeight: '1.6',
+      marginBottom: '4px',
+    },
+  },
+};
 
 function getInitials(name: string): string {
   return name
@@ -291,96 +334,26 @@ export default function ExecutiveTemplate({ data }: ExecutiveTemplateProps) {
         }}
       >
         {/* Profile / Summary */}
-        {personalInfo?.summary && (
-          <div style={{ marginBottom: '24px' }}>
-            <MainSectionHeader title="Profile" />
-            <p
-              style={{
-                fontSize: '11.5px',
-                color: '#374151',
-                lineHeight: '1.7',
-                margin: 0,
-              }}
-            >
-              {personalInfo.summary}
-            </p>
-          </div>
-        )}
+        <TextSection
+          text={personalInfo?.summary}
+          heading={<MainSectionHeader title="Profile" />}
+          marginBottom="24px"
+          textStyle={{
+            fontSize: '11.5px',
+            color: '#374151',
+            lineHeight: '1.7',
+            margin: 0,
+          }}
+        />
 
         {/* Employment History */}
-        {experience && experience.length > 0 && (
-          <div style={{ marginBottom: '24px' }}>
-            <MainSectionHeader title="Employment History" />
-            {experience.map((exp, i) => (
-              <div
-                key={i}
-                style={{ marginBottom: i < experience.length - 1 ? '20px' : 0 }}
-              >
-                {/* Position + Date */}
-                <DatedRow
-                  startDate={exp.startDate}
-                  endDate={exp.endDate}
-                  titleStyle={{
-                    fontSize: '13.5px',
-                    fontWeight: 800,
-                    color: '#0f172a',
-                    lineHeight: 1.2,
-                  }}
-                  dateStyle={{
-                    fontSize: '10.5px',
-                    color: '#64748b',
-                    fontStyle: 'italic',
-                    whiteSpace: 'nowrap',
-                    marginLeft: '10px',
-                    marginTop: '2px',
-                  }}
-                  align="flex-start"
-                  marginBottom="2px"
-                >
-                  {exp.position}
-                </DatedRow>
-                {/* Company + Location */}
-                <div
-                  style={{
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    color: SIDEBAR_BG,
-                    marginBottom: '6px',
-                  }}
-                >
-                  {exp.company}
-                  {exp.location ? ` · ${exp.location}` : ''}
-                </div>
-                {exp.description && (
-                  <p
-                    style={{
-                      fontSize: '11px',
-                      color: '#4b5563',
-                      lineHeight: '1.6',
-                      margin: '0 0 6px',
-                      fontStyle: 'italic',
-                    }}
-                  >
-                    {exp.description}
-                  </p>
-                )}
-                <BulletList
-                  bullets={exp.bullets}
-                  look={{
-                    marker: '•',
-                    markerColor: SIDEBAR_BG,
-                    markerWeight: 700,
-                    markerOffset: '1px',
-                    gap: '8px',
-                    fontSize: '11.5px',
-                    lineHeight: '1.6',
-                    spacing: '4px',
-                  }}
-                />
-              </div>
-            ))}
-          </div>
-        )}
+        <ExperienceSection
+          items={experience}
+          heading={<MainSectionHeader title="Employment History" />}
+          marginBottom="24px"
+          itemGap="20px"
+          look={EXPERIENCE}
+        />
 
         {/* References */}
         <div style={{ marginTop: 'auto', paddingTop: '8px' }}>
