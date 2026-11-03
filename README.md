@@ -57,7 +57,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 
 | Package     | Version       | Role                                    |
 | ----------- | ------------- | --------------------------------------- |
-| Bun         | 1.3.4         | Runtime, package manager, test runner   |
+| Bun         | 1.4.3         | Runtime, package manager, test runner   |
 | MongoDB     | 7.2.0         | Document database                       |
 | Mongoose    | 9.7.4         | ODM, schema validation, indexing        |
 | NextAuth.js | 5.0.0-beta.32 | JWT sessions, Google OAuth, credentials |
@@ -242,7 +242,7 @@ Consistent indigo palette applied across all pages, components, and templates:
 ### Prerequisites
 
 ```
-Bun 1.3.4+
+Bun 1.4.3+ (older Bun cannot run Next.js 16.4's production build)
 MongoDB Atlas cluster
 Google OAuth credentials (optional)
 Groq API key
