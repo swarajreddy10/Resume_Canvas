@@ -9,6 +9,14 @@ test.describe('Resume journey', () => {
     await page.getByRole('link', { name: 'Create New Resume' }).click();
     await page.waitForURL(/\/builder\/.+/);
 
+    // The template carousel loops, so once Embla mounts both arrows can scroll.
+    await expect(
+      page.getByRole('button', { name: 'Next slide' })
+    ).toBeEnabled();
+    await expect(
+      page.getByRole('button', { name: 'Previous slide' })
+    ).toBeEnabled();
+
     await page.getByRole('textbox', { name: 'John Doe' }).fill('Jane Tester');
     await page
       .getByRole('textbox', { name: 'john@example.com' })

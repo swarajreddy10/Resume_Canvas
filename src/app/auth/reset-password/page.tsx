@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,56 +15,50 @@ import { AlertCircle, CheckCircle, Clock, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 import { passwordSchema } from '@/lib/validation/password.schema';
 
-export default function ResetPasswordPage() {
+export default function ResetPasswordPage({
+  searchParams,
+}: Readonly<{
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+}>) {
+  // A client page reads the query through `use`; a link without a token is invalid
+  // from the first render. https://nextjs.org/docs/app/api-reference/file-conventions/page#searchparams-optional
+  const queryToken = use(searchParams).token;
+  const token = typeof queryToken === 'string' ? queryToken : '';
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
-  const [token, setToken] = useState('');
   const [tokenStatus, setTokenStatus] = useState<
     'loading' | 'valid' | 'invalid' | 'expired'
-  >('loading');
+  >(token ? 'loading' : 'invalid');
   const [userEmail, setUserEmail] = useState('');
 
   const router = useRouter();
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const urlToken = urlParams.get('token') || '';
-      setToken(urlToken);
-
-      if (urlToken) {
-        validateToken(urlToken);
-      } else {
-        setTokenStatus('invalid');
-      }
-    }
-  }, []);
-
-  const validateToken = async (tokenToValidate: string) => {
-    try {
-      const response = await fetch('/api/auth/validate-reset-token', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: tokenToValidate }),
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        setTokenStatus('valid');
+    if (!token) return;
+    let current = true;
+    (async () => {
+      try {
+        const response = await fetch('/api/auth/validate-reset-token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token }),
+        });
+        const data = await response.json();
+        if (!current) return;
+        setTokenStatus(response.ok ? 'valid' : data.status || 'invalid');
         setUserEmail(data.email || '');
-      } else {
-        setTokenStatus(data.status || 'invalid');
-        setUserEmail(data.email || '');
+      } catch {
+        if (current) setTokenStatus('invalid');
       }
-    } catch {
-      setTokenStatus('invalid');
-    }
-  };
+    })();
+    return () => {
+      current = false;
+    };
+  }, [token]);
 
   const handleAutoResend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,7 +100,9 @@ export default function ResetPasswordPage() {
 
     const policy = passwordSchema.safeParse(password);
     if (!policy.success) {
-      setError(policy.error.issues[0]?.message ?? 'Password does not meet the policy');
+      setError(
+        policy.error.issues[0]?.message ?? 'Password does not meet the policy'
+      );
       return;
     }
 
