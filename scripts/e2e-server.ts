@@ -14,15 +14,9 @@ const app = Bun.spawn(['bun', '--bun', 'next', 'start', '-p', port], {
   stderr: 'inherit',
 });
 
-async function shutdown(code: number): Promise<never> {
-  app.kill();
-  await app.exited;
-  await mongo.stop();
-  process.exit(code);
-}
-
-process.on('SIGINT', () => void shutdown(0));
-process.on('SIGTERM', () => void shutdown(0));
+// On a signal, stop the app; the single exit path below then stops MongoDB.
+process.on('SIGINT', () => app.kill());
+process.on('SIGTERM', () => app.kill());
 
 const code = await app.exited;
 await mongo.stop();
