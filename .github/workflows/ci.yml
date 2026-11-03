@@ -99,6 +99,15 @@ jobs:
         with:
           name: coverage-integration
           path: coverage-integration
+      # Bun reports only the files a test run loads; list every other source file at zero
+      # coverage so the new-code gate counts it (scripts/lcov-unloaded-files.ts).
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+      - run: bun ci
+      - run: |
+          mkdir -p coverage-unloaded
+          bun scripts/lcov-unloaded-files.ts coverage/lcov.info coverage-integration/lcov.info > coverage-unloaded/lcov.info
       # package.json's version is the project version, so a version bump starts a new
       # "new code" period under the project's Previous version definition.
       - id: version

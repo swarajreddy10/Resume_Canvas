@@ -9,6 +9,7 @@
 # Testing
 /coverage
 /coverage-integration
+/coverage-unloaded
 *.lcov
 test-results.xml
 /tests/coverage/

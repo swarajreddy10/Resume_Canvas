@@ -305,7 +305,8 @@ Coverage is gated on new code, not as a project-wide number. The `sonar` job sen
 LCOV reports to SonarQube Cloud (CI-based analysis, configured in
 `sonar-project.properties`), whose Sonar way quality gate requires at least 80% coverage on
 the code a change adds. Bun counts only the files a test run loads, so its own percentages
-are not project coverage. The job needs a `SONAR_TOKEN` repository secret and Automatic
+are not project coverage; `scripts/lcov-unloaded-files.ts` adds every other source file at
+zero, so a change that adds a file no test loads cannot pass the gate. The job needs a `SONAR_TOKEN` repository secret and Automatic
 Analysis switched off in SonarQube Cloud (Administration → Analysis Method); automatic
 analysis cannot import coverage. Bumping `version` in `package.json` starts a new "new code"
 period for the main branch.

@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     // Generated test output (gitignored).
     'coverage/**',
     'coverage-integration/**',
+    'coverage-unloaded/**',
     'playwright-report/**',
     'test-results/**',
   ]),
