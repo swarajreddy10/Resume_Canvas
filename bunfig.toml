@@ -1,10 +1,10 @@
 [test]
 preload = ["./tests/setup.ts"]
-# text prints the table (and is what enforces the threshold); lcov writes coverage/lcov.info.
+# text prints the table; lcov writes coverage/lcov.info for SonarQube Cloud.
 coverageReporter = ["text", "lcov"]
 # Helpers and setup are not product code.
 coveragePathIgnorePatterns = ["tests/**"]
-# Bun applies these to every file the tests load, not to the total. Measured on the unit
-# suite: lowest file 89.09% lines (memory-cache.ts), 75.00% functions (logger.ts); total
-# 97.54% lines, 92.51% functions. Raise as coverage grows; never lower to pass.
-coverageThreshold = { lines = 0.89, functions = 0.75 }
+# No coverageThreshold: Bun applies it to every coverage run, the integration run
+# included, and to the files a run loads rather than the project. Coverage is gated on
+# new code in SonarQube Cloud instead (Sonar way: at least 80%), from both runs' LCOV.
+# https://docs.sonarsource.com/sonarqube-cloud/standards/managing-quality-gates/introduction-to-quality-gates/
