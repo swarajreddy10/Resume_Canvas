@@ -217,7 +217,37 @@ describe('generateBulletPoints', () => {
     const prompt = lastPrompt();
     expect(prompt).toContain('Never invent numbers');
     expect(prompt).toContain('[X%]');
+    expect(prompt).toContain(
+      'Never add a result the description does not state'
+    );
     expect(prompt).not.toMatch(/INCLUDE specific metrics|\$\d|\d+M\+/);
+  });
+
+  test('drops a bullet stating a figure the description does not give', async () => {
+    replyWith(
+      '{"bullets": ["Built React apps", "Grew revenue by 40%", "Shipped [N] features"]}'
+    );
+    expect(await generateBulletPoints(bulletRequest)).toEqual([
+      'Built React apps',
+      'Shipped [N] features',
+    ]);
+  });
+
+  test('keeps a figure the description gives', async () => {
+    replyWith('{"bullets": ["Cut a nightly batch from 30 to 4 minutes"]}');
+    expect(
+      await generateBulletPoints({
+        ...bulletRequest,
+        description: 'Cut a nightly batch from 30 to 4 minutes with COPY',
+      })
+    ).toEqual(['Cut a nightly batch from 30 to 4 minutes']);
+  });
+
+  test('throws AIServiceError when every bullet states an unsupported figure', async () => {
+    replyWith('{"bullets": ["Grew revenue by 40%", "Served 2M users"]}');
+    await expect(generateBulletPoints(bulletRequest)).rejects.toBeInstanceOf(
+      AIServiceError
+    );
   });
 });
 
@@ -301,5 +331,41 @@ describe('generateCoverLetter', () => {
     expect(prompt).toContain('Never invent numbers');
     expect(prompt).toContain('No addresses, dates, subject line');
     expect(prompt).toContain('Dear Hiring Team,');
+    expect(prompt).toContain('come only from the resume data');
+  });
+
+  test.each([
+    [
+      'a figure the resume does not give',
+      'Dear Hiring Team,\n\nI cut costs by 40%.',
+    ],
+    ['a placeholder', 'Dear Hiring Team,\n\nI live at [Your Address].'],
+    ['a date', 'April 27, 2026\n\nDear Hiring Team,'],
+  ])('refuses a letter with %s', async (_, letter) => {
+    replyWith(letter);
+    await expect(generateCoverLetter(letterInput)).rejects.toBeInstanceOf(
+      AIServiceError
+    );
+  });
+
+  test("refuses a job requirement's figure stated as the candidate's", async () => {
+    replyWith('Dear Hiring Team,\n\nI bring 5+ years of Go.');
+    await expect(
+      generateCoverLetter({ ...letterInput, jobDescription: '5+ years of Go' })
+    ).rejects.toBeInstanceOf(AIServiceError);
+  });
+
+  test('keeps figures the resume gives', async () => {
+    const letter =
+      'Dear Hiring Team,\n\nI cut a nightly batch from 30 to 4 minutes.';
+    replyWith(letter);
+    expect(
+      await generateCoverLetter({
+        ...letterInput,
+        resumeData: {
+          experience: [{ description: 'cut a batch from 30 to 4 minutes' }],
+        },
+      })
+    ).toBe(letter);
   });
 });

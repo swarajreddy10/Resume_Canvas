@@ -1,51 +1,23 @@
 /**
- * Measures how often generated résumé text states facts the user never gave: numbers that
- * are not in the input, and, in cover letters, bracketed placeholders and dates. Bullets
- * may hold a bracketed placeholder such as [X%] for the user to fill in; a number inside
- * one is not counted. A figure derived from the input (87% from "30 to 4 minutes") counts
- * as invented: only numbers the user wrote are facts.
+ * Measures how often the model's drafts state facts the user never gave: figures that are
+ * not in the input, and, in cover letters, bracketed placeholders and dates. It reads the
+ * drafts before the service's facts check (src/lib/ai/facts.ts) drops or refuses them, so
+ * it shows how well the prompts hold, not only what reaches users. Bullets may hold a
+ * placeholder such as [X%] for the user to fill in; a figure derived from the input (87%
+ * from "30 to 4 minutes"), or a number reused with another unit, counts as invented.
  *
  * Usage: bun run ai:facts [runs per input, default 6] (live Groq API, GROQ_API_KEY set).
  * Prints one JSON line per generation, then a summary. Each run is two bullet requests
  * and one cover letter, about 2,700 tokens.
  */
 import {
-  generateBulletPoints,
-  generateCoverLetter,
+  coverLetterFacts,
+  draftBulletPoints,
+  draftCoverLetter,
   type BulletPointRequest,
+  type CoverLetterRequest,
 } from '@/features/ai/services/ai.service';
-
-const PLACEHOLDER = /\[[^\]\n]+\]/g;
-const NUMBER = /\d+(?:[.,]\d+)*/g;
-const MONTH =
-  '(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)';
-const DATE = new RegExp(
-  `${MONTH}\\s+\\d{1,2},?\\s+\\d{4}|\\d{1,2}\\s+${MONTH},?\\s+\\d{4}|\\d{4}-\\d{2}-\\d{2}`,
-  'g'
-);
-
-/** The numbers in `text`, digits only ("$120,000" is "120000"). */
-function numbersIn(text: string): string[] {
-  return (text.match(NUMBER) ?? []).map((n) => n.replace(/,/g, ''));
-}
-
-/**
- * Numbers in `output`, outside its placeholders, that `input` does not contain, in order
- * of first appearance. The input keeps its brackets: they are JSON arrays there.
- */
-export function inventedNumbers(output: string, input: string): string[] {
-  const given = new Set(numbersIn(input));
-  const stated = numbersIn(output.replace(PLACEHOLDER, ' '));
-  return [...new Set(stated)].filter((n) => !given.has(n));
-}
-
-export function placeholders(text: string): string[] {
-  return text.match(PLACEHOLDER) ?? [];
-}
-
-export function dates(text: string): string[] {
-  return text.match(DATE) ?? [];
-}
+import { dates, inventedFigures, placeholders } from '@/lib/ai/facts';
 
 const bulletInputs: BulletPointRequest[] = [
   {
@@ -64,7 +36,7 @@ const bulletInputs: BulletPointRequest[] = [
   },
 ];
 
-const letterInput = {
+const letterInput: CoverLetterRequest = {
   resumeData: {
     personalInfo: { name: 'Zoë Ñúñez', summary: 'Backend engineer.' },
     experience: [
@@ -81,19 +53,61 @@ const letterInput = {
   jobDescription: 'Go, PostgreSQL, Kubernetes, on-call ownership.',
 };
 
+type Summary = {
+  bullets: number;
+  bulletsWithInventedNumber: number;
+  bulletsWithPlaceholder: number;
+  letters: number;
+  lettersWithInventedNumber: number;
+  lettersWithPlaceholder: number;
+  lettersWithDate: number;
+  failures: number;
+};
+type Log = (line: string) => void;
+
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+async function measureBullets(
+  input: BulletPointRequest,
+  index: number,
+  summary: Summary,
+  log: Log
+) {
+  for (const bullet of await draftBulletPoints(input)) {
+    const invented = inventedFigures(bullet, JSON.stringify(input));
+    summary.bullets++;
+    if (invented.length) summary.bulletsWithInventedNumber++;
+    if (placeholders(bullet).length) summary.bulletsWithPlaceholder++;
+    log(JSON.stringify({ kind: 'bullet', input: index, invented, bullet }));
+  }
+}
+
+async function measureLetter(summary: Summary, log: Log) {
+  const letter = await draftCoverLetter(letterInput);
+  const invented = inventedFigures(letter, coverLetterFacts(letterInput));
+  summary.letters++;
+  if (invented.length) summary.lettersWithInventedNumber++;
+  if (placeholders(letter).length) summary.lettersWithPlaceholder++;
+  if (dates(letter).length) summary.lettersWithDate++;
+  log(
+    JSON.stringify({
+      kind: 'letter',
+      invented,
+      placeholders: placeholders(letter),
+      dates: dates(letter),
+      opening: letter.slice(0, 120),
+    })
+  );
+}
 
 /**
  * Generate `runs` rounds (bullets for each input, then a cover letter), writing one JSON
- * line per generation to `log`, and return the counts. `pauseMs` between calls keeps the
- * run under Groq's 8,000 tokens a minute for openai/gpt-oss-120b.
+ * line per generation to `log`, and return the counts. A failed generation is counted and
+ * logged, not fatal. `pauseMs` between calls keeps the run under Groq's 8,000 tokens a
+ * minute for openai/gpt-oss-120b.
  */
-export async function evaluate(
-  runs: number,
-  pauseMs: number,
-  log: (line: string) => void
-) {
-  const summary = {
+export async function evaluate(runs: number, pauseMs: number, log: Log) {
+  const summary: Summary = {
     bullets: 0,
     bulletsWithInventedNumber: 0,
     bulletsWithPlaceholder: 0,
@@ -103,46 +117,21 @@ export async function evaluate(
     lettersWithDate: 0,
     failures: 0,
   };
-  const failed = (kind: string, error: unknown) => {
-    summary.failures++;
-    log(JSON.stringify({ kind, error: (error as Error).message }));
+  const attempt = async (kind: string, measure: () => Promise<void>) => {
+    try {
+      await measure();
+    } catch (error) {
+      summary.failures++;
+      log(JSON.stringify({ kind, error: (error as Error).message }));
+    }
+    await sleep(pauseMs);
   };
 
   for (let run = 0; run < runs; run++) {
-    for (const [i, input] of bulletInputs.entries()) {
-      try {
-        for (const bullet of await generateBulletPoints(input)) {
-          const invented = inventedNumbers(bullet, JSON.stringify(input));
-          summary.bullets++;
-          if (invented.length) summary.bulletsWithInventedNumber++;
-          if (placeholders(bullet).length) summary.bulletsWithPlaceholder++;
-          log(JSON.stringify({ kind: 'bullet', input: i, invented, bullet }));
-        }
-      } catch (error) {
-        failed('bullet', error);
-      }
-      await sleep(pauseMs);
+    for (const [index, input] of bulletInputs.entries()) {
+      await attempt('bullet', () => measureBullets(input, index, summary, log));
     }
-    try {
-      const letter = await generateCoverLetter(letterInput);
-      const invented = inventedNumbers(letter, JSON.stringify(letterInput));
-      summary.letters++;
-      if (invented.length) summary.lettersWithInventedNumber++;
-      if (placeholders(letter).length) summary.lettersWithPlaceholder++;
-      if (dates(letter).length) summary.lettersWithDate++;
-      log(
-        JSON.stringify({
-          kind: 'letter',
-          invented,
-          placeholders: placeholders(letter),
-          dates: dates(letter),
-          opening: letter.slice(0, 120),
-        })
-      );
-    } catch (error) {
-      failed('letter', error);
-    }
-    await sleep(pauseMs);
+    await attempt('letter', () => measureLetter(summary, log));
   }
   return summary;
 }
