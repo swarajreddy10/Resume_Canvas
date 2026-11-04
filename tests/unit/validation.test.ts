@@ -556,14 +556,37 @@ describe('international input', () => {
     ).toBe(true);
   });
 
+  // Name, employer and location each carry their own copy of the joiner rules.
+  const fields = [
+    ['name', (v: string) => PersonalInfoSchema.safeParse(person(v)).success],
+    ['employer', (v: string) => ExperienceSchema.safeParse(job(v)).success],
+    [
+      'location',
+      (v: string) => ExperienceSchema.safeParse(job('Acme', v)).success,
+    ],
+  ] as const;
+
   test.each([
     ['after a consonant the table does not list (ka)', `മോഹക${VIRAMA}${ZWJ}`],
     ['as a non-joiner', `മോഹന${VIRAMA}${ZWNJ}`],
     ['twice', `മോഹന${VIRAMA}${ZWJ}${ZWJ}`],
     ['with no virama', `മോഹന${ZWJ}`],
-  ])('refuses a word-final joiner %s', (_, name) => {
-    expect(PersonalInfoSchema.safeParse(person(name)).success).toBe(false);
+  ])('refuses a word-final joiner %s', (_, value) => {
+    for (const [, accepts] of fields) expect(accepts(value)).toBe(false);
   });
+
+  // The legacy rule applies only where no letter follows, so it never matches a joiner the
+  // between-letters rule matches too; rules that overlap there let each joiner match two
+  // ways, and 22 legacy chillus before a refused character took over a second.
+  test.each(fields)(
+    'refuses a long run of legacy chillus in the %s in linear time',
+    (_, accepts) => {
+      const value = `ന${VIRAMA}${ZWJ}`.repeat(22) + 'ന<';
+      const start = performance.now();
+      expect(accepts(value)).toBe(false);
+      expect(performance.now() - start).toBeLessThan(250);
+    }
+  );
 
   test('accepts a non-joiner inside an employer and a location', () => {
     expect(

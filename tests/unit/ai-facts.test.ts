@@ -398,12 +398,18 @@ describe('dates', () => {
       'November 4th, 2026',
       '21st March 2025',
     ]);
+    // Short names of the shortest months, and the four-letter Sept.
+    expect(dates('Sent Jun. 9, 2024, 3 Jul. 2025 and Sept. 3, 2025')).toEqual([
+      'Jun. 9, 2024',
+      '3 Jul. 2025',
+      'Sept. 3, 2025',
+    ]);
   });
 
   test('a full month name ending a sentence is not a dated month', () => {
     expect(
       dates(
-        'Shipped in May. 10 2026 releases followed, and in June. 4 2025 more'
+        'Shipped in May. 10 2026 releases followed, in June. 4 2025 more, and on 4 June. 2025 a fix'
       )
     ).toEqual([]);
   });
