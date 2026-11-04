@@ -7,9 +7,9 @@
  * from "30 to 4 minutes"), or a number reused with another unit, counts as invented.
  *
  * Usage: bun run ai:facts [runs per input, default 6] (live Groq API, GROQ_API_KEY set).
- * Prints one JSON line per generation, with the whole draft so a saved run can be counted
- * again when the check changes, then a summary. Each run is two bullet requests
- * and one cover letter, about 2,700 tokens.
+ * Prints one JSON line per bullet and one per cover letter, each with its whole text so a
+ * saved run can be counted again when the check changes, one per failed request, then a
+ * summary. Each run is two bullet requests and one cover letter, about 2,700 tokens.
  */
 import {
   coverLetterFacts,
