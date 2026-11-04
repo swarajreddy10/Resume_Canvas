@@ -1,0 +1,11 @@
+# CodeRabbit reviews pull requests into the default branch (main) only, unless other base
+# branches are listed. Feature work merges into dev, so dev is listed: the review arrives
+# before a change merges, not on the later dev -> main pull request.
+# https://docs.coderabbit.ai/reference/configuration (reviews.auto_review.base_branches)
+# inheritance keeps every setting this file does not name at its UI or organization value.
+# https://docs.coderabbit.ai/configuration/central-configuration
+inheritance: true
+reviews:
+  auto_review:
+    base_branches:
+      - '^dev$'
