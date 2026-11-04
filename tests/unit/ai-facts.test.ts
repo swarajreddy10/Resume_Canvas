@@ -92,6 +92,70 @@ describe('inventedFigures', () => {
     ).toEqual(['30 Percent']);
   });
 
+  test('a currency sign after a country code stays a currency figure', () => {
+    expect(inventedFigures('Raised US$10M', 'served 10M users')).toEqual([
+      'US$10M',
+    ]);
+    expect(inventedFigures('Raised A$5k', 'hired 5k people')).toEqual(['A$5k']);
+    expect(inventedFigures('Raised USD10k', 'raised funds')).toEqual([
+      'USD10k',
+    ]);
+    expect(inventedFigures('Raised INR 5 crore', 'raised funds')).toEqual([
+      'INR 5 crore',
+    ]);
+    expect(inventedFigures('Raised US$10M', 'raised US$10M')).toEqual([]);
+  });
+
+  test('a number glued to a word is part of the word', () => {
+    expect(inventedFigures('Released v2.5', 'released version 2.5')).toEqual(
+      []
+    );
+    expect(
+      inventedFigures('Implemented OAuth2.0 login', 'implemented OAuth login')
+    ).toEqual([]);
+    expect(inventedFigures('Upgraded to v18.2.0', 'upgraded it')).toEqual([]);
+  });
+
+  test('a word named like an Object.prototype member is not a unit', () => {
+    expect(inventedFigures('Wrote 3 constructor', 'wrote 3 tests')).toEqual([]);
+    expect(inventedFigures('Wrote 3 valueOf', 'wrote 3 tests')).toEqual([]);
+  });
+
+  test('x10 is a multiplier, and lakh and crore are scales', () => {
+    expect(
+      inventedFigures('Boosted throughput x10', 'boosted throughput')
+    ).toEqual(['x10']);
+    expect(
+      inventedFigures('Boosted throughput x10', 'boosted throughput 10x')
+    ).toEqual([]);
+    expect(inventedFigures('Saved ₹10 crore', 'saved ₹10 lakh')).toEqual([
+      '₹10 crore',
+    ]);
+    // A crore is 100 lakh (10^7 and 10^5).
+    expect(inventedFigures('Saved ₹100 lakh', 'saved ₹1 crore')).toEqual([]);
+    expect(inventedFigures('Saved ₹100 lakh', 'saved ₹10 crore')).toEqual([
+      '₹100 lakh',
+    ]);
+  });
+
+  test('ranges and approximations keep each figure', () => {
+    expect(inventedFigures('Cut latency 30–40%', 'cut latency')).toEqual([
+      '30',
+      '40%',
+    ]);
+    expect(inventedFigures('Cut latency 30-40%', 'cut latency')).toEqual([
+      '30',
+      '40%',
+    ]);
+    expect(inventedFigures('Cut latency ~30%', 'cut latency by 30%')).toEqual(
+      []
+    );
+    expect(inventedFigures('Led 5+ engineers', 'led a team')).toEqual(['5+']);
+    expect(inventedFigures('Served 10k+ users', 'served 10k users')).toEqual(
+      []
+    );
+  });
+
   test('a bare number may restate a figure the input gave with its unit', () => {
     expect(
       inventedFigures('cut errors by 30 percent', 'cut errors by 30%')
