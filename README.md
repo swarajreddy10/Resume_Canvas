@@ -20,7 +20,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Resume Builder**          | 6-section form (personal, experience, education, skills, projects, certifications) with real-time preview and auto-save             |
 | **5 Templates**             | Executive, Tech, Corporate, Creative, Academic — all A4-optimized and ATS-compatible                                                |
-| **AI Bullet Generation**    | GPT-OSS 120B on Groq generates up to five action-oriented bullets per role                                                          |
+| **AI Bullet Generation**    | GPT-OSS 120B on Groq writes up to five action-oriented bullets per role from the facts given, never invented figures                |
 | **ATS Scoring**             | 0–100 completeness score across seven weighted sections (contact, summary, experience, education, skills, projects, certifications) |
 | **Resume Review**           | Section-by-section AI analysis with actionable feedback                                                                             |
 | **Keyword Optimizer**       | Industry-specific keyword extraction and gap analysis                                                                               |
@@ -193,13 +193,19 @@ with `tool_use_failed` and JSON object mode never did. There is no canned answer
 502, and the UI shows the message. `bun run ai:smoke` calls every feature once against the
 live API; on 2026-11-04 each answered in 1.0 to 2.4 s.
 
-| AI Feature        | Input                           | Output                                            |
-| ----------------- | ------------------------------- | ------------------------------------------------- |
-| Bullet generation | Job title, company, description | Up to five action-verb bullets                    |
-| ATS optimization  | Resume text                     | 0–100 score, suggestions, missing keywords        |
-| Resume review     | Full resume data                | Score, assessment, strengths, ranked suggestions  |
-| Keyword analysis  | Resume + job description        | Match score, keywords present or missing, by need |
-| Cover letter      | Resume + job description        | Tailored 3–4 paragraph letter                     |
+Bullets and cover letters go on a real person's resume, so their prompts allow only the facts
+given: no invented numbers, and a bracketed placeholder such as `[X%]` where a metric is
+missing. `bun run ai:facts` measures it live. On 2026-11-04 (6 runs), bullets with a number the
+user never gave fell from 58 of 59 to 0 of 50, and cover letters with invented numbers,
+`[Your Address]`-style placeholders or a made-up date from 6, 6 and 4 of 6 to none.
+
+| AI Feature        | Input                           | Output                                                        |
+| ----------------- | ------------------------------- | ------------------------------------------------------------- |
+| Bullet generation | Job title, company, description | Up to five action-verb bullets; `[X%]` marks a missing metric |
+| ATS optimization  | Resume text                     | 0–100 score, suggestions, missing keywords                    |
+| Resume review     | Full resume data                | Score, assessment, strengths, ranked suggestions              |
+| Keyword analysis  | Resume + job description        | Match score, keywords present or missing, by need             |
+| Cover letter      | Resume + job description        | Letter body, 3–4 paragraphs, from the resume's facts          |
 
 ---
 
@@ -302,6 +308,7 @@ bun run verify       # format + lint + type-check
 bun run db:sync-indexes  # make MongoDB indexes match the Mongoose schemas
 bun run db:migrate-slugs # rewrite legacy name/N resume slugs to one URL segment
 bun run ai:smoke     # call every AI feature once against the live Groq API
+bun run ai:facts     # measure invented numbers, placeholders and dates in live bullets and letters
 ```
 
 CI (`.github/workflows/ci.yml`) runs type-check, lint, unit and integration tests with
