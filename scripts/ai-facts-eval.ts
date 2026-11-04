@@ -17,7 +17,7 @@ import {
   type BulletPointRequest,
   type CoverLetterRequest,
 } from '@/features/ai/services/ai.service';
-import { dates, inventedFigures, placeholders } from '@/lib/ai/facts';
+import { dates, inventedFigures, placeholders, textOf } from '@/lib/ai/facts';
 
 const bulletInputs: BulletPointRequest[] = [
   {
@@ -74,7 +74,7 @@ async function measureBullets(
   log: Log
 ) {
   for (const bullet of await draftBulletPoints(input)) {
-    const invented = inventedFigures(bullet, JSON.stringify(input));
+    const invented = inventedFigures(bullet, textOf(input));
     summary.bullets++;
     if (invented.length) summary.bulletsWithInventedNumber++;
     if (placeholders(bullet).length) summary.bulletsWithPlaceholder++;

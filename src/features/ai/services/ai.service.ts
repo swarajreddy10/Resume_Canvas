@@ -2,7 +2,7 @@ import Groq from 'groq-sdk';
 import { z } from 'zod';
 import { appConfig } from '@/lib/config/app.config';
 import { AIServiceError } from '@/lib/ai/errors';
-import { dates, inventedFigures, placeholders } from '@/lib/ai/facts';
+import { dates, inventedFigures, placeholders, textOf } from '@/lib/ai/facts';
 import { logger } from '@/lib/utils/logger';
 
 /**
@@ -132,7 +132,7 @@ Reply with JSON only: {"bullets": ["bullet text without symbols or numbering"]}
 export async function generateBulletPoints(
   request: BulletPointRequest
 ): Promise<string[]> {
-  const facts = JSON.stringify(request);
+  const facts = textOf(request);
   const drafts = await draftBulletPoints(request);
   const supported = drafts.filter(
     (bullet) => inventedFigures(bullet, facts).length === 0
@@ -336,7 +336,7 @@ export function coverLetterFacts({
   jobTitle,
   companyName,
 }: CoverLetterRequest): string {
-  return JSON.stringify({ resumeData, jobTitle, companyName });
+  return textOf({ resumeData, jobTitle, companyName });
 }
 
 /** The model's letter, before the facts check: measured by ai:facts. */

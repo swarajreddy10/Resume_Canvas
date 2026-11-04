@@ -243,6 +243,16 @@ describe('generateBulletPoints', () => {
     ).toEqual(['Cut a nightly batch from 30 to 4 minutes']);
   });
 
+  test('keeps a figure from a later line of a multi-line description', async () => {
+    replyWith('{"bullets": ["Cut build time by 40% with remote caching"]}');
+    expect(
+      await generateBulletPoints({
+        ...bulletRequest,
+        description: 'Moved CI to remote caching.\n40% faster builds',
+      })
+    ).toEqual(['Cut build time by 40% with remote caching']);
+  });
+
   test('throws AIServiceError when every bullet states an unsupported figure', async () => {
     replyWith('{"bullets": ["Grew revenue by 40%", "Served 2M users"]}');
     await expect(generateBulletPoints(bulletRequest)).rejects.toBeInstanceOf(
@@ -364,6 +374,21 @@ describe('generateCoverLetter', () => {
         ...letterInput,
         resumeData: {
           experience: [{ description: 'cut a batch from 30 to 4 minutes' }],
+        },
+      })
+    ).toBe(letter);
+  });
+
+  test('keeps a figure from a later line of a multi-line resume field', async () => {
+    const letter = 'Dear Hiring Team,\n\nI saved $10k a month on cloud spend.';
+    replyWith(letter);
+    expect(
+      await generateCoverLetter({
+        ...letterInput,
+        resumeData: {
+          experience: [
+            { description: 'Moved CI to spot instances.\n$10k saved monthly' },
+          ],
         },
       })
     ).toBe(letter);

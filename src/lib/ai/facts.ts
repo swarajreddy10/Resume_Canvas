@@ -10,22 +10,25 @@
  * and matches only as written. A placeholder is a bracket with no digit in it ([X%],
  * [N users]); "[20%]" is a figure.
  *
- * Text is read token by token, never scanned for digits: a number inside a word ("v2.5",
- * "OAuth2.0", "B2B") is part of the word, and a figure's currency, multiplier, unit and
- * scale come only from its own token or the word right next to it.
+ * Text is read token by token. A token that is a figure ("US$10M", "x10", "16.1k") is read
+ * with its currency, multiplier, unit and scale, including a code or word beside it ("INR 5
+ * crore", "10 Million"). A token that is not ("B2B", "OAuth2.0") still contributes its
+ * numbers, bare: a number is never lost, because a missed figure is the failure this check
+ * exists to prevent, while a doubtful one only costs a bullet.
  */
 type Unit = '' | 'currency' | 'percent' | 'times';
 
-// Tokens split at spaces, at punctuation that never sits inside a figure, and at a dash
-// between two digits, so "30–40%" is two figures and "COVID-19" stays one word.
-const RANGE_DASH = /(?<=\d)[-–—](?=\d)/g;
-const SEPARATORS = /[\s"'“”‘’{}[\]()<>:;/\\|–—]+/;
-const TRAILING = /[.,!?]+$/;
+// A dash after a figure splits it from what follows ("10-person", "30%-40%", "10k-20k");
+// one after a letter ("COVID-19") stays inside the word.
+const SPLIT_DASH = /(?<=[\d%×xXkKMBL])[-–—]/g;
+// Spaces and punctuation that never sit inside a figure, Markdown marks included.
+const SEPARATORS = /[\s"'“”‘’`{}[\]()<>:;/\\|*_#!?–—]+/;
+const TRAILING = /[.,]+$/;
 const DIGIT = /\d/;
-const PLAIN_INTEGER = /^[1-9]\d*$/;
-const NO_SUFFIX: { unit?: Unit; exponent?: number } = Object.freeze({});
 // A token's parts: what precedes the number, the number, and what follows it.
 const FIGURE_TOKEN = /^(\D*?)(\d+(?:[.,]\d+)*)(\D*)$/u;
+const NUMBER_RUN = /\d+(?:[.,]\d+)*/g;
+const PLAIN_INTEGER = /^[1-9]\d*$/;
 const APPROXIMATELY = /^[~≈±+−-]/;
 // $, ₹, US$, A$, HK$; ISO codes and Rs are matched whole.
 const CURRENCY_SIGN = /^[A-Z]{0,3}[$€£₹]$/;
@@ -38,10 +41,12 @@ const CURRENCY_CODES = new Set([
   'CAD',
   'SGD',
   'Rs',
+  'Rs.',
 ]);
-// Maps, not object literals: an object would answer for "constructor" or "valueOf".
-// Signs and single letters are read as written ("M" is million; "10m" is as likely minutes
-// or metres); words are read in any case ("10 Million", "30 Percent").
+// Maps, not object literals: an object would answer for "constructor" or "valueOf"
+// (MDN: an Object "contains default keys that could collide with your own keys").
+// Signs and letters are read as written ("M" is million; "10m" is as likely minutes or
+// metres); words in any case ("10 Million", "30 Percent").
 const SIGN_UNITS = new Map<string, Unit>([
   ['%', 'percent'],
   ['x', 'times'],
@@ -49,21 +54,30 @@ const SIGN_UNITS = new Map<string, Unit>([
   ['×', 'times'],
 ]);
 const WORD_UNITS = new Map<string, Unit>([['percent', 'percent']]);
-/** Scales as powers of ten. */
+/** Scales as powers of ten; L and Cr are lakh and crore. */
 const SCALE_LETTERS = new Map([
   ['k', 3],
   ['K', 3],
   ['M', 6],
   ['B', 9],
+  ['L', 5],
+  ['Cr', 7],
 ]);
 const SCALE_WORDS = new Map([
   ['thousand', 3],
+  ['thousands', 3],
   ['lakh', 5],
+  ['lakhs', 5],
   ['million', 6],
+  ['millions', 6],
   ['crore', 7],
+  ['crores', 7],
   ['billion', 9],
+  ['billions', 9],
   ['bn', 9],
 ]);
+const NO_SUFFIX: { unit?: Unit; exponent?: number } = Object.freeze({});
+
 const PLACEHOLDER = /\[[^\]\d\n]{1,80}\]/g;
 // One small pattern per date shape, and the month checked in code: a single pattern with
 // the month names inline scored 127 on Sonar's regex complexity rule (S5843, limit 20).
@@ -90,6 +104,22 @@ const MONTHS = [
 function isMonth(word: string): boolean {
   const w = word.toLowerCase();
   return w === 'sept' || MONTHS.some((m) => w === m || w === m.slice(0, 3));
+}
+
+/**
+ * The facts in a request as plain text: its strings and numbers, one per line. Never
+ * JSON.stringify: it writes a line break inside a string as the two characters "\n", which
+ * glue onto the figure after them ("\n40%" reads as the word "n40%").
+ */
+export function textOf(value: unknown): string {
+  const parts: string[] = [];
+  const visit = (v: unknown): void => {
+    if (typeof v === 'string' || typeof v === 'number') parts.push(String(v));
+    else if (Array.isArray(v)) v.forEach(visit);
+    else if (v && typeof v === 'object') Object.values(v).forEach(visit);
+  };
+  visit(value);
+  return parts.join('\n');
 }
 
 interface Figure {
@@ -120,7 +150,7 @@ function amountOf(number: string, exponent: number): string {
 
 /** Tokens as split; trailing punctuation is trimmed only where a figure is read. */
 function tokensOf(text: string): string[] {
-  return text.replace(RANGE_DASH, ' ').split(SEPARATORS);
+  return text.replace(SPLIT_DASH, ' ').split(SEPARATORS);
 }
 
 function trimmed(token: string | undefined): string | undefined {
@@ -130,18 +160,22 @@ function trimmed(token: string | undefined): string | undefined {
     : token;
 }
 
+function isCurrency(word: string): boolean {
+  return CURRENCY_SIGN.test(word) || CURRENCY_CODES.has(word);
+}
+
 /** What precedes the number: nothing, a currency, or a multiplier; null if a word. */
 function readPrefix(prefix: string): Unit | null {
   if (prefix === '') return '';
   const p = prefix.replace(APPROXIMATELY, '');
   if (p === '') return '';
-  if (CURRENCY_SIGN.test(p) || CURRENCY_CODES.has(p)) return 'currency';
+  if (isCurrency(p)) return 'currency';
   return SIGN_UNITS.get(p) === 'times' ? 'times' : null;
 }
 
 /**
  * What follows the number in its token: a unit, a scale, nothing, or another unit such as
- * "h" or "GB" (a plain figure); null if it is not a figure at all. A trailing "+" ("5+",
+ * "h" or "GB" (a plain figure); null if the token is a word. A trailing "+" ("5+",
  * "10k+") leaves the figure as written.
  */
 function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
@@ -152,49 +186,47 @@ function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
   if (unit) return { unit };
   const exponent = SCALE_LETTERS.get(s) ?? SCALE_WORDS.get(s.toLowerCase());
   if (exponent !== undefined) return { exponent };
-  return /^\p{L}+$/u.test(s) ? {} : null;
+  return /^\p{L}+$/u.test(s) ? NO_SUFFIX : null;
 }
 
-/** The figure at tokens[i], with the currency code before it or the word after it. */
-function figureAt(tokens: string[], i: number): Figure | null {
+/** The figures in tokens[i]: one if it is a figure, its bare numbers if it is a word. */
+function figuresAt(tokens: string[], i: number): Figure[] {
   const token = trimmed(tokens[i]);
-  const parts = token === undefined ? null : FIGURE_TOKEN.exec(token);
-  if (!token || !parts) return null;
-  const [, prefix, number, suffix] = parts;
-  const lead = readPrefix(prefix);
-  const tail = readSuffix(suffix);
-  if (lead === null || tail === null) return null;
+  if (!token || !DIGIT.test(token)) return [];
+  const parts = FIGURE_TOKEN.exec(token);
+  const lead = parts ? readPrefix(parts[1]) : null;
+  const tail = parts ? readSuffix(parts[3]) : null;
+  if (!parts || lead === null || tail === null) {
+    return [...token.matchAll(NUMBER_RUN)].map(([number]) => ({
+      text: token,
+      amount: amountOf(number, 0),
+      unit: '',
+    }));
+  }
 
   let text = token;
   let unit: Unit = lead || tail.unit || '';
   let exponent = tail.exponent;
   const before = trimmed(tokens[i - 1]);
-  if (!lead && before !== undefined && CURRENCY_CODES.has(before)) {
+  if (!lead && before !== undefined && isCurrency(before)) {
     unit = 'currency';
     text = `${before} ${text}`;
   }
   const after = trimmed(tokens[i + 1]);
   if (after !== undefined && !tail.unit && exponent === undefined) {
-    const nextUnit =
-      SIGN_UNITS.get(after) ?? WORD_UNITS.get(after.toLowerCase());
-    const nextScale = SCALE_WORDS.get(after.toLowerCase());
+    const lower = after.toLowerCase();
+    const nextUnit = SIGN_UNITS.get(after) ?? WORD_UNITS.get(lower);
+    const nextScale = SCALE_WORDS.get(lower) ?? SCALE_LETTERS.get(after);
     if (nextUnit && unit === '') unit = nextUnit;
     if (nextScale !== undefined) exponent = nextScale;
     if (nextUnit || nextScale !== undefined) text = `${text} ${after}`;
   }
-  return { text, amount: amountOf(number, exponent ?? 0), unit };
+  return [{ text, amount: amountOf(parts[2], exponent ?? 0), unit }];
 }
 
 function figuresIn(text: string): Figure[] {
   const tokens = tokensOf(text);
-  const figures: Figure[] = [];
-  tokens.forEach((token, i) => {
-    // Most tokens are words; only one with a digit can hold a figure.
-    if (!DIGIT.test(token)) return;
-    const figure = figureAt(tokens, i);
-    if (figure) figures.push(figure);
-  });
-  return figures;
+  return tokens.flatMap((_, i) => figuresAt(tokens, i));
 }
 
 /** Figures in `output` that `input` does not give, as written, in order of appearance. */
