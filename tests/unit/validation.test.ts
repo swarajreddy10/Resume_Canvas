@@ -535,6 +535,10 @@ describe('international input', () => {
   // Before Unicode 5.1 the five Malayalam chillus were written consonant + virama + ZWJ, so
   // the joiner can end a word, and older data still holds that form (Unicode 17, section
   // 12.9, Table 12-42: "implementations must be prepared to handle both kinds of data").
+  const VIRAMA = String.fromCharCode(0x0d4d);
+  const ZWJ = String.fromCharCode(0x200d);
+  const ZWNJ = String.fromCharCode(0x200c);
+
   test.each([
     ['nna', 'ണ'],
     ['na', 'ന'],
@@ -542,7 +546,7 @@ describe('international input', () => {
     ['la', 'ല'],
     ['lla', 'ള'],
   ])('accepts a legacy chillu %s at the end of a word', (_, consonant) => {
-    const chillu = `${consonant}്‍`;
+    const chillu = `${consonant}${VIRAMA}${ZWJ}`;
     expect(
       PersonalInfoSchema.safeParse(person(`മോഹ${chillu} കുമാർ`)).success
     ).toBe(true);
@@ -550,6 +554,15 @@ describe('international input', () => {
       ExperienceSchema.safeParse(job(`ടെക്${chillu}`, `കൊച്ചി${chillu}`))
         .success
     ).toBe(true);
+  });
+
+  test.each([
+    ['after a consonant the table does not list (ka)', `മോഹക${VIRAMA}${ZWJ}`],
+    ['as a non-joiner', `മോഹന${VIRAMA}${ZWNJ}`],
+    ['twice', `മോഹന${VIRAMA}${ZWJ}${ZWJ}`],
+    ['with no virama', `മോഹന${ZWJ}`],
+  ])('refuses a word-final joiner %s', (_, name) => {
+    expect(PersonalInfoSchema.safeParse(person(name)).success).toBe(false);
   });
 
   test('accepts a non-joiner inside an employer and a location', () => {
