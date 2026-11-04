@@ -15,12 +15,19 @@
  * crore", "10 Million"). A token that is not ("B2B", "OAuth2.0") still contributes its
  * numbers, bare: a number is never lost, because a missed figure is the failure this check
  * exists to prevent, while a doubtful one only costs a bullet.
+ *
+ * It is a backstop behind the prompt, not a parser of all English, and it does not see:
+ * numbers spelled out ("five engineers"); time units ("30 minutes" licenses "30 hours");
+ * digits outside ASCII (Devanagari, full width); and a number in any field of the input
+ * licensing the same bare number elsewhere (a start date of 06/2021 licenses "6 engineers").
+ * Every case found in review is a row in tests/unit/ai-facts.test.ts.
  */
 type Unit = '' | 'currency' | 'percent' | 'times';
 
 // A dash after a figure splits it from what follows ("10-person", "30%-40%", "10k-20k");
-// one after a letter ("COVID-19") stays inside the word.
-const SPLIT_DASH = /(?<=[\d%×xXkKMBL])[-–—]/g;
+// one after a letter that is not a figure's unit ("COVID-19", "B-tree") stays in the word.
+// The hyphens include U+2010 and U+2011 (non-breaking), which GPT-OSS writes ("26‑minute").
+const SPLIT_DASH = /(?<=\d|\d[%×xXkKMBL])[-‐‑–—]/g;
 // Spaces and punctuation that never sit inside a figure, Markdown marks included.
 const SEPARATORS = /[\s"'“”‘’`{}[\]()<>:;/\\|*_#!?–—]+/;
 const TRAILING = /[.,]+$/;
@@ -29,9 +36,30 @@ const DIGIT = /\d/;
 const FIGURE_TOKEN = /^(\D*?)(\d+(?:[.,]\d+)*)(\D*)$/u;
 const NUMBER_RUN = /\d+(?:[.,]\d+)*/g;
 const PLAIN_INTEGER = /^[1-9]\d*$/;
-const APPROXIMATELY = /^[~≈±+−-]/;
+// Approximately, at least, at most: the figure is still the number after the sign.
+const APPROXIMATELY = /^[~≈±+−≤≥-]/;
 // $, ₹, US$, A$, HK$; ISO codes and Rs are matched whole.
 const CURRENCY_SIGN = /^[A-Z]{0,3}[$€£₹]$/;
+const TRAILING_CURRENCY = new Set(['$', '€', '£', '₹']);
+// A currency named after the number, in any case ("10k USD", "500 euros").
+const CURRENCY_WORDS = new Set([
+  'usd',
+  'eur',
+  'gbp',
+  'inr',
+  'aud',
+  'cad',
+  'sgd',
+  'rs',
+  'dollar',
+  'dollars',
+  'euro',
+  'euros',
+  'pound',
+  'pounds',
+  'rupee',
+  'rupees',
+]);
 const CURRENCY_CODES = new Set([
   'USD',
   'EUR',
@@ -53,28 +81,42 @@ const SIGN_UNITS = new Map<string, Unit>([
   ['X', 'times'],
   ['×', 'times'],
 ]);
-const WORD_UNITS = new Map<string, Unit>([['percent', 'percent']]);
-/** Scales as powers of ten; L and Cr are lakh and crore. */
+// "per cent" is two words; figureAt reads it from the next two tokens.
+const WORD_UNITS = new Map<string, Unit>([
+  ['percent', 'percent'],
+  ['times', 'times'],
+]);
+/** Scales as powers of ten, written against the number; L and Cr are lakh and crore. */
 const SCALE_LETTERS = new Map([
   ['k', 3],
   ['K', 3],
   ['M', 6],
+  ['MM', 6],
   ['B', 9],
   ['L', 5],
   ['Cr', 7],
 ]);
+// After a currency sign, m and b can only be million and billion ("$5m", "$2b").
+const CURRENCY_SCALE_LETTERS = new Map([
+  ['m', 6],
+  ['b', 9],
+]);
+/** Scale words, read in any case, against the number or as the next word. */
 const SCALE_WORDS = new Map([
   ['thousand', 3],
   ['thousands', 3],
+  ['lac', 5],
+  ['lacs', 5],
   ['lakh', 5],
   ['lakhs', 5],
+  ['mn', 6],
   ['million', 6],
   ['millions', 6],
   ['crore', 7],
   ['crores', 7],
+  ['bn', 9],
   ['billion', 9],
   ['billions', 9],
-  ['bn', 9],
 ]);
 const NO_SUFFIX: { unit?: Unit; exponent?: number } = Object.freeze({});
 
@@ -182,11 +224,35 @@ function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
   if (suffix === '') return NO_SUFFIX;
   const s = suffix.endsWith('+') ? suffix.slice(0, -1) : suffix;
   if (s === '') return NO_SUFFIX;
+  if (TRAILING_CURRENCY.has(s)) return { unit: 'currency' };
   const unit = SIGN_UNITS.get(s) ?? WORD_UNITS.get(s.toLowerCase());
   if (unit) return { unit };
   const exponent = SCALE_LETTERS.get(s) ?? SCALE_WORDS.get(s.toLowerCase());
   if (exponent !== undefined) return { exponent };
   return /^\p{L}+$/u.test(s) ? NO_SUFFIX : null;
+}
+
+/**
+ * What the word after a figure adds: a currency ("10k USD", "500 euros"), a unit ("30
+ * percent", "30 per cent", "10 times") or a scale ("10 million", "₹5 lacs"). A lone letter
+ * is a word, not a scale: "3 B-tree", "Plan 2 B".
+ */
+function wordAfter(
+  tokens: string[],
+  i: number
+): { unit?: Unit; exponent?: number; words: string } | null {
+  const after = trimmed(tokens[i + 1]);
+  if (after === undefined) return null;
+  const lower = after.toLowerCase();
+  if (CURRENCY_WORDS.has(lower)) return { unit: 'currency', words: after };
+  const then = trimmed(tokens[i + 2]);
+  if (lower === 'per' && then?.toLowerCase() === 'cent') {
+    return { unit: 'percent', words: `${after} ${then}` };
+  }
+  const unit = SIGN_UNITS.get(after) ?? WORD_UNITS.get(lower);
+  if (unit) return { unit, words: after };
+  const exponent = SCALE_WORDS.get(lower);
+  return exponent === undefined ? null : { exponent, words: after };
 }
 
 /** The figures in tokens[i]: one if it is a figure, its bare numbers if it is a word. */
@@ -212,14 +278,16 @@ function figuresAt(tokens: string[], i: number): Figure[] {
     unit = 'currency';
     text = `${before} ${text}`;
   }
-  const after = trimmed(tokens[i + 1]);
-  if (after !== undefined && !tail.unit && exponent === undefined) {
-    const lower = after.toLowerCase();
-    const nextUnit = SIGN_UNITS.get(after) ?? WORD_UNITS.get(lower);
-    const nextScale = SCALE_WORDS.get(lower) ?? SCALE_LETTERS.get(after);
-    if (nextUnit && unit === '') unit = nextUnit;
-    if (nextScale !== undefined) exponent = nextScale;
-    if (nextUnit || nextScale !== undefined) text = `${text} ${after}`;
+  if (unit === 'currency' && exponent === undefined) {
+    exponent = CURRENCY_SCALE_LETTERS.get(parts[3].replace(/\+$/, ''));
+  }
+  const next = wordAfter(tokens, i);
+  if (next) {
+    const addsUnit = next.unit !== undefined && unit === '';
+    const addsScale = next.exponent !== undefined && exponent === undefined;
+    if (addsUnit && next.unit) unit = next.unit;
+    if (addsScale) exponent = next.exponent;
+    if (addsUnit || addsScale) text = `${text} ${next.words}`;
   }
   return [{ text, amount: amountOf(parts[2], exponent ?? 0), unit }];
 }

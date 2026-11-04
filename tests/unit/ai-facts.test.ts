@@ -98,11 +98,30 @@ const cases: [string, string, string, string[]][] = [
     ['10 Million'],
   ],
   ['Bn as a word', 'Raised $3 Bn', 'raised $3 Bn', []],
+  // A lone letter after a number is a word ("3 B-tree", "Plan 2 B"), not a scale.
   [
-    'a scale letter as its own word',
+    'a lone letter after a number is a word',
     'Served 10 k users',
     'served 10 users',
-    ['10 k'],
+    [],
+  ],
+  [
+    'a hyphenated word after a number',
+    'Ran 3 B-tree indexes',
+    'ran 3 indexes on B-trees',
+    [],
+  ],
+  ['mn', 'Raised $5mn', 'raised $5', ['$5mn']],
+  ['MM', 'Raised $5MM', 'raised $5', ['$5MM']],
+  ['lacs', 'Saved ₹5 lacs', 'saved ₹5', ['₹5 lacs']],
+  // After a currency sign, m and b can only be million and billion.
+  ['m after a currency', 'Raised $5m', 'raised $5', ['$5m']],
+  ['b after a currency', 'Raised $2b in ARR', 'raised $2', ['$2b']],
+  [
+    'm without a currency is not million',
+    'Ran a 5m sprint',
+    'ran a 5 minute sprint',
+    [],
   ],
   ['crore is not lakh', 'Saved ₹10 crore', 'saved ₹10 lakh', ['₹10 crore']],
   ['100 lakh is 1 crore', 'Saved ₹100 lakh', 'saved ₹1 crore', []],
@@ -200,6 +219,19 @@ const cases: [string, string, string, string[]][] = [
     ['30%', '40%'],
   ],
   ['a scaled range', 'Served 10k-20k users', 'served users', ['10k', '20k']],
+  // GPT-OSS writes U+2011, the non-breaking hyphen ("Go‑based", "26‑minute").
+  [
+    'a non-breaking hyphen range',
+    'Cut costs 30%‑40%',
+    'cut costs by 40 minutes',
+    ['30%', '40%'],
+  ],
+  [
+    'a non-breaking hyphen after a number',
+    'Cut a 26‑minute batch',
+    'cut a 30 to 4 minute batch',
+    ['26'],
+  ],
   ['approximately', 'Cut latency ~30%', 'cut latency by 30%', []],
   ['at least', 'Led 5+ engineers', 'led a team', ['5+']],
   ['at least, scaled', 'Served 10k+ users', 'served 10k users', []],
@@ -211,6 +243,42 @@ const cases: [string, string, string, string[]][] = [
     [],
   ],
   ['a figure in brackets', 'Grew sign-ups by [20%]', 'grew sign-ups', ['20%']],
+  // Currency named after the number.
+  [
+    'a currency code after the number',
+    'Raised 10k USD',
+    'served 10k users',
+    ['10k USD'],
+  ],
+  [
+    'a currency word after the number',
+    'Saved 10,000 dollars',
+    'served 10,000 users',
+    ['10,000 dollars'],
+  ],
+  ['euros', 'Saved 500 euros', 'cut 500 tickets', ['500 euros']],
+  [
+    'a currency sign after the number',
+    'Saved 10€ per user',
+    'served 10 users',
+    ['10€'],
+  ],
+  ['the same money named after', 'Saved 500 euros', 'saved €500', []],
+  // Unit words and signs.
+  [
+    'per cent as two words',
+    'Cut costs by 30 per cent',
+    'in 30 minutes',
+    ['30 per cent'],
+  ],
+  [
+    'times as a multiplier',
+    'Made builds 10 times faster',
+    'in 10 minutes',
+    ['10 times'],
+  ],
+  ['at most', 'Kept the error rate ≤1%', 'led 1 team', ['≤1%']],
+  ['at least, as a sign', 'Held ≥99.9% uptime', 'kept 99.9 ms', ['≥99.9%']],
 ];
 
 describe('inventedFigures', () => {

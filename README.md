@@ -20,7 +20,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Resume Builder**          | 6-section form (personal, experience, education, skills, projects, certifications) with real-time preview and auto-save             |
 | **5 Templates**             | Executive, Tech, Corporate, Creative, Academic — all A4-optimized and ATS-compatible                                                |
-| **AI Bullet Generation**    | GPT-OSS 120B on Groq writes up to five action-oriented bullets per role from the facts given, never invented figures                |
+| **AI Bullet Generation**    | GPT-OSS 120B on Groq writes up to five action-oriented bullets per role from the facts given, checked for invented figures          |
 | **ATS Scoring**             | 0–100 completeness score across seven weighted sections (contact, summary, experience, education, skills, projects, certifications) |
 | **Resume Review**           | Section-by-section AI analysis with actionable feedback                                                                             |
 | **Keyword Optimizer**       | Industry-specific keyword extraction and gap analysis                                                                               |
@@ -193,17 +193,20 @@ with `tool_use_failed` and JSON object mode never did. There is no canned answer
 502, and the UI shows the message. `bun run ai:smoke` calls every feature once against the
 live API; on 2026-11-04 each answered in 1.0 to 2.4 s.
 
-Bullets and cover letters go on a real person's resume, so they state only the facts given, and
-the service enforces it (`src/lib/ai/facts.ts`) rather than trusting the prompt: a bullet with a
-figure the description does not give is dropped (the request fails if none is left), and a
-cover letter with such a figure, a bracketed placeholder or a date is refused with a 502. A
-figure keeps its unit, so "30 minutes" does not license "30%". Bullets may quantify a result the
-description states with a placeholder such as `[X%]` for the user to fill in; cover letters
-carry no placeholders and take the candidate's facts from the resume only, never from the job
-description. `bun run ai:facts` measures the model's raw drafts live: on 2026-11-04 (6 runs
-each), bullets with a number the user never gave fell from 58 of 59 on the old prompt to 0 of 49,
-and cover letters with invented numbers, `[Your Address]`-style placeholders or a made-up date
-from 6, 6 and 4 of 6 to none.
+Bullets and cover letters go on a real person's resume, so the prompts ask for the facts given
+only, and code checks the result (`src/lib/ai/facts.ts`): a bullet with a figure the description
+does not give is dropped (the request fails if none is left), and a cover letter with such a
+figure, a bracketed placeholder or a date is refused with a 502. A figure is read with its
+currency, unit and scale, so "30 minutes" does not license "30%" and "10k" does not license
+"10M". The check is a backstop, not a parser of all English: it does not see numbers spelled
+out, time units, or digits outside ASCII. Bullets may quantify a result the description states
+with a placeholder such as `[X%]` for the user to fill in; cover letters carry no placeholders
+and take the candidate's facts from the resume only, never from the job description.
+`bun run ai:facts` measures the model's raw drafts live: on 2026-11-04 (6 runs each), bullets
+with a number the user never gave fell from 58 of 59 on the old prompt to 1 of 48 (a
+"26-minute" cut the model worked out from "30 to 4 minutes", which the check drops), and cover
+letters with invented numbers, `[Your Address]`-style placeholders or a made-up date from 6, 6
+and 4 of 6 to none.
 
 | AI Feature        | Input                           | Output                                                        |
 | ----------------- | ------------------------------- | ------------------------------------------------------------- |
