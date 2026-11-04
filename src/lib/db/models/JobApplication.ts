@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { EMAIL_REGEX } from '@/lib/validation/email.regex';
 
 const jobApplicationSchema = new mongoose.Schema(
   {
@@ -7,7 +8,7 @@ const jobApplicationSchema = new mongoose.Schema(
       required: true,
       lowercase: true,
       trim: true,
-      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      match: EMAIL_REGEX,
     },
     resumeId: { type: mongoose.Schema.Types.ObjectId, ref: 'Resume' },
     jobTitle: {
@@ -47,7 +48,7 @@ const jobApplicationSchema = new mongoose.Schema(
           type: String,
           lowercase: true,
           trim: true,
-          match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+          match: EMAIL_REGEX,
         },
         role: { type: String, trim: true, maxlength: 100 },
       },

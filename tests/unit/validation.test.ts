@@ -6,6 +6,7 @@ import {
   ProjectSchema,
   CertificationSchema,
 } from '@/lib/validation/resume.schemas';
+import { EMAIL_REGEX } from '@/lib/validation/email.regex';
 
 describe('PersonalInfoSchema - Edge Cases', () => {
   test('validates correct personal info', () => {
@@ -543,5 +544,35 @@ describe('international input', () => {
     ['between spaces', 'Zoë ‌ Ñúñez'],
   ])('refuses a joiner %s', (_, name) => {
     expect(PersonalInfoSchema.safeParse(person(name)).success).toBe(false);
+  });
+});
+
+// The models check this on every save, and job-application contacts reach it with no
+// length limit before it, so it must reject in linear time.
+describe('EMAIL_REGEX', () => {
+  test.each([
+    'zoe@example.com',
+    'first.last+tag@mail.example.co.uk',
+    'zoë@exämple.de',
+  ])('accepts %s', (email) => {
+    expect(EMAIL_REGEX.test(email)).toBe(true);
+  });
+
+  test.each([
+    '',
+    'zoe',
+    'zoe@example',
+    '@example.com',
+    'zoe@example.',
+    'zoe@@example.com',
+    'zo e@example.com',
+  ])('refuses %j', (email) => {
+    expect(EMAIL_REGEX.test(email)).toBe(false);
+  });
+
+  test('refuses a long run of dots in linear time', () => {
+    const start = performance.now();
+    expect(EMAIL_REGEX.test(`a@${'.'.repeat(50_000)}@`)).toBe(false);
+    expect(performance.now() - start).toBeLessThan(250);
   });
 });

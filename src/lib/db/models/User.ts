@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { EMAIL_REGEX } from '@/lib/validation/email.regex';
 
 const userSchema = new mongoose.Schema(
   {
@@ -8,7 +9,7 @@ const userSchema = new mongoose.Schema(
       unique: true,
       lowercase: true,
       trim: true,
-      match: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+      match: EMAIL_REGEX,
     },
     name: {
       type: String,
