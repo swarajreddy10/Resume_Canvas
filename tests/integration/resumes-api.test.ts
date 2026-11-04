@@ -9,6 +9,7 @@ import {
   describe,
   expect,
   mock,
+  spyOn,
   test,
 } from 'bun:test';
 import { startMongo, stopMongo } from '../helpers/mongo';
@@ -103,6 +104,16 @@ describe('freshness and caching', () => {
     const res = await list(req('GET'));
     expect(res.headers.get('cache-control') ?? '').toMatch(/private/);
     expect(res.headers.get('cache-control') ?? '').toMatch(/no-store/);
+  });
+
+  test('a failed list read is a 500 that does not reveal the database error', async () => {
+    const find = spyOn(Resume, 'find').mockImplementationOnce(() => {
+      throw new Error('connect ECONNREFUSED 127.0.0.1:27017');
+    });
+    const res = await list(req('GET'));
+    find.mockRestore();
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Failed to fetch resumes' });
   });
 });
 

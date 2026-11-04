@@ -120,7 +120,7 @@ export default function ResumeBuilderPage() {
   const [selectedTemplate, setSelectedTemplate] =
     useState<TemplateType>(DEFAULT_TEMPLATE);
   const [isPublic, setIsPublic] = useState(false);
-  const [viewCount] = useState(0);
+  const [viewCount, setViewCount] = useState(0);
   const [showPreview, setShowPreview] = useState(false);
 
   const resumePreviewData = useMemo<ResumeData>(() => {
@@ -186,6 +186,7 @@ export default function ResumeBuilderPage() {
           });
           setSelectedTemplate(normalizeTemplateId(resume.templateId));
           setIsPublic(resume.isPublic || false);
+          setViewCount(resume.viewCount ?? 0);
           setResumeId(resume._id);
 
           // Redirect to slug URL if available and different

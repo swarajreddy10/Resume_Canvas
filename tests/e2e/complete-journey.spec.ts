@@ -41,10 +41,14 @@ test.describe('Resume journey', () => {
       .getByRole('textbox', { name: 'Description *' })
       .fill('Led a development team of five engineers.');
 
+    const created = page.waitForResponse(
+      (r) => r.url().endsWith('/api/resumes') && r.request().method() === 'POST'
+    );
     await page.getByRole('button', { name: 'Publish Resume' }).click();
     await expect(
       page.getByText(/Resume (created|saved) successfully!/)
     ).toBeVisible();
+    const { resume } = await (await created).json();
 
     const downloadEvent = page.waitForEvent('download');
     await page.getByRole('button', { name: 'Download PDF' }).click();
@@ -52,6 +56,29 @@ test.describe('Resume journey', () => {
     expect(download.suggestedFilename()).toMatch(/\.pdf$/);
     const pdf = fs.readFileSync(await download.path());
     expect(pdf.subarray(0, 5).toString()).toBe('%PDF-');
+
+    // Make it public and visit it once; the owner's views show the stored count, and no
+    // figure is shown that the app does not measure.
+    await page.getByRole('button', { name: 'Share' }).click();
+    const share = page
+      .getByRole('dialog', { name: 'Share Resume' })
+      .getByRole('switch', { name: 'Make Public' });
+    await share.click();
+    await expect(share).toBeChecked();
+    await page.keyboard.press('Escape');
+    const visit = await page.request.get(`/api/resume/public/${resume._id}`);
+    expect(visit.status()).toBe(200);
+
+    await page.goto(`/builder/${resume._id}`);
+    const views = page.getByRole('region', { name: 'Resume Analytics' });
+    await expect(views).toContainText(/Total Views\s*1(?!\d)/);
+    await expect(views).not.toContainText('Downloads');
+
+    await page.goto('/analytics');
+    const main = page.getByRole('main');
+    await expect(main).toContainText(/Total Views\s*1(?!\d)/);
+    await expect(main).not.toContainText('Downloads');
+    await expect(main).not.toContainText('from last month');
 
     await page.goto('/dashboard');
     await expect(page.getByText('My Resumes')).toBeVisible();
