@@ -131,9 +131,10 @@ const NO_SUFFIX: { unit?: Unit; exponent?: number } = Object.freeze({});
 const PLACEHOLDER = /\[[^\]\d\n]{1,80}\]/g;
 // One small pattern per date shape, and the month checked in code: a single pattern with
 // the month names inline scored 127 on Sonar's regex complexity rule (S5843, limit 20).
-// A short month may take a full stop ("Nov. 4") and a day an ordinal ("4th", "21st").
-const MONTH_FIRST = /\b([A-Z][a-z]{2,8})\.? \d{1,2}(?:st|nd|rd|th)?,? \d{4}\b/g;
-const DAY_FIRST = /\b\d{1,2}(?:st|nd|rd|th)? ([A-Z][a-z]{2,8})\.?,? \d{4}\b/g;
+// A day may take an ordinal ("4th", "21st"), and a month a full stop, which isMonth allows
+// after a short name only ("Nov. 4", not "May. 10" ending a sentence).
+const MONTH_FIRST = /\b([A-Z][a-z]{2,8}\.?) \d{1,2}(?:st|nd|rd|th)?,? \d{4}\b/g;
+const DAY_FIRST = /\b\d{1,2}(?:st|nd|rd|th)? ([A-Z][a-z]{2,8}\.?),? \d{4}\b/g;
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/g;
 const NUMERIC_DATE = /\b\d{1,2}[/.]\d{1,2}[/.]\d{4}\b/g;
 const MONTHS = [
@@ -151,10 +152,19 @@ const MONTHS = [
   'december',
 ];
 
-/** A full month name, its first three letters, or "Sept". */
+/**
+ * A full month name, its first three letters, or "Sept"; a full stop may follow a short
+ * name that abbreviates a longer one ("Nov.", "Sept."), not a full name ("May.", "June.").
+ */
 function isMonth(word: string): boolean {
-  const w = word.toLowerCase();
-  return w === 'sept' || MONTHS.some((m) => w === m || w === m.slice(0, 3));
+  const dotted = word.endsWith('.');
+  const w = (dotted ? word.slice(0, -1) : word).toLowerCase();
+  if (w === 'sept') return true;
+  return MONTHS.some((m) =>
+    dotted
+      ? m.length > 3 && w === m.slice(0, 3)
+      : w === m || w === m.slice(0, 3)
+  );
 }
 
 /**

@@ -399,4 +399,12 @@ describe('dates', () => {
       '21st March 2025',
     ]);
   });
+
+  test('a full month name ending a sentence is not a dated month', () => {
+    expect(
+      dates(
+        'Shipped in May. 10 2026 releases followed, and in June. 4 2025 more'
+      )
+    ).toEqual([]);
+  });
 });
