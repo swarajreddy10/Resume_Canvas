@@ -233,8 +233,14 @@ describe('EducationSchema - Edge Cases', () => {
     });
   });
 
+  // The store is MongoDB through Mongoose and output is escaped, so an apostrophe is data
+  // (McDonald's, L'Oréal); what the allow-list still refuses is the statement syntax.
   test('rejects SQL injection attempts', () => {
-    const sqlInjections = ["'; DROP TABLE users--", "1' OR '1'='1", "admin'--"];
+    const sqlInjections = [
+      "'; DROP TABLE users--",
+      "1' OR '1'='1",
+      'admin";--',
+    ];
     sqlInjections.forEach((sql) => {
       expect(() =>
         EducationSchema.parse({
@@ -441,5 +447,77 @@ describe('CertificationSchema - Edge Cases', () => {
         url: '',
       })
     ).not.toThrow();
+  });
+});
+
+// Names, employers, schools and places in any script, with the punctuation they carry.
+// https://www.w3.org/International/questions/qa-personal-names
+describe('international input', () => {
+  const person = (name: string) => ({
+    name,
+    email: 'zoe@example.com',
+    summary: 'Backend engineer with two years of Go, PostgreSQL and AWS.',
+  });
+  const job = (company: string, location = 'Zürich') => ({
+    company,
+    position: 'Software Engineer',
+    location,
+    startDate: '2024',
+    endDate: 'Present',
+    description: 'Built a job ingestion pipeline in Go and PostgreSQL.',
+    bullets: [
+      'Cut a nightly batch from 30 to 4 minutes with COPY.',
+      'Added dead-letter recovery for failed messages.',
+    ],
+  });
+
+  test.each([
+    'José García',
+    'Zoë Ñúñez-Øberg',
+    '李小龙',
+    'Nguyễn Văn An',
+    'O’Brien',
+    'Zoë Müller', // decomposed: e and u followed by a combining diaeresis
+  ])('accepts the name %s', (name) => {
+    expect(PersonalInfoSchema.safeParse(person(name)).success).toBe(true);
+  });
+
+  test.each([
+    'Café Ünïcode GmbH',
+    'Société Générale',
+    "McDonald's",
+    'L’Oréal',
+    '株式会社トヨタ',
+  ])('accepts the employer %s', (company) => {
+    expect(ExperienceSchema.safeParse(job(company)).success).toBe(true);
+  });
+
+  test.each(['São Paulo', 'Coeur d’Alene', 'München, Bayern', '東京'])(
+    'accepts the location %s',
+    (location) => {
+      expect(ExperienceSchema.safeParse(job('Acme', location)).success).toBe(
+        true
+      );
+    }
+  );
+
+  test('accepts a school outside the ASCII range', () => {
+    expect(
+      EducationSchema.safeParse({
+        school: 'Universität Zürich',
+        degree: 'BSc',
+        field: 'Informatik',
+        startDate: '2018',
+        endDate: '2022',
+        location: 'Zürich',
+      }).success
+    ).toBe(true);
+  });
+
+  test('still refuses markup and digits in a name', () => {
+    expect(PersonalInfoSchema.safeParse(person('Zoë<script>')).success).toBe(
+      false
+    );
+    expect(PersonalInfoSchema.safeParse(person('Zoë 2')).success).toBe(false);
   });
 });

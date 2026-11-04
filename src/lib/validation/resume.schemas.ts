@@ -13,9 +13,12 @@ const URL_REGEX =
   /^https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&\/\/=]*)$/;
 const PHONE_REGEX =
   /^[\+]?[(]?[0-9]{1,4}[)]?[-\s\.]?[(]?[0-9]{1,4}[)]?[-\s\.]?[0-9]{1,9}$/;
-const NAME_REGEX = /^[a-zA-Z\s\-\.,']+$/;
-const COMPANY_REGEX = /^[a-zA-Z0-9\s\-\.,&()]+$/;
-const LOCATION_REGEX = /^[a-zA-Z0-9\s\-\.,]+$/;
+// Letters of any script (\p{L}) and combining marks (\p{M}, for decomposed accents), not
+// a-z: names, employers and places are written in every language, with apostrophes
+// (O’Brien, McDonald's). https://www.w3.org/International/questions/qa-personal-names
+const NAME_REGEX = /^[\p{L}\p{M}\s.,'’-]+$/u;
+const COMPANY_REGEX = /^[\p{L}\p{M}\p{N}\s.,&()'’-]+$/u;
+const LOCATION_REGEX = /^[\p{L}\p{M}\p{N}\s.,'’-]+$/u;
 const DATE_REGEX =
   /^(0[1-9]|1[0-2])[\/\-]\d{4}$|^\d{4}$|^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}$|^Present$/i;
 

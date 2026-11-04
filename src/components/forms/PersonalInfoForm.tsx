@@ -9,8 +9,8 @@ import {
   VALIDATION_LIMITS,
 } from '@/lib/validation/resume.schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useEffect } from 'react';
-import { useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
+import { useFormSync } from '@/hooks/useFormSync';
 
 import {
   Form,
@@ -45,25 +45,7 @@ export default function PersonalInfoForm({
     },
   });
 
-  // Reset form when initialData changes
-  useEffect(() => {
-    if (initialData) {
-      form.reset(initialData);
-    }
-  }, [initialData, form]);
-
-  const watchedValues = useWatch({ control: form.control });
-
-  // Update parent state when form values change (debounced for performance)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      // Only submit if form is valid (no validation errors)
-      if (form.formState.isDirty && form.formState.isValid) {
-        onSubmit(watchedValues as PersonalInfoFormData);
-      }
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [watchedValues, form.formState.isDirty, form.formState.isValid, onSubmit]);
+  useFormSync(form, initialData, onSubmit);
 
   return (
     <Form {...form}>

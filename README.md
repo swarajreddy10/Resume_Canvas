@@ -20,7 +20,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Resume Builder**          | 6-section form (personal, experience, education, skills, projects, certifications) with real-time preview and auto-save             |
 | **5 Templates**             | Executive, Tech, Corporate, Creative, Academic — all A4-optimized and ATS-compatible                                                |
-| **AI Bullet Generation**    | GPT-OSS 120B on Groq generates up to five action-oriented bullets per role                                                          |
+| **AI Bullet Generation**    | GPT-OSS 120B on Groq writes up to five action-oriented bullets per role from the facts given, never invented figures                |
 | **ATS Scoring**             | 0–100 completeness score across seven weighted sections (contact, summary, experience, education, skills, projects, certifications) |
 | **Resume Review**           | Section-by-section AI analysis with actionable feedback                                                                             |
 | **Keyword Optimizer**       | Industry-specific keyword extraction and gap analysis                                                                               |
@@ -40,7 +40,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 
 | Package           | Version | Role                                                 |
 | ----------------- | ------- | ---------------------------------------------------- |
-| Next.js           | 16.4.4  | App Router, RSC, API routes, middleware              |
+| Next.js           | 16.4.5  | App Router, RSC, API routes, middleware              |
 | React             | 19.2.4  | UI with Server + Client Components                   |
 | TypeScript        | 5.9.3   | Strict mode throughout                               |
 | Tailwind CSS      | 4.2.2   | Utility-first styling with custom design tokens      |
@@ -193,13 +193,25 @@ with `tool_use_failed` and JSON object mode never did. There is no canned answer
 502, and the UI shows the message. `bun run ai:smoke` calls every feature once against the
 live API; on 2026-11-04 each answered in 1.0 to 2.4 s.
 
-| AI Feature        | Input                           | Output                                            |
-| ----------------- | ------------------------------- | ------------------------------------------------- |
-| Bullet generation | Job title, company, description | Up to five action-verb bullets                    |
-| ATS optimization  | Resume text                     | 0–100 score, suggestions, missing keywords        |
-| Resume review     | Full resume data                | Score, assessment, strengths, ranked suggestions  |
-| Keyword analysis  | Resume + job description        | Match score, keywords present or missing, by need |
-| Cover letter      | Resume + job description        | Tailored 3–4 paragraph letter                     |
+Bullets and cover letters go on a real person's resume, so they state only the facts given, and
+the service enforces it (`src/lib/ai/facts.ts`) rather than trusting the prompt: a bullet with a
+figure the description does not give is dropped (the request fails if none is left), and a
+cover letter with such a figure, a bracketed placeholder or a date is refused with a 502. A
+figure keeps its unit, so "30 minutes" does not license "30%". Bullets may quantify a result the
+description states with a placeholder such as `[X%]` for the user to fill in; cover letters
+carry no placeholders and take the candidate's facts from the resume only, never from the job
+description. `bun run ai:facts` measures the model's raw drafts live: on 2026-11-04 (6 runs
+each), bullets with a number the user never gave fell from 58 of 59 on the old prompt to 0 of 49,
+and cover letters with invented numbers, `[Your Address]`-style placeholders or a made-up date
+from 6, 6 and 4 of 6 to none.
+
+| AI Feature        | Input                           | Output                                                        |
+| ----------------- | ------------------------------- | ------------------------------------------------------------- |
+| Bullet generation | Job title, company, description | Up to five action-verb bullets; `[X%]` marks a missing metric |
+| ATS optimization  | Resume text                     | 0–100 score, suggestions, missing keywords                    |
+| Resume review     | Full resume data                | Score, assessment, strengths, ranked suggestions              |
+| Keyword analysis  | Resume + job description        | Match score, keywords present or missing, by need             |
+| Cover letter      | Resume + job description        | Letter body, 3–4 paragraphs, from the resume's facts          |
 
 ---
 
@@ -213,7 +225,7 @@ live API; on 2026-11-04 each answered in 1.0 to 2.4 s.
 - **Output encoding** — React escapes rendered text and the PDF service encodes its HTML; text is stored exactly as typed. AI routes strip markup and script patterns from their input before it reaches the model
 - **CSRF** — NextAuth built-in protection on all mutations
 - **Environment validation** — `src/lib/config/app.config.ts` throws on a missing required variable when the config loads
-- **Dependency security** — `bun audit fix` applied; Next.js 16.4.4, Auth.js 5.0.0-beta.32 / `@auth/core` 0.41.3 and Mongoose 9.7.4 carry the fixes `bun audit` reported; overrides pin `minimatch`, `flatted` and `basic-ftp` (≥ 5.3.1). The advisories still reported have no fix inside their dependents' ranges: `basic-ftp` 6.x and `extract-zip` (Puppeteer's browser download), `zod` 3 (Puppeteer and the React hooks lint plugin), `minimatch` 3 (ESLint 9) and `uuid` 10 (Resend)
+- **Dependency security** — `bun audit fix` applied; Next.js 16.4.5, Auth.js 5.0.0-beta.32 / `@auth/core` 0.41.3 and Mongoose 9.7.4 carry the fixes `bun audit` reported; overrides pin `minimatch`, `flatted` and `basic-ftp` (≥ 5.3.1). The advisories still reported have no fix inside their dependents' ranges: `basic-ftp` 6.x and `extract-zip` (Puppeteer's browser download), `zod` 3 (Puppeteer and the React hooks lint plugin), `minimatch` 3 (ESLint 9) and `uuid` 10 (Resend)
 
 ---
 
@@ -302,6 +314,7 @@ bun run verify       # format + lint + type-check
 bun run db:sync-indexes  # make MongoDB indexes match the Mongoose schemas
 bun run db:migrate-slugs # rewrite legacy name/N resume slugs to one URL segment
 bun run ai:smoke     # call every AI feature once against the live Groq API
+bun run ai:facts     # measure invented numbers, placeholders and dates in live bullets and letters
 ```
 
 CI (`.github/workflows/ci.yml`) runs type-check, lint, unit and integration tests with

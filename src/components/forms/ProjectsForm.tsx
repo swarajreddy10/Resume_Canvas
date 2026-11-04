@@ -20,8 +20,8 @@ import {
 } from '@/lib/validation/resume.schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Plus, Trash2 } from 'lucide-react';
-import { useEffect } from 'react';
-import { useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { useFieldArray, useForm } from 'react-hook-form';
+import { useFormSync } from '@/hooks/useFormSync';
 
 interface ProjectsFormProps {
   initialData?: ProjectsArrayData;
@@ -54,24 +54,7 @@ export default function ProjectsForm({
     name: 'projects',
   });
 
-  // Reset form when initialData changes
-  useEffect(() => {
-    if (initialData) {
-      form.reset(initialData);
-    }
-  }, [initialData, form]);
-
-  const watchedValues = useWatch({ control: form.control });
-
-  // Update parent state when form values change (debounced for performance)
-  useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (form.formState.isDirty && form.formState.isValid) {
-        onSubmit(watchedValues as ProjectsArrayData);
-      }
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [watchedValues, form.formState.isDirty, form.formState.isValid, onSubmit]);
+  useFormSync(form, initialData, onSubmit);
 
   const addProject = () => {
     append({

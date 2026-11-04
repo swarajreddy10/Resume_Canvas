@@ -2,6 +2,8 @@ import Groq from 'groq-sdk';
 import { z } from 'zod';
 import { appConfig } from '@/lib/config/app.config';
 import { AIServiceError } from '@/lib/ai/errors';
+import { dates, inventedFigures, placeholders } from '@/lib/ai/facts';
+import { logger } from '@/lib/utils/logger';
 
 /**
  * Every model call goes through complete(): one client, the model settings in appConfig,
@@ -80,30 +82,30 @@ export interface BulletPointRequest {
   skills?: string[];
 }
 
-export async function generateBulletPoints(
+/** The model's bullets for one role, before the facts check: measured by ai:facts. */
+export async function draftBulletPoints(
   request: BulletPointRequest
 ): Promise<string[]> {
   const prompt = `
 You are a professional resume writer with expertise in creating ATS-optimized, achievement-focused bullet points.
 
-Generate 4 or 5 POWERFUL, QUANTIFIABLE resume bullet points for:
+Generate 4 or 5 resume bullet points for:
 Role: ${request.jobTitle}
 Company: ${request.company}
 Description: ${request.description}
 ${request.skills ? `Key Skills: ${request.skills.join(', ')}` : ''}
 
-CRITICAL Requirements:
-1. START with strong action verbs (Led, Architected, Optimized, Spearheaded, Engineered, etc.)
-2. INCLUDE specific metrics and numbers (%, $, time saved, users impacted, etc.)
-3. FOCUS on business impact and results, not just responsibilities
-4. USE industry-specific technical keywords
-5. KEEP each bullet 100-150 characters for optimal ATS parsing
-6. FOLLOW the formula: [Action Verb] + [What you did] + [How you did it] + [Quantifiable result]
+Every bullet goes on a real person's resume, so it must be true:
+1. Use only facts in the role, description and skills above. Never invent numbers, percentages, money, team sizes, user counts, durations or results.
+2. Keep every number the description gives, exactly as given; do not calculate new ones from it.
+3. Where the description states a result without a number, you may quantify it with a placeholder in square brackets for the person to fill in, such as [X%] or [N users]. Never add a result the description does not state.
+4. Start with a strong action verb (Led, Built, Designed, Optimized, Automated).
+5. Show what was done, how, and the result, in 100-150 characters.
+6. Use the technical terms from the description and skills.
 
-Examples of GOOD bullet points:
-- "Architected microservices infrastructure reducing deployment time by 60% and serving 2M+ daily users"
-- "Led cross-functional team of 8 engineers to deliver $2M revenue-generating feature 3 weeks ahead of schedule"
-- "Optimized database queries improving application response time by 45% and reducing server costs by $50K annually"
+Example. Description: "Moved nightly reports from a cron job to a queue, so they finish sooner and failed runs retry on their own."
+- "Moved nightly reporting from a cron job to a queue-based worker, so failed runs retry on their own"
+- "Rebuilt the report scheduler on a queue so nightly reports finish [X%] sooner"
 
 Reply with JSON only: {"bullets": ["bullet text without symbols or numbering"]}
 `;
@@ -120,6 +122,35 @@ Reply with JSON only: {"bullets": ["bullet text without symbols or numbering"]}
     throw new AIServiceError('The model returned no bullet points');
   }
   return lines;
+}
+
+/**
+ * Bullets that state only figures the request gives. A bullet with any other figure is
+ * dropped, and logged; if none is left, the request fails rather than return fewer facts
+ * than it claims.
+ */
+export async function generateBulletPoints(
+  request: BulletPointRequest
+): Promise<string[]> {
+  const facts = JSON.stringify(request);
+  const drafts = await draftBulletPoints(request);
+  const supported = drafts.filter(
+    (bullet) => inventedFigures(bullet, facts).length === 0
+  );
+  if (supported.length < drafts.length) {
+    logger.warn(
+      'Dropped bullets stating figures the description does not give',
+      {
+        dropped: drafts.length - supported.length,
+      }
+    );
+  }
+  if (supported.length === 0) {
+    throw new AIServiceError(
+      'Every bullet stated a figure the description does not give'
+    );
+  }
+  return supported;
 }
 
 const optimization = z.object({
@@ -289,17 +320,32 @@ Rules:
   return completeJSON(prompt, 2048, keywordMatch);
 }
 
-export async function generateCoverLetter({
-  resumeData,
-  jobTitle,
-  companyName,
-  jobDescription,
-}: {
+export interface CoverLetterRequest {
   resumeData: unknown;
   jobTitle: string;
   companyName: string;
   jobDescription?: string;
-}): Promise<string> {
+}
+
+/**
+ * What a letter may state as fact: the resume, the role's title and the company. The job
+ * description describes the role; a requirement in it is not the candidate's experience.
+ */
+export function coverLetterFacts({
+  resumeData,
+  jobTitle,
+  companyName,
+}: CoverLetterRequest): string {
+  return JSON.stringify({ resumeData, jobTitle, companyName });
+}
+
+/** The model's letter, before the facts check: measured by ai:facts. */
+export async function draftCoverLetter({
+  resumeData,
+  jobTitle,
+  companyName,
+  jobDescription,
+}: CoverLetterRequest): Promise<string> {
   const prompt = `
 You are an expert career coach and professional cover letter writer.
 
@@ -313,15 +359,35 @@ Candidate's Resume Data:
 ${JSON.stringify(resumeData, null, 2)}
 
 Requirements:
-1. Professional tone, 3-4 paragraphs
-2. Opening: Express enthusiasm and mention specific role
-3. Body: Highlight 2-3 relevant achievements from resume with metrics
-4. Closing: Call to action and availability
-5. Use candidate's actual experience and skills
-6. Match keywords from job description if provided
-7. Keep under 400 words
+1. Professional tone, 3-4 paragraphs, under 400 words
+2. Opening: express enthusiasm and name the role
+3. Body: highlight 2-3 relevant achievements from the resume
+4. Closing: a call to action
+5. Match keywords from the job description if provided
+6. The candidate's skills, experience, achievements and numbers come only from the resume data. Use the job title, company and job description to describe the role and to choose which resume facts to highlight; never present a job requirement as the candidate's experience. Never invent numbers, employers, titles, dates or achievements; keep any number the resume gives exactly as given, and do not calculate new ones from it.
 
-Return ONLY the cover letter text, no additional formatting or explanations.
+Write the letter body only: start with "Dear Hiring Team," and end with a sign-off and the candidate's name from the resume data (just the sign-off if it has none). No addresses, dates, subject line, or placeholders in square brackets, and no explanations.
 `;
   return complete(prompt, 2048, false);
+}
+
+/**
+ * A letter that states only what coverLetterFacts allows. A letter with any other figure, a
+ * placeholder or a date is refused: a letter cannot drop a sentence and stay coherent.
+ */
+export async function generateCoverLetter(
+  request: CoverLetterRequest
+): Promise<string> {
+  const letter = await draftCoverLetter(request);
+  const unsupported = [
+    ...inventedFigures(letter, coverLetterFacts(request)),
+    ...placeholders(letter),
+    ...dates(letter),
+  ];
+  if (unsupported.length > 0) {
+    throw new AIServiceError(
+      `The letter stated what the resume does not give: ${unsupported.join(', ')}`
+    );
+  }
+  return letter;
 }

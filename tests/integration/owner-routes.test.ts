@@ -321,15 +321,17 @@ describe('AI bullets', () => {
   };
 
   test('each request is generated fresh and the response is private', async () => {
-    replyWith('{"bullets": ["bullet 1"]}');
-    replyWith('{"bullets": ["bullet 2"]}');
+    replyWith('{"bullets": ["Built the ingest API"]}');
+    replyWith('{"bullets": ["Built the export API"]}');
     const first = await routes.bullets(post(input));
     session = { user: BOB };
     const second = await routes.bullets(post(input));
     expect(first.status).toBe(200);
     expect(second.headers.get('cache-control') ?? '').toMatch(PRIVATE);
     expect(groqCreate).toHaveBeenCalledTimes(2);
-    expect((await second.json()).bulletPoints).toEqual(['bullet 2']);
+    expect((await second.json()).bulletPoints).toEqual([
+      'Built the export API',
+    ]);
   });
 });
 
