@@ -18,8 +18,9 @@
  *
  * It is a backstop behind the prompt, not a parser of all English, and it does not see:
  * numbers spelled out ("five engineers"); time units ("30 minutes" licenses "30 hours");
- * digits outside ASCII (Devanagari, full width); and a number in any field of the input
- * licensing the same bare number elsewhere (a start date of 06/2021 licenses "6 engineers").
+ * an ISO code after the number ("10k USD", since "3 INR payment flows" is a label); digits
+ * outside ASCII (Devanagari, full width); and a number in any field of the input licensing
+ * the same bare number elsewhere (a start date of 06/2021 licenses "6 engineers").
  * Every case found in review is a row in tests/unit/ai-facts.test.ts.
  */
 type Unit = '' | 'currency' | 'percent' | 'times';
@@ -27,7 +28,8 @@ type Unit = '' | 'currency' | 'percent' | 'times';
 // A dash after a figure splits it from what follows ("10-person", "30%-40%", "10k-20k");
 // one after a letter that is not a figure's unit ("COVID-19", "B-tree") stays in the word.
 // The hyphens include U+2010 and U+2011 (non-breaking), which GPT-OSS writes ("26‑minute").
-const SPLIT_DASH = /(?<=\d|\d[%×xXkKMBL])[-‐‑–—]/g;
+// A unit or scale of up to two letters ends a figure too ("5bn-10bn", "10k-20k").
+const SPLIT_DASH = /(?<=\d[%×]?|\d[A-Za-z]{1,2})[-‐‑–—]/g;
 // Spaces and punctuation that never sit inside a figure, Markdown marks included.
 const SEPARATORS = /[\s"'“”‘’`{}[\]()<>:;/\\|*_#!?–—]+/;
 const TRAILING = /[.,]+$/;
@@ -41,16 +43,10 @@ const APPROXIMATELY = /^[~≈±+−≤≥-]/;
 // $, ₹, US$, A$, HK$; ISO codes and Rs are matched whole.
 const CURRENCY_SIGN = /^[A-Z]{0,3}[$€£₹]$/;
 const TRAILING_CURRENCY = new Set(['$', '€', '£', '₹']);
-// A currency named after the number, in any case ("10k USD", "500 euros").
+// A currency named after the number, in any case ("500 euros"). Words only: an ISO code
+// there is as often a label ("3 INR payment flows") as money, so codes count only before
+// the number ("INR 5 crore") and "10k USD" is not read.
 const CURRENCY_WORDS = new Set([
-  'usd',
-  'eur',
-  'gbp',
-  'inr',
-  'aud',
-  'cad',
-  'sgd',
-  'rs',
   'dollar',
   'dollars',
   'euro',
@@ -81,10 +77,23 @@ const SIGN_UNITS = new Map<string, Unit>([
   ['X', 'times'],
   ['×', 'times'],
 ]);
-// "per cent" is two words; figureAt reads it from the next two tokens.
-const WORD_UNITS = new Map<string, Unit>([
-  ['percent', 'percent'],
-  ['times', 'times'],
+// "per cent" is two words and "times" a multiplier only before a comparative ("10 times
+// faster", not "20 times a day"); wordAfter reads both from the next two tokens.
+const WORD_UNITS = new Map<string, Unit>([['percent', 'percent']]);
+const COMPARATIVES = new Set([
+  'faster',
+  'slower',
+  'quicker',
+  'more',
+  'less',
+  'fewer',
+  'higher',
+  'lower',
+  'greater',
+  'larger',
+  'smaller',
+  'bigger',
+  'cheaper',
 ]);
 /** Scales as powers of ten, written against the number; L and Cr are lakh and crore. */
 const SCALE_LETTERS = new Map([
@@ -225,6 +234,13 @@ function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
   const s = suffix.endsWith('+') ? suffix.slice(0, -1) : suffix;
   if (s === '') return NO_SUFFIX;
   if (TRAILING_CURRENCY.has(s)) return { unit: 'currency' };
+  // A sign after a scale ("10k€"): money, at that scale.
+  if (s.length > 1 && TRAILING_CURRENCY.has(s.slice(-1))) {
+    const scaled = readSuffix(s.slice(0, -1));
+    return scaled && !scaled.unit
+      ? { unit: 'currency', exponent: scaled.exponent }
+      : null;
+  }
   const unit = SIGN_UNITS.get(s) ?? WORD_UNITS.get(s.toLowerCase());
   if (unit) return { unit };
   const exponent = SCALE_LETTERS.get(s) ?? SCALE_WORDS.get(s.toLowerCase());
@@ -233,9 +249,9 @@ function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
 }
 
 /**
- * What the word after a figure adds: a currency ("10k USD", "500 euros"), a unit ("30
- * percent", "30 per cent", "10 times") or a scale ("10 million", "₹5 lacs"). A lone letter
- * is a word, not a scale: "3 B-tree", "Plan 2 B".
+ * What the word after a figure adds: a currency ("500 euros"), a unit ("30 percent", "30
+ * per cent", "10 times faster") or a scale ("10 million", "₹5 lacs"). A lone letter is a
+ * word, not a scale ("3 B-tree", "Plan 2 B"), and "20 times a day" is a count.
  */
 function wordAfter(
   tokens: string[],
@@ -248,6 +264,13 @@ function wordAfter(
   const then = trimmed(tokens[i + 2]);
   if (lower === 'per' && then?.toLowerCase() === 'cent') {
     return { unit: 'percent', words: `${after} ${then}` };
+  }
+  if (
+    lower === 'times' &&
+    then !== undefined &&
+    COMPARATIVES.has(then.toLowerCase())
+  ) {
+    return { unit: 'times', words: after };
   }
   const unit = SIGN_UNITS.get(after) ?? WORD_UNITS.get(lower);
   if (unit) return { unit, words: after };

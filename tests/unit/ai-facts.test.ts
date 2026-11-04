@@ -243,12 +243,31 @@ const cases: [string, string, string, string[]][] = [
     [],
   ],
   ['a figure in brackets', 'Grew sign-ups by [20%]', 'grew sign-ups', ['20%']],
-  // Currency named after the number.
+  // Currency named after the number: words and signs only. An ISO code there is as often a
+  // label ("3 INR payment flows") as money, so "10k USD" is a documented limit.
   [
-    'a currency code after the number',
+    'an ISO code after a count is a label',
+    'Built 3 INR payment flows',
+    'built 3 payment flows for India',
+    [],
+  ],
+  [
+    'an ISO code after the number is not read (a documented limit)',
     'Raised 10k USD',
     'served 10k users',
-    ['10k USD'],
+    [],
+  ],
+  [
+    'a currency sign after a scaled number',
+    'Saved 10k€ a year',
+    'served 10 users',
+    ['10k€'],
+  ],
+  [
+    'a range in bn',
+    'Managed budgets of $5bn-$10bn',
+    'managed 5 teams over 10 years',
+    ['$5bn', '$10bn'],
   ],
   [
     'a currency word after the number',
@@ -279,6 +298,19 @@ const cases: [string, string, string, string[]][] = [
   ],
   ['at most', 'Kept the error rate ≤1%', 'led 1 team', ['≤1%']],
   ['at least, as a sign', 'Held ≥99.9% uptime', 'kept 99.9 ms', ['≥99.9%']],
+  // "times" is a multiplier only before a comparative; "20 times a day" is a count.
+  [
+    'times meaning how often',
+    'Shipped to production 20 times a day',
+    'the team now ships 20 deploys a day',
+    [],
+  ],
+  [
+    'times a week',
+    'Paged on-call 3 times a week less',
+    'cut pages from 5 to 3 a week',
+    [],
+  ],
 ];
 
 describe('inventedFigures', () => {
