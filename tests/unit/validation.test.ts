@@ -538,6 +538,28 @@ describe('international input', () => {
   const VIRAMA = String.fromCharCode(0x0d4d);
   const ZWJ = String.fromCharCode(0x200d);
   const ZWNJ = String.fromCharCode(0x200c);
+  const school = (school: string, location = 'Kochi') => ({
+    school,
+    degree: 'BTech',
+    field: 'Computer Science',
+    startDate: '2018',
+    endDate: '2022',
+    location,
+  });
+  // Every field the script patterns check: name, school, employer, and both locations.
+  const fields = [
+    ['name', (v: string) => PersonalInfoSchema.safeParse(person(v)).success],
+    ['school', (v: string) => EducationSchema.safeParse(school(v)).success],
+    [
+      'school location',
+      (v: string) => EducationSchema.safeParse(school('CUSAT', v)).success,
+    ],
+    ['employer', (v: string) => ExperienceSchema.safeParse(job(v)).success],
+    [
+      'job location',
+      (v: string) => ExperienceSchema.safeParse(job('Acme', v)).success,
+    ],
+  ] as const;
 
   test.each([
     ['nna', 'ണ'],
@@ -546,25 +568,9 @@ describe('international input', () => {
     ['la', 'ല'],
     ['lla', 'ള'],
   ])('accepts a legacy chillu %s at the end of a word', (_, consonant) => {
-    const chillu = `${consonant}${VIRAMA}${ZWJ}`;
-    expect(
-      PersonalInfoSchema.safeParse(person(`മോഹ${chillu} കുമാർ`)).success
-    ).toBe(true);
-    expect(
-      ExperienceSchema.safeParse(job(`ടെക്${chillu}`, `കൊച്ചി${chillu}`))
-        .success
-    ).toBe(true);
+    const value = `മോഹ${consonant}${VIRAMA}${ZWJ} കുമാർ`;
+    for (const [, accepts] of fields) expect(accepts(value)).toBe(true);
   });
-
-  // Name, employer and location each carry their own copy of the joiner rules.
-  const fields = [
-    ['name', (v: string) => PersonalInfoSchema.safeParse(person(v)).success],
-    ['employer', (v: string) => ExperienceSchema.safeParse(job(v)).success],
-    [
-      'location',
-      (v: string) => ExperienceSchema.safeParse(job('Acme', v)).success,
-    ],
-  ] as const;
 
   test.each([
     ['after a consonant the table does not list (ka)', `മോഹക${VIRAMA}${ZWJ}`],
@@ -582,10 +588,12 @@ describe('international input', () => {
   test.each(fields)(
     'refuses a long run of legacy chillus in the %s in linear time',
     (_, accepts) => {
-      const value = `ന${VIRAMA}${ZWJ}`.repeat(22) + 'ന<';
-      const start = performance.now();
-      expect(accepts(value)).toBe(false);
-      expect(performance.now() - start).toBeLessThan(250);
+      // Plain chillus, and chillus each followed by a second joiner, which stay as written.
+      for (const unit of [`ന${VIRAMA}${ZWJ}`, `ന${VIRAMA}${ZWJ}${ZWJ}`]) {
+        const start = performance.now();
+        expect(accepts(unit.repeat(22) + 'ന<')).toBe(false);
+        expect(performance.now() - start).toBeLessThan(250);
+      }
     }
   );
 
