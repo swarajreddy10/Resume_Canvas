@@ -575,9 +575,8 @@ describe('international input', () => {
     for (const [, accepts] of fields) expect(accepts(value)).toBe(false);
   });
 
-  // The legacy rule applies only where no letter follows, so it never matches a joiner the
-  // between-letters rule matches too; rules that overlap there let each joiner match two
-  // ways, and 22 legacy chillus before a refused character took over a second.
+  // A pattern rule for legacy chillus that overlapped the between-letters joiner rule let
+  // each joiner match two ways: 22 of them before a refused character took over a second.
   test.each(fields)(
     'refuses a long run of legacy chillus in the %s in linear time',
     (_, accepts) => {

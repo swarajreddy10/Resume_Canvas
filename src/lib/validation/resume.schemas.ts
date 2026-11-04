@@ -16,18 +16,25 @@ const PHONE_REGEX =
 // Letters of any script (\p{L}) and combining marks (\p{M}, for decomposed accents), not
 // a-z: names, employers and places are written in every language, with apostrophes
 // (O’Brien, McDonald's). https://www.w3.org/International/questions/qa-personal-names
-// U+200C and U+200D are allowed between letters or marks: Persian compounds need the
+// U+200C and U+200D are allowed between letters or marks only: Persian compounds need the
 // non-joiner (https://www.w3.org/International/alreq/), and Indic clusters take either after
-// the virama (https://www.unicode.org/faq/indic.html). U+200D may also end a word after one
-// of the five Malayalam consonants + virama, the chillu form text used before Unicode 5.1
-// (Unicode 17, section 12.9, Table 12-42). The two joiner rules never match the same
-// character, so a long run of joiners cannot be matched in more than one way.
+// the virama (https://www.unicode.org/faq/indic.html).
 const NAME_REGEX =
-  /^(?:[\p{L}\p{M}\s.,'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}])|(?<=[ണനരലള]്)‍(?![\p{L}\p{M}]))+$/u;
+  /^(?:[\p{L}\p{M}\s.,'’-]|(?<=[\p{L}\p{M}])[\u{200C}\u{200D}](?=[\p{L}\p{M}]))+$/u;
 const COMPANY_REGEX =
-  /^(?:[\p{L}\p{M}\p{N}\s.,&()'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}])|(?<=[ണനരലള]്)‍(?![\p{L}\p{M}]))+$/u;
+  /^(?:[\p{L}\p{M}\p{N}\s.,&()'’-]|(?<=[\p{L}\p{M}])[\u{200C}\u{200D}](?=[\p{L}\p{M}]))+$/u;
 const LOCATION_REGEX =
-  /^(?:[\p{L}\p{M}\p{N}\s.,'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}])|(?<=[ണനരലള]്)‍(?![\p{L}\p{M}]))+$/u;
+  /^(?:[\p{L}\p{M}\p{N}\s.,'’-]|(?<=[\p{L}\p{M}])[\u{200C}\u{200D}](?=[\p{L}\p{M}]))+$/u;
+// Before Unicode 5.1 the five Malayalam chillus were written consonant + virama + U+200D, so
+// that joiner can end a word, and older text still holds the form (Unicode 17, section 12.9,
+// Table 12-42: "implementations must be prepared to handle both kinds of data"). Each is
+// read as its consonant before a pattern is tested, so the joiner rule above stays one rule.
+const LEGACY_CHILLU =
+  /([\u{0D23}\u{0D28}\u{0D30}\u{0D32}\u{0D33}])\u{0D4D}\u{200D}/gu;
+
+/** A check that `value`, with each legacy chillu read as its consonant, matches `pattern`. */
+const inScript = (pattern: RegExp) => (value: string) =>
+  pattern.test(value.replace(LEGACY_CHILLU, '$1'));
 const DATE_REGEX =
   /^(0[1-9]|1[0-2])[\/\-]\d{4}$|^\d{4}$|^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}$|^Present$/i;
 
@@ -64,10 +71,10 @@ export const PersonalInfoSchema = z.object({
       fieldLimits.personalInfo.name.max,
       'Name must be less than 100 characters'
     )
-    .regex(
-      NAME_REGEX,
-      'Name can only contain letters, spaces, hyphens, periods, commas, and apostrophes'
-    ),
+    .refine(inScript(NAME_REGEX), {
+      message:
+        'Name can only contain letters, spaces, hyphens, periods, commas, and apostrophes',
+    }),
   email: z
     .string()
     .min(1, 'Email is required')
@@ -112,7 +119,9 @@ export const EducationSchema = z.object({
     .string()
     .min(1, 'School name is required')
     .max(100, 'School name must be less than 100 characters')
-    .regex(COMPANY_REGEX, 'School name contains invalid characters'),
+    .refine(inScript(COMPANY_REGEX), {
+      message: 'School name contains invalid characters',
+    }),
   degree: z
     .string()
     .min(1, 'Degree is required')
@@ -143,7 +152,9 @@ export const EducationSchema = z.object({
     .string()
     .min(1, 'Location is required')
     .max(100, 'Location must be less than 100 characters')
-    .regex(LOCATION_REGEX, 'Location contains invalid characters'),
+    .refine(inScript(LOCATION_REGEX), {
+      message: 'Location contains invalid characters',
+    }),
 });
 
 export const ExperienceSchema = z.object({
@@ -151,7 +162,9 @@ export const ExperienceSchema = z.object({
     .string()
     .min(1, 'Company name is required')
     .max(100, 'Company name must be less than 100 characters')
-    .regex(COMPANY_REGEX, 'Company name contains invalid characters'),
+    .refine(inScript(COMPANY_REGEX), {
+      message: 'Company name contains invalid characters',
+    }),
   position: z
     .string()
     .min(1, 'Position is required')
@@ -160,7 +173,9 @@ export const ExperienceSchema = z.object({
     .string()
     .min(1, 'Location is required')
     .max(100, 'Location must be less than 100 characters')
-    .regex(LOCATION_REGEX, 'Location contains invalid characters'),
+    .refine(inScript(LOCATION_REGEX), {
+      message: 'Location contains invalid characters',
+    }),
   startDate: dateString.refine((val) => val !== '', {
     message: 'Start date is required',
   }),
