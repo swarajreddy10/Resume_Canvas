@@ -24,6 +24,7 @@ import { postAI } from '@/lib/api/ai.client';
 import { showError, showSuccess } from '@/shared/services/toast.service';
 import * as React from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
+import { useFormSync } from '@/hooks/useFormSync';
 
 interface ExperienceFormProps {
   initialData?: ExperienceArrayData;
@@ -57,23 +58,7 @@ export default function ExperienceForm({
     name: 'experiences',
   });
 
-  // Reset form when initialData changes
-  React.useEffect(() => {
-    if (initialData) {
-      form.reset(initialData);
-    }
-  }, [initialData, form]);
-
-  // Update parent state when form values change (debounced for performance)
-  React.useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      if (form.formState.isDirty && form.formState.isValid) {
-        const values = form.getValues();
-        onSubmit(values as ExperienceArrayData);
-      }
-    }, 300);
-    return () => clearTimeout(timeoutId);
-  }, [form, onSubmit]);
+  useFormSync(form, initialData, onSubmit);
 
   const addExperience = () => {
     append({

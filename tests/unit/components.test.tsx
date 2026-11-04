@@ -27,6 +27,14 @@ const { default: ATSOptimizer } =
   await import('@/components/resume/ATSOptimizer');
 const { default: ExperienceForm } =
   await import('@/components/forms/ExperienceForm');
+const { default: PersonalInfoForm } =
+  await import('@/components/forms/PersonalInfoForm');
+const { default: EducationForm } =
+  await import('@/components/forms/EducationForm');
+const { default: ProjectsForm } =
+  await import('@/components/forms/ProjectsForm');
+const { default: CertificationsForm } =
+  await import('@/components/forms/CertificationsForm');
 const { AI_UNAVAILABLE } = await import('@/lib/ai/errors');
 
 const domFetch = globalThis.fetch;
@@ -259,4 +267,135 @@ describe('AI features', () => {
     await settled(view);
     expect(view.getByDisplayValue('Built B')).toBeTruthy();
   });
+});
+
+// Each section form with valid data, the field a test edits, and the edit.
+type SectionForm = (props: {
+  initialData?: never;
+  onSubmit: (data: unknown) => void;
+}) => React.ReactNode;
+const sectionForms = [
+  {
+    name: 'PersonalInfoForm',
+    Form: PersonalInfoForm as unknown as SectionForm,
+    initialData: {
+      name: 'Zoë Ñúñez',
+      email: 'zoe@example.com',
+      phone: '',
+      address: '',
+      linkedin: '',
+      github: '',
+      website: '',
+      summary: 'Backend engineer with two years of Go, PostgreSQL and AWS.',
+    },
+    field: 'John Doe',
+    edit: 'Zoë Ñúñez-Øberg',
+  },
+  {
+    name: 'ExperienceForm',
+    Form: ExperienceForm as unknown as SectionForm,
+    initialData: {
+      experiences: [
+        {
+          company: 'Café Ünïcode',
+          position: 'Software Engineer',
+          location: 'Zürich',
+          startDate: '2024',
+          endDate: 'Present',
+          description: 'Built a job ingestion pipeline in Go and PostgreSQL.',
+          bullets: [
+            'Cut a nightly batch from 30 to 4 minutes with COPY.',
+            'Added dead-letter recovery for failed messages.',
+          ],
+        },
+      ],
+    },
+    field: 'Google',
+    edit: 'Café Ünïcode GmbH',
+  },
+  {
+    name: 'EducationForm',
+    Form: EducationForm as unknown as SectionForm,
+    initialData: {
+      education: [
+        {
+          school: 'Universität Zürich',
+          degree: 'BSc',
+          field: 'Informatik',
+          startDate: '2018',
+          endDate: '2022',
+          gpa: '',
+          location: 'Zürich',
+        },
+      ],
+    },
+    field: 'Stanford University',
+    edit: 'ETH Zürich',
+  },
+  {
+    name: 'ProjectsForm',
+    Form: ProjectsForm as unknown as SectionForm,
+    initialData: {
+      projects: [
+        {
+          name: 'ResumeCanvas',
+          description: 'An AI resume builder on Next.js and MongoDB.',
+          technologies: 'Next.js, MongoDB',
+          url: '',
+          link: '',
+          startDate: '',
+          endDate: '',
+        },
+      ],
+    },
+    field: 'E-commerce Platform',
+    edit: 'ResumeCanvas Ünïcode',
+  },
+  {
+    name: 'CertificationsForm',
+    Form: CertificationsForm as unknown as SectionForm,
+    initialData: {
+      certifications: [
+        { name: 'AWS SAA', issuer: 'Amazon Web Services', date: '', url: '' },
+      ],
+    },
+    field: 'AWS Certified Solutions Architect',
+    edit: 'AWS Certified Developer',
+  },
+];
+
+describe('resume section forms', () => {
+  test.each(sectionForms)(
+    '$name passes a valid edit to the builder once typing pauses',
+    async ({ Form, initialData, field, edit }) => {
+      const onSubmit = mock<(data: unknown) => void>(() => {});
+      const view = render(
+        <Form initialData={initialData as never} onSubmit={onSubmit} />
+      );
+      fireEvent.change(view.getByPlaceholderText(field), {
+        target: { value: edit },
+      });
+      await waitFor(() => expect(onSubmit).toHaveBeenCalled(), {
+        timeout: 2000,
+      });
+      expect(
+        JSON.stringify(onSubmit.mock.calls[onSubmit.mock.calls.length - 1][0])
+      ).toContain(edit);
+    }
+  );
+
+  test.each(sectionForms)(
+    '$name holds back an edit that breaks its schema',
+    async ({ Form, initialData, field }) => {
+      const onSubmit = mock<(data: unknown) => void>(() => {});
+      const view = render(
+        <Form initialData={initialData as never} onSubmit={onSubmit} />
+      );
+      fireEvent.change(view.getByPlaceholderText(field), {
+        target: { value: '' },
+      });
+      await new Promise((r) => setTimeout(r, 700));
+      expect(onSubmit).not.toHaveBeenCalled();
+    }
+  );
 });
