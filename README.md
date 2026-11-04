@@ -16,21 +16,21 @@ This project was built as a showcase of modern full-stack engineering combined w
 
 ## What It Does
 
-| Feature                     | Description                                                                                                             |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| **Resume Builder**          | 6-section form (personal, experience, education, skills, projects, certifications) with real-time preview and auto-save |
-| **5 Templates**             | Executive, Tech, Corporate, Creative, Academic — all A4-optimized and ATS-compatible                                    |
-| **AI Bullet Generation**    | Groq Llama 3.3 70B generates 4–6 action-oriented, metrics-driven bullets per role                                       |
-| **ATS Scoring**             | 0–100 score with missing keyword detection and format compatibility checks                                              |
-| **Resume Review**           | Section-by-section AI analysis with actionable feedback                                                                 |
-| **Keyword Optimizer**       | Industry-specific keyword extraction and gap analysis                                                                   |
-| **Cover Letter Generator**  | Context-aware AI cover letters tailored to job descriptions                                                             |
-| **PDF Export**              | Server-side Puppeteer rendering, one headless Chromium per request                                                      |
-| **Public Sharing**          | Public resume URLs with custom slugs and view count tracking                                                            |
-| **Clone Resumes**           | One-click resume duplication with full data copy                                                                        |
-| **Job Application Tracker** | Kanban-style status tracking with notes and follow-ups                                                                  |
-| **Analytics**               | Resume view counts, download metrics, application funnel                                                                |
-| **PWA**                     | Web app manifest for installation; no service worker and no offline mode                                                |
+| Feature                     | Description                                                                                                                         |
+| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **Resume Builder**          | 6-section form (personal, experience, education, skills, projects, certifications) with real-time preview and auto-save             |
+| **5 Templates**             | Executive, Tech, Corporate, Creative, Academic — all A4-optimized and ATS-compatible                                                |
+| **AI Bullet Generation**    | Groq Llama 3.3 70B generates up to five action-oriented, metrics-driven bullets per role                                            |
+| **ATS Scoring**             | 0–100 completeness score across seven weighted sections (contact, summary, experience, education, skills, projects, certifications) |
+| **Resume Review**           | Section-by-section AI analysis with actionable feedback                                                                             |
+| **Keyword Optimizer**       | Industry-specific keyword extraction and gap analysis                                                                               |
+| **Cover Letter Generator**  | Context-aware AI cover letters tailored to job descriptions                                                                         |
+| **PDF Export**              | Server-side Puppeteer rendering, one headless Chromium per request                                                                  |
+| **Public Sharing**          | Public resume URLs with custom slugs and view count tracking                                                                        |
+| **Clone Resumes**           | One-click resume duplication with full data copy                                                                                    |
+| **Job Application Tracker** | Status from applied to offer, rejected or withdrawn, with job details and notes per application                                     |
+| **Analytics**               | Views of published resumes, published count, and average ATS score; only measured figures                                           |
+| **PWA**                     | Web app manifest for installation; no service worker and no offline mode                                                            |
 
 ---
 
@@ -89,15 +89,15 @@ src/
 │   │   ├── builder/[id]/          # Resume editor
 │   │   ├── cover-letters/         # AI cover letter generator
 │   │   ├── applications/          # Job application tracker
-│   │   ├── analytics/             # Performance metrics
-│   │   ├── career/                # Career recommendations
+│   │   ├── analytics/             # Views, published count, average ATS score
 │   │   ├── profile/               # Account info + stats
 │   │   └── settings/              # User preferences
-│   ├── api/                       # 30 API routes
+│   ├── api/                       # 22 route files
 │   │   ├── auth/                  # NextAuth, forgot/reset password
-│   │   ├── resumes/               # CRUD, PDF, ATS score, clone, slug, view tracking
-│   │   ├── ai/                    # Bullets, review, ATS, keywords, cover letter, job match
-│   │   ├── analytics/             # Resume + user + performance analytics
+│   │   ├── resumes/               # CRUD, PDF, ATS score, clone, slug
+│   │   ├── resume/public/         # Published resume by id or slug; counts the view
+│   │   ├── ai/                    # Bullets, review, optimize, keywords, cover letter
+│   │   ├── analytics/             # Per-account performance figures
 │   │   ├── applications/          # Job application CRUD
 │   │   ├── cover-letters/         # Cover letter management
 │   │   └── user/                  # Registration, stats
@@ -119,8 +119,8 @@ src/
 │   └── email/                     # Resend integration
 │
 ├── features/
-│   ├── ai/services/               # Groq AI service, job matching
-│   └── resume/services/           # PDF generation, browser pool
+│   ├── ai/services/               # Groq AI service
+│   └── resume/services/           # PDF generation
 │
 └── hooks/                         # useResumes, useSidebar, usePagination
 ```
@@ -156,12 +156,9 @@ src/
 | POST           | `/api/ai/optimize`                                          | ATS keyword optimization                                       |
 | POST           | `/api/ai/analyze-keywords`                                  | Keyword gap analysis                                           |
 | POST           | `/api/ai/generate-cover-letter`                             | Cover letter generation                                        |
-| POST           | `/api/ai/job-match`                                         | Job description matching                                       |
-| POST           | `/api/ai/interview-questions`                               | Interview prep questions                                       |
 | GET/POST       | `/api/applications`                                         | Job application tracking                                       |
-| GET            | `/api/analytics/resume`                                     | Resume analytics                                               |
-| GET            | `/api/analytics/user`                                       | User-level analytics                                           |
-| GET            | `/api/analytics/performance`                                | Performance metrics                                            |
+| GET/POST       | `/api/cover-letters`                                        | Saved cover letters                                            |
+| GET            | `/api/analytics/performance`                                | Views, published count, average ATS score                      |
 | POST           | `/api/auth/forgot-password`                                 | Password reset email                                           |
 | POST           | `/api/auth/reset-password`                                  | Apply new password                                             |
 | POST           | `/api/auth/validate-reset-token`                            | Token validation                                               |
@@ -193,7 +190,6 @@ const completion = await groq.chat.completions.create({
 | Resume review     | Full resume data                | Section feedback + critical issues |
 | Keyword analysis  | Resume + job description        | Gap list + suggestions             |
 | Cover letter      | Resume + job description        | Tailored 3-paragraph letter        |
-| Job matching      | Resume + job listing            | Match score + recommendations      |
 
 ---
 
@@ -287,7 +283,7 @@ bun lint             # ESLint with auto-fix
 bun run lint:check   # ESLint, no fixes, fails on any warning (CI)
 bun format           # Prettier
 bun type-check       # tsc --noEmit
-bun run test         # Unit tests
+bun run test         # Unit tests, client components included (happy-dom + Testing Library)
 bun run test:coverage     # Unit tests with coverage (coverage/lcov.info)
 bun run test:integration  # API routes against an in-memory MongoDB
 bun run test:integration:coverage  # The same, writing coverage-integration/lcov.info
@@ -340,7 +336,7 @@ This project was developed using an **agentic AI-assisted workflow** as a delibe
 
 | Aspect                     | Approach                                                                                         |
 | -------------------------- | ------------------------------------------------------------------------------------------------ |
-| **Architecture**           | Human-designed — route groups, template rendering strategy, API shape, caching layers            |
+| **Architecture**           | Human-designed — route groups, template rendering strategy, API shape, data access               |
 | **Feature implementation** | AI-accelerated — Claude Code and GitHub Copilot used to scaffold, iterate, and refine components |
 | **Code quality**           | Human-reviewed — every generated change reviewed, tested, and adjusted before committing         |
 | **Design decisions**       | Human-led — design system tokens, UX flows, component hierarchy all explicitly specified         |
@@ -368,32 +364,25 @@ Modern software engineering increasingly requires the ability to leverage AI too
 
 ---
 
-## Roadmap
-
-## 🎯 Current Limitations & Roadmap
+## Current Limitations & Roadmap
 
 **AI Rate Limits**
 
-- Groq free tier: 14,400 requests/day
-- Per-user limit: 50 requests/hour
-- Cover letter generation: 10 requests/day (free tier)
+- Per-user limit: 50 requests/hour across the AI endpoints
+- Groq's own limits apply per organization and per model ([rate limits](https://console.groq.com/docs/rate-limits))
 
 **PDF Generation**
 
-- Server-side only (Puppeteer)
-- Memory intensive (~100MB per PDF)
-- Browser pool management required
+- Server-side only (Puppeteer): each request launches and closes its own headless Chromium
 - Not suitable for edge runtime
 
 **Database**
 
-- Production: MongoDB Atlas M0
-- Free tier: 512MB storage limit
-- Complex queries may need optimization
+- Production: MongoDB Atlas free cluster, 0.5 GB storage including indexes ([limits](https://www.mongodb.com/docs/atlas/reference/free-shared-limitations/))
 
 **Upcoming Features**
 
-- LinkedIn profile import (in development)
+- LinkedIn profile import
 - Team collaboration features
 - Premium subscription tiers
 - Advanced analytics dashboard

@@ -77,7 +77,11 @@ export default function ShareButton({
                 Allow anyone with the link to view
               </p>
             </div>
-            <Switch checked={isPublic} onCheckedChange={handleTogglePublic} />
+            <Switch
+              aria-label="Make Public"
+              checked={isPublic}
+              onCheckedChange={handleTogglePublic}
+            />
           </div>
 
           {isPublic && (

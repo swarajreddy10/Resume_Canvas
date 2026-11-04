@@ -10,6 +10,7 @@ import {
   describe,
   expect,
   mock,
+  spyOn,
   test,
 } from 'bun:test';
 import { NextRequest } from 'next/server';
@@ -84,7 +85,6 @@ beforeAll(async () => {
   routes.atsScore = (await load('@/app/api/resumes/[id]/ats-score/route')).POST;
   routes.bySlug = (await load('@/app/api/resumes/slug/[slug]/route')).GET;
   routes.bullets = (await load('@/app/api/ai/generate-bullets/route')).POST;
-  routes.linkedin = (await load('@/app/api/integrations/linkedin/route')).POST;
   ({ Resume } = await import('@/lib/db/models/Resume'));
   ({ JobApplication } = await import('@/lib/db/models/JobApplication'));
   ({ default: CoverLetter } = await import('@/lib/db/models/CoverLetter'));
@@ -205,9 +205,8 @@ describe('dashboard counts are fresh and private', () => {
     expect(first.headers.get('cache-control') ?? '').toMatch(PRIVATE);
     expect(await first.json()).toEqual({
       totalViews: 0,
-      totalDownloads: 0,
       totalShares: 0,
-      avgAtsScore: 0,
+      avgAtsScore: null,
       topPerformingResume: null,
     });
     await resumeOf(ALICE, {
@@ -217,15 +216,37 @@ describe('dashboard counts are fresh and private', () => {
       atsScore: 90,
     });
     await resumeOf(ALICE, { title: 'Other', viewCount: 1, atsScore: 71 });
+    await resumeOf(ALICE, { title: 'Unscored', viewCount: 0 });
     await resumeOf(BOB, { viewCount: 1000, atsScore: 10 });
     const body = await (await routes.analytics(get())).json();
     expect(body.totalViews).toBe(10);
     expect(body.totalShares).toBe(1);
-    expect(body.avgAtsScore).toBe(81); // (90 + 71) / 2, rounded
+    expect(body.avgAtsScore).toBe(81); // (90 + 71) / 2, rounded; the unscored one is left out
     expect(body.topPerformingResume).toEqual({
       title: 'Top',
       views: 9,
       atsScore: 90,
+    });
+  });
+
+  test('a failed analytics read is a 500 that does not reveal the database error', async () => {
+    const aggregate = spyOn(Resume, 'aggregate').mockImplementationOnce(() => {
+      throw new Error('connect ECONNREFUSED 127.0.0.1:27017');
+    });
+    const res = await routes.analytics(get());
+    aggregate.mockRestore();
+    expect(res.status).toBe(500);
+    expect(await res.json()).toEqual({ error: 'Failed to fetch analytics' });
+  });
+
+  test('resumes never scored give no ATS figure rather than an assumed one', async () => {
+    await resumeOf(ALICE, { title: 'Fresh', viewCount: 2 });
+    const body = await (await routes.analytics(get())).json();
+    expect(body.avgAtsScore).toBeNull();
+    expect(body.topPerformingResume).toEqual({
+      title: 'Fresh',
+      views: 2,
+      atsScore: null,
     });
   });
 });
@@ -326,24 +347,5 @@ describe('session guard', () => {
   test('an Auth.js error object is not a session', async () => {
     session = { message: 'There was a problem with the server configuration.' };
     expect((await routes.stats(get())).status).toBe(401);
-  });
-});
-
-describe('LinkedIn import', () => {
-  test('anonymous callers are rejected and responses are private', async () => {
-    session = null;
-    expect(
-      (
-        await routes.linkedin(
-          post({ linkedinUrl: 'https://linkedin.com/in/x' })
-        )
-      ).status
-    ).toBe(401);
-    session = { user: ALICE };
-    const res = await routes.linkedin(
-      post({ linkedinUrl: 'https://linkedin.com/in/x' })
-    );
-    expect(res.status).toBe(200);
-    expect(res.headers.get('cache-control') ?? '').toMatch(PRIVATE);
   });
 });

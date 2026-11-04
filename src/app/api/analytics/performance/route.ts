@@ -3,19 +3,18 @@ import connectDB from '@/lib/db/connection';
 import { Resume } from '@/lib/db/models/Resume';
 import { withAuth } from '@/lib/middleware/withAuth';
 
-// An unscored resume counts as 75 (the `atsScore || 75` this route has always used).
-const atsOrDefault = { $cond: [{ $gt: ['$atsScore', 0] }, '$atsScore', 75] };
-
 interface Summary {
-  count: number;
   totalViews: number;
   publicCount: number;
-  atsTotal: number;
-  top: { title: string; views: number; atsScore: number };
+  avgAts: number | null;
+  top: { title: string; views: number; atsScore: number | null };
 }
 
 // Aggregated in MongoDB (one round trip on the userEmail index, one document back) and
-// never cached: a per-instance cache showed figures up to five minutes old.
+// never cached: a per-instance cache showed figures up to five minutes old. Only measured
+// figures: a resume never scored is left out of the ATS average ($avg ignores missing
+// values and is null when none are numeric,
+// https://www.mongodb.com/docs/manual/reference/operator/aggregation/avg/).
 export const GET = withAuth(async (_request, { session }) => {
   try {
     await connectDB();
@@ -25,31 +24,31 @@ export const GET = withAuth(async (_request, { session }) => {
       {
         $group: {
           _id: null,
-          count: { $sum: 1 },
           totalViews: { $sum: '$viewCount' },
           publicCount: { $sum: { $cond: ['$isPublic', 1, 0] } },
-          atsTotal: { $sum: atsOrDefault },
+          avgAts: { $avg: '$atsScore' },
           top: {
             $first: {
               title: '$title',
               views: { $ifNull: ['$viewCount', 0] },
-              atsScore: atsOrDefault,
+              atsScore: { $ifNull: ['$atsScore', null] },
             },
           },
         },
       },
     ]);
 
-    const totalViews = summary?.totalViews ?? 0;
     return NextResponse.json({
-      totalViews,
-      totalDownloads: Math.floor(totalViews * 0.3),
+      totalViews: summary?.totalViews ?? 0,
       totalShares: summary?.publicCount ?? 0,
-      avgAtsScore: summary ? Math.round(summary.atsTotal / summary.count) : 0,
+      avgAtsScore: summary?.avgAts == null ? null : Math.round(summary.avgAts),
       topPerformingResume: summary?.top ?? null,
     });
   } catch (error) {
     console.error('Analytics API error:', error);
-    return NextResponse.json({ error: 'Failed to fetch analytics' }, { status: 500 });
+    return NextResponse.json(
+      { error: 'Failed to fetch analytics' },
+      { status: 500 }
+    );
   }
 });
