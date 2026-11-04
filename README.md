@@ -40,7 +40,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 
 | Package           | Version | Role                                                 |
 | ----------------- | ------- | ---------------------------------------------------- |
-| Next.js           | 16.4.4  | App Router, RSC, API routes, middleware              |
+| Next.js           | 16.4.5  | App Router, RSC, API routes, middleware              |
 | React             | 19.2.4  | UI with Server + Client Components                   |
 | TypeScript        | 5.9.3   | Strict mode throughout                               |
 | Tailwind CSS      | 4.2.2   | Utility-first styling with custom design tokens      |
@@ -213,7 +213,7 @@ live API; on 2026-11-04 each answered in 1.0 to 2.4 s.
 - **Output encoding** — React escapes rendered text and the PDF service encodes its HTML; text is stored exactly as typed. AI routes strip markup and script patterns from their input before it reaches the model
 - **CSRF** — NextAuth built-in protection on all mutations
 - **Environment validation** — `src/lib/config/app.config.ts` throws on a missing required variable when the config loads
-- **Dependency security** — `bun audit fix` applied; Next.js 16.4.4, Auth.js 5.0.0-beta.32 / `@auth/core` 0.41.3 and Mongoose 9.7.4 carry the fixes `bun audit` reported; overrides pin `minimatch`, `flatted` and `basic-ftp` (≥ 5.3.1). The advisories still reported have no fix inside their dependents' ranges: `basic-ftp` 6.x and `extract-zip` (Puppeteer's browser download), `zod` 3 (Puppeteer and the React hooks lint plugin), `minimatch` 3 (ESLint 9) and `uuid` 10 (Resend)
+- **Dependency security** — `bun audit fix` applied; Next.js 16.4.5, Auth.js 5.0.0-beta.32 / `@auth/core` 0.41.3 and Mongoose 9.7.4 carry the fixes `bun audit` reported; overrides pin `minimatch`, `flatted` and `basic-ftp` (≥ 5.3.1). The advisories still reported have no fix inside their dependents' ranges: `basic-ftp` 6.x and `extract-zip` (Puppeteer's browser download), `zod` 3 (Puppeteer and the React hooks lint plugin), `minimatch` 3 (ESLint 9) and `uuid` 10 (Resend)
 
 ---
 
