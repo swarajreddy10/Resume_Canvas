@@ -16,9 +16,15 @@ const PHONE_REGEX =
 // Letters of any script (\p{L}) and combining marks (\p{M}, for decomposed accents), not
 // a-z: names, employers and places are written in every language, with apostrophes
 // (O’Brien, McDonald's). https://www.w3.org/International/questions/qa-personal-names
-const NAME_REGEX = /^[\p{L}\p{M}\s.,'’-]+$/u;
-const COMPANY_REGEX = /^[\p{L}\p{M}\p{N}\s.,&()'’-]+$/u;
-const LOCATION_REGEX = /^[\p{L}\p{M}\p{N}\s.,'’-]+$/u;
+// U+200C and U+200D are allowed between letters or marks only: Persian compounds need the
+// non-joiner (https://www.w3.org/International/alreq/), and Indic clusters take either after
+// the virama (https://www.unicode.org/faq/indic.html).
+const NAME_REGEX =
+  /^(?:[\p{L}\p{M}\s.,'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}]))+$/u;
+const COMPANY_REGEX =
+  /^(?:[\p{L}\p{M}\p{N}\s.,&()'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}]))+$/u;
+const LOCATION_REGEX =
+  /^(?:[\p{L}\p{M}\p{N}\s.,'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}]))+$/u;
 const DATE_REGEX =
   /^(0[1-9]|1[0-2])[\/\-]\d{4}$|^\d{4}$|^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}$|^Present$/i;
 
