@@ -9,8 +9,32 @@
  */
 const FIGURE = /([$€£₹]?)(\d+(?:[.,]\d+)*)(%| percent\b|x\b|×)?/g;
 const PLACEHOLDER = /\[[^\]\d\n]{1,80}\]/g;
-const DATE =
-  /\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?) \d{1,2},? \d{4}\b|\b\d{1,2} (?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|June?|July?|Aug(?:ust)?|Sep(?:t(?:ember)?)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?),? \d{4}\b|\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}[/.]\d{1,2}[/.]\d{4}\b/g;
+// One small pattern per date shape, and the month checked in code: a single pattern with
+// the month names inline scored 127 on Sonar's regex complexity rule (S5843, limit 20).
+const MONTH_FIRST = /\b([A-Z][a-z]{2,8}) \d{1,2},? \d{4}\b/g;
+const DAY_FIRST = /\b\d{1,2} ([A-Z][a-z]{2,8}),? \d{4}\b/g;
+const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/g;
+const NUMERIC_DATE = /\b\d{1,2}[/.]\d{1,2}[/.]\d{4}\b/g;
+const MONTHS = [
+  'january',
+  'february',
+  'march',
+  'april',
+  'may',
+  'june',
+  'july',
+  'august',
+  'september',
+  'october',
+  'november',
+  'december',
+];
+
+/** A full month name, its first three letters, or "Sept". */
+function isMonth(word: string): boolean {
+  const w = word.toLowerCase();
+  return w === 'sept' || MONTHS.some((m) => w === m || w === m.slice(0, 3));
+}
 
 interface Figure {
   text: string;
@@ -51,5 +75,13 @@ export function placeholders(text: string): string[] {
 
 /** Calendar dates: written ("April 27, 2026", "3 March 2025"), ISO, and numeric. */
 export function dates(text: string): string[] {
-  return [...text.matchAll(DATE)].map(([match]) => match);
+  const written = [MONTH_FIRST, DAY_FIRST].flatMap((pattern) =>
+    [...text.matchAll(pattern)].filter(([, month]) => isMonth(month))
+  );
+  const numeric = [ISO_DATE, NUMERIC_DATE].flatMap((pattern) => [
+    ...text.matchAll(pattern),
+  ]);
+  return [...written, ...numeric]
+    .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
+    .map(([match]) => match);
 }

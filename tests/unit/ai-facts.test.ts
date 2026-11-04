@@ -84,4 +84,15 @@ describe('dates', () => {
   test('a month and year alone is not a date line', () => {
     expect(dates('Engineer since January 2024')).toEqual([]);
   });
+
+  test('takes full and short month names, and only month names', () => {
+    expect(dates('Sent Sept 3, 2025, Jun 9 2024 and 12 Dec 2023')).toEqual([
+      'Sept 3, 2025',
+      'Jun 9 2024',
+      '12 Dec 2023',
+    ]);
+    expect(dates('Sprint 12 2025 shipped; Release 3 2024 followed')).toEqual(
+      []
+    );
+  });
 });
