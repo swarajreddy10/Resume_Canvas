@@ -193,11 +193,17 @@ with `tool_use_failed` and JSON object mode never did. There is no canned answer
 502, and the UI shows the message. `bun run ai:smoke` calls every feature once against the
 live API; on 2026-11-04 each answered in 1.0 to 2.4 s.
 
-Bullets and cover letters go on a real person's resume, so their prompts allow only the facts
-given: no invented numbers, and a bracketed placeholder such as `[X%]` where a metric is
-missing. `bun run ai:facts` measures it live. On 2026-11-04 (6 runs), bullets with a number the
-user never gave fell from 58 of 59 to 0 of 50, and cover letters with invented numbers,
-`[Your Address]`-style placeholders or a made-up date from 6, 6 and 4 of 6 to none.
+Bullets and cover letters go on a real person's resume, so they state only the facts given, and
+the service enforces it (`src/lib/ai/facts.ts`) rather than trusting the prompt: a bullet with a
+figure the description does not give is dropped (the request fails if none is left), and a
+cover letter with such a figure, a bracketed placeholder or a date is refused with a 502. A
+figure keeps its unit, so "30 minutes" does not license "30%". Bullets may quantify a result the
+description states with a placeholder such as `[X%]` for the user to fill in; cover letters
+carry no placeholders and take the candidate's facts from the resume only, never from the job
+description. `bun run ai:facts` measures the model's raw drafts live: on 2026-11-04 (6 runs
+each), bullets with a number the user never gave fell from 58 of 59 on the old prompt to 0 of 49,
+and cover letters with invented numbers, `[Your Address]`-style placeholders or a made-up date
+from 6, 6 and 4 of 6 to none.
 
 | AI Feature        | Input                           | Output                                                        |
 | ----------------- | ------------------------------- | ------------------------------------------------------------- |
