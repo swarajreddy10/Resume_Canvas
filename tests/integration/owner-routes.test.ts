@@ -1,6 +1,6 @@
 /**
  * Per-user routes outside resume CRUD, through the real route handlers and a real
- * MongoDB. Mocked: the session (`auth()`), the Groq-backed AI service and the
+ * MongoDB. Mocked: the session (`auth()`), the Groq client (tests/setup.ts) and the
  * Puppeteer-backed PDF renderer.
  */
 import {
@@ -14,6 +14,7 @@ import {
   test,
 } from 'bun:test';
 import { NextRequest } from 'next/server';
+import { groqCreate, replyWith, resetGroq } from '../helpers/groq';
 import { jsonRequest, startMongo, stopMongo } from '../helpers/mongo';
 
 let session:
@@ -21,16 +22,6 @@ let session:
   | { message: string }
   | null = null;
 mock.module('@/lib/auth/session', () => ({ getSession: async () => session }));
-
-let aiCalls = 0;
-mock.module('@/services/ai.service', () => ({
-  aiService: {
-    generateBulletPoints: async () => {
-      aiCalls++;
-      return [`bullet ${aiCalls}`];
-    },
-  },
-}));
 
 let pdfFailure: Error | null = null;
 mock.module('@/services/pdf.service', () => ({
@@ -96,7 +87,7 @@ afterAll(stopMongo);
 
 beforeEach(async () => {
   session = { user: ALICE };
-  aiCalls = 0;
+  resetGroq();
   pdfFailure = null;
   await Promise.all([
     Resume.deleteMany({}),
@@ -330,12 +321,14 @@ describe('AI bullets', () => {
   };
 
   test('each request is generated fresh and the response is private', async () => {
+    replyWith('{"bullets": ["bullet 1"]}');
+    replyWith('{"bullets": ["bullet 2"]}');
     const first = await routes.bullets(post(input));
     session = { user: BOB };
     const second = await routes.bullets(post(input));
     expect(first.status).toBe(200);
     expect(second.headers.get('cache-control') ?? '').toMatch(PRIVATE);
-    expect(aiCalls).toBe(2);
+    expect(groqCreate).toHaveBeenCalledTimes(2);
     expect((await second.json()).bulletPoints).toEqual(['bullet 2']);
   });
 });

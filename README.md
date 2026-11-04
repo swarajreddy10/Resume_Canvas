@@ -20,7 +20,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 | --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
 | **Resume Builder**          | 6-section form (personal, experience, education, skills, projects, certifications) with real-time preview and auto-save             |
 | **5 Templates**             | Executive, Tech, Corporate, Creative, Academic — all A4-optimized and ATS-compatible                                                |
-| **AI Bullet Generation**    | Groq Llama 3.3 70B generates up to five action-oriented, metrics-driven bullets per role                                            |
+| **AI Bullet Generation**    | GPT-OSS 120B on Groq generates up to five action-oriented bullets per role                                                          |
 | **ATS Scoring**             | 0–100 completeness score across seven weighted sections (contact, summary, experience, education, skills, projects, certifications) |
 | **Resume Review**           | Section-by-section AI analysis with actionable feedback                                                                             |
 | **Keyword Optimizer**       | Industry-specific keyword extraction and gap analysis                                                                               |
@@ -61,7 +61,7 @@ This project was built as a showcase of modern full-stack engineering combined w
 | MongoDB     | 7.2.0         | Document database                       |
 | Mongoose    | 9.7.4         | ODM, schema validation, indexing        |
 | NextAuth.js | 5.0.0-beta.32 | JWT sessions, Google OAuth, credentials |
-| Groq SDK    | 1.1.1         | Llama 3.3 70B inference (AI features)   |
+| Groq SDK    | 1.1.1         | GPT-OSS 120B inference (AI features)    |
 | Puppeteer   | 24.40.0       | Headless Chrome for PDF generation      |
 | Resend      | 6.9.4         | Transactional email (password reset)    |
 | bcryptjs    | 3.0.3         | Password hashing (cost 12)              |
@@ -171,25 +171,35 @@ src/
 
 ## AI Implementation
 
-All AI features use **Groq's Llama 3.3 70B Versatile** model — chosen for sub-second inference latency on Groq's LPU hardware.
+All AI features call **`openai/gpt-oss-120b` on Groq**, the replacement Groq names for the
+retired `llama-3.3-70b-versatile` ([deprecations](https://console.groq.com/docs/deprecations)),
+through one function in `src/features/ai/services/ai.service.ts`:
 
 ```typescript
-// Core pattern used across all AI endpoints
-const completion = await groq.chat.completions.create({
+await groq.chat.completions.create({
+  model: 'openai/gpt-oss-120b',
   messages: [{ role: 'user', content: prompt }],
-  model: 'llama-3.3-70b-versatile',
-  temperature: 0.7,
-  max_tokens: 800,
+  reasoning_effort: 'low', // reasoning tokens count against the budget
+  include_reasoning: false,
+  temperature: 0.6,
+  max_completion_tokens: budget,
+  response_format: { type: 'json_object' }, // then a Zod check of the shape
 });
 ```
 
-| AI Feature        | Input                           | Output                             |
-| ----------------- | ------------------------------- | ---------------------------------- |
-| Bullet generation | Job title, company, description | 4–6 action verbs + metrics         |
-| ATS scoring       | Resume sections                 | 0–100 score + missing keywords     |
-| Resume review     | Full resume data                | Section feedback + critical issues |
-| Keyword analysis  | Resume + job description        | Gap list + suggestions             |
-| Cover letter      | Resume + job description        | Tailored 3-paragraph letter        |
+JSON object mode, not strict `json_schema`: in 24 live calls each, strict mode failed twice
+with `tool_use_failed` and JSON object mode never did. There is no canned answer: a Groq error
+(after the SDK's two retries), an empty or cut-off reply, or a reply of the wrong shape is a
+502, and the UI shows the message. `bun run ai:smoke` calls every feature once against the
+live API; on 2026-11-04 each answered in 1.0 to 2.4 s.
+
+| AI Feature        | Input                           | Output                                            |
+| ----------------- | ------------------------------- | ------------------------------------------------- |
+| Bullet generation | Job title, company, description | Up to five action-verb bullets                    |
+| ATS optimization  | Resume text                     | 0–100 score, suggestions, missing keywords        |
+| Resume review     | Full resume data                | Score, assessment, strengths, ranked suggestions  |
+| Keyword analysis  | Resume + job description        | Match score, keywords present or missing, by need |
+| Cover letter      | Resume + job description        | Tailored 3–4 paragraph letter                     |
 
 ---
 
@@ -291,6 +301,7 @@ bun run test:e2e     # Playwright: builds, then serves against an in-memory Mong
 bun run verify       # format + lint + type-check
 bun run db:sync-indexes  # make MongoDB indexes match the Mongoose schemas
 bun run db:migrate-slugs # rewrite legacy name/N resume slugs to one URL segment
+bun run ai:smoke     # call every AI feature once against the live Groq API
 ```
 
 CI (`.github/workflows/ci.yml`) runs type-check, lint, unit and integration tests with
@@ -369,7 +380,7 @@ Modern software engineering increasingly requires the ability to leverage AI too
 **AI Rate Limits**
 
 - Per-user limit: 50 requests/hour across the AI endpoints
-- Groq's own limits apply per organization and per model ([rate limits](https://console.groq.com/docs/rate-limits))
+- Groq's own limits apply per organization and per model; for `openai/gpt-oss-120b` on the Developer plan, 30 requests and 8,000 tokens a minute ([rate limits](https://console.groq.com/docs/rate-limits)). An ATS optimization call used 490 to 808 tokens in 24 measured calls
 
 **PDF Generation**
 

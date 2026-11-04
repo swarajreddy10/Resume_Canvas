@@ -25,6 +25,26 @@ class Logger {
       .substring(0, 1000); // Limit length
   }
 
+  /**
+   * An error's causes, innermost last ("Error: a <- Error: b"): a wrapped upstream
+   * failure, such as a Groq status inside an AIServiceError, is the part worth reading.
+   */
+  private causeChain(error: Error): string | undefined {
+    const causes: string[] = [];
+    for (
+      let cause = error.cause;
+      cause !== undefined && causes.length < 5;
+      cause = cause instanceof Error ? cause.cause : undefined
+    ) {
+      causes.push(
+        cause instanceof Error
+          ? `${cause.name}: ${cause.message}`
+          : String(cause)
+      );
+    }
+    return causes.length ? this.sanitizeForLog(causes.join(' <- ')) : undefined;
+  }
+
   private sanitizeMeta(meta?: LogMeta): LogMeta | undefined {
     if (!meta) return meta;
 
@@ -37,6 +57,7 @@ class Logger {
           name: value.name,
           message: this.sanitizeForLog(value.message),
           stack: value.stack ? this.sanitizeForLog(value.stack) : undefined,
+          cause: this.causeChain(value),
         };
       } else {
         sanitized[key] = value;

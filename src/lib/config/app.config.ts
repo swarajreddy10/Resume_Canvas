@@ -19,8 +19,9 @@ interface AppConfig {
   ai: {
     groqApiKey: string;
     model: string;
-    maxTokens: number;
+    reasoningEffort: 'low' | 'medium' | 'high';
     temperature: number;
+    timeoutMs: number;
   };
   security: {
     rateLimits: {
@@ -67,11 +68,17 @@ export const appConfig: AppConfig = {
     },
   },
 
+  // Groq shut llama-3.3-70b-versatile down on 2026-08-16 and names openai/gpt-oss-120b
+  // as its replacement (https://console.groq.com/docs/deprecations). It is a reasoning
+  // model: low effort keeps replies near 1 s, 0.6 is Groq's default temperature for
+  // reasoning models (https://console.groq.com/docs/reasoning), and a 20 s timeout per
+  // attempt replaces the SDK's 60 s default, since calls take 1 to 3 s.
   ai: {
     groqApiKey: validateEnv('GROQ_API_KEY'),
-    model: 'llama-3.3-70b-versatile', // Latest powerful model for better analysis
-    maxTokens: 2000, // Increased for detailed feedback
-    temperature: 0.7,
+    model: 'openai/gpt-oss-120b',
+    reasoningEffort: 'low',
+    temperature: 0.6,
+    timeoutMs: 20_000,
   },
 
   security: {

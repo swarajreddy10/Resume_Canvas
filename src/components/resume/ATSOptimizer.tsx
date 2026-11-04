@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Sparkles, Target, TrendingUp } from 'lucide-react';
+import { postAI } from '@/lib/api/ai.client';
+import { showError } from '@/shared/services/toast.service';
 
 import { ResumeBuilderData } from '@/types/resume.unified';
 
@@ -47,16 +49,13 @@ export default function ATSOptimizer({ resumeData }: ATSOptimizerProps) {
         .filter(Boolean)
         .join(' ');
 
-      const response = await fetch('/api/ai/optimize', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeContent: resumeText }),
-      });
-
-      const data = await response.json();
-      setOptimization(data);
+      setOptimization(
+        await postAI<OptimizationResult>('/api/ai/optimize', {
+          resumeContent: resumeText,
+        })
+      );
     } catch (error) {
-      console.error('Failed to analyze resume:', error);
+      showError((error as Error).message);
     } finally {
       setLoading(false);
     }
