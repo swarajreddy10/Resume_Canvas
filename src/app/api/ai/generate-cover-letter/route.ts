@@ -4,7 +4,7 @@ import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { aiRateLimit } from '@/lib/security/rateLimit';
 import { sanitizeInput } from '@/lib/security/sanitize';
 import { generateCoverLetter } from '@/services/ai.service';
-import { logger } from '@/lib/utils/logger';
+import { aiErrorResponse } from '@/lib/ai/errors';
 
 export const POST = withRateLimit(aiRateLimit)(
   withAuth(async (request: NextRequest) => {
@@ -33,11 +33,7 @@ export const POST = withRateLimit(aiRateLimit)(
 
       return NextResponse.json({ coverLetter });
     } catch (error) {
-      logger.error('Error generating cover letter', { error });
-      return NextResponse.json(
-        { error: 'Failed to generate cover letter' },
-        { status: 500 }
-      );
+      return aiErrorResponse(error, 'Failed to generate cover letter');
     }
   })
 );

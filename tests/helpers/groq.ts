@@ -8,9 +8,10 @@
  */
 import { mock } from 'bun:test';
 
-type ChatRequest = {
+export type ChatRequest = {
   messages: { role: string; content: string }[];
   model: string;
+  [param: string]: unknown;
 };
 
 async function unqueued(): Promise<unknown> {
@@ -22,9 +23,14 @@ async function unqueued(): Promise<unknown> {
 export const groqCreate =
   mock<(req: ChatRequest) => Promise<unknown>>(unqueued);
 
-/** Queue the text the model returns on the next call. */
-export function replyWith(content: string): void {
-  groqCreate.mockResolvedValueOnce({ choices: [{ message: { content } }] });
+/**
+ * Queue the text the model returns on the next call. `finishReason` is `stop` for a
+ * complete reply; `length` is a reply cut off at the token budget.
+ */
+export function replyWith(content: string, finishReason = 'stop'): void {
+  groqCreate.mockResolvedValueOnce({
+    choices: [{ message: { content }, finish_reason: finishReason }],
+  });
 }
 
 /** Queue a failure for the next call, the way the SDK reports an HTTP error. */
@@ -38,11 +44,18 @@ export function resetGroq(): void {
   groqCreate.mockImplementation(unqueued);
 }
 
-/** The prompt text of the most recent call. */
-export function lastPrompt(): string {
+/** The request of the most recent call. */
+export function lastRequest(): ChatRequest {
   const call = groqCreate.mock.calls[groqCreate.mock.calls.length - 1];
   if (!call) throw new Error('groq-sdk was not called');
-  return call[0].messages.map((m: { content: string }) => m.content).join('\n');
+  return call[0];
+}
+
+/** The prompt text of the most recent call. */
+export function lastPrompt(): string {
+  return lastRequest()
+    .messages.map((m) => m.content)
+    .join('\n');
 }
 
 export class MockGroq {

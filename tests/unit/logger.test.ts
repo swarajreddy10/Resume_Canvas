@@ -76,6 +76,19 @@ describe('logger', () => {
     expect(meta.error.stack).not.toContain('\n');
   });
 
+  test("keeps an Error's cause chain, where an upstream failure says what went wrong", () => {
+    const upstream = new Error('400 tool_use_failed');
+    const wrapped = new Error('The model request failed', {
+      cause: new Error('retry exhausted', { cause: upstream }),
+    });
+    logger.error('Failed to optimize resume', { error: wrapped });
+
+    const meta = lastLine(error).meta as { error: { cause: string } };
+    expect(meta.error.cause).toBe(
+      'Error: retry exhausted <- Error: 400 tool_use_failed'
+    );
+  });
+
   test('suppresses debug outside development', () => {
     const debug = spyOn(console, 'debug').mockImplementation(() => {});
     try {

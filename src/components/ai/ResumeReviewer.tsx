@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, CheckCircle, AlertCircle, XCircle } from 'lucide-react';
+import { postAI } from '@/lib/api/ai.client';
+import { showError } from '@/shared/services/toast.service';
 
 interface ReviewSuggestion {
   type: 'critical' | 'warning' | 'improvement' | 'info';
@@ -32,18 +34,11 @@ export default function ResumeReviewer({ resumeData }: ResumeReviewerProps) {
   const reviewResume = async () => {
     setReviewing(true);
     try {
-      const response = await fetch('/api/ai/review-resume', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeData }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setReview(data);
-      }
+      setReview(
+        await postAI<ReviewResponse>('/api/ai/review-resume', { resumeData })
+      );
     } catch (error) {
-      console.error('Failed to review resume:', error);
+      showError((error as Error).message);
     } finally {
       setReviewing(false);
     }

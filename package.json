@@ -18,6 +18,7 @@
     "type-check": "bun tsc --noEmit",
     "db:sync-indexes": "bun scripts/sync-indexes.ts",
     "db:migrate-slugs": "bun scripts/migrate-legacy-slugs.ts",
+    "ai:smoke": "bun scripts/ai-smoke.ts",
     "test": "bun test tests/unit",
     "test:watch": "bun test --watch tests/unit",
     "test:coverage": "bun test tests/unit --coverage",

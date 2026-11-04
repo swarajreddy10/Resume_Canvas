@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { optimizeResume } from '@/services/ai.service';
+import { aiErrorResponse } from '@/lib/ai/errors';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { aiRateLimit } from '@/lib/security/rateLimit';
@@ -21,11 +22,7 @@ export const POST = withRateLimit(aiRateLimit)(
       const optimization = await optimizeResume(resumeContent);
       return NextResponse.json(optimization);
     } catch (error) {
-      console.error('Error in resume optimization:', error);
-      return NextResponse.json(
-        { error: 'Failed to optimize resume' },
-        { status: 500 }
-      );
+      return aiErrorResponse(error, 'Failed to optimize resume');
     }
   })
 );

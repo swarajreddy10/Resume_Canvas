@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { FileText, Copy, Check } from 'lucide-react';
+import { postAI } from '@/lib/api/ai.client';
+import { showError } from '@/shared/services/toast.service';
 
 interface CoverLetterGeneratorProps {
   resumeData: { _id: string; [key: string]: unknown };
@@ -55,23 +57,13 @@ export default function CoverLetterGenerator({
 
     setGenerating(true);
     try {
-      const response = await fetch('/api/ai/generate-cover-letter', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          resumeData,
-          jobTitle,
-          companyName,
-          jobDescription,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setCoverLetter(data.coverLetter);
-      }
+      const data = await postAI<{ coverLetter: string }>(
+        '/api/ai/generate-cover-letter',
+        { resumeData, jobTitle, companyName, jobDescription }
+      );
+      setCoverLetter(data.coverLetter);
     } catch (error) {
-      console.error('Failed to generate cover letter:', error);
+      showError((error as Error).message);
     } finally {
       setGenerating(false);
     }

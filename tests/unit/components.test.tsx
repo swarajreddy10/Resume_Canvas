@@ -17,22 +17,42 @@ const { default: ResumeAnalytics } =
   await import('@/components/resume/ResumeAnalytics');
 const { default: ShareButton } =
   await import('@/components/resume/ShareButton');
+const { default: KeywordOptimizer } =
+  await import('@/components/ai/KeywordOptimizer');
+const { default: ResumeReviewer } =
+  await import('@/components/ai/ResumeReviewer');
+const { default: CoverLetterGenerator } =
+  await import('@/components/ai/CoverLetterGenerator');
+const { default: ATSOptimizer } =
+  await import('@/components/resume/ATSOptimizer');
+const { default: ExperienceForm } =
+  await import('@/components/forms/ExperienceForm');
+const { AI_UNAVAILABLE } = await import('@/lib/ai/errors');
 
 const domFetch = globalThis.fetch;
 afterEach(() => {
   cleanup();
+  // Toasts are appended to the body directly, outside what cleanup() unmounts.
+  document.body.innerHTML = '';
   globalThis.fetch = domFetch;
 });
 afterAll(() => GlobalRegistrator.unregister());
 
 /** Every fetch answers with `body`; returns the mock to inspect the calls. */
-function respondWith(body: unknown, ok = true) {
+function respondWith(body: unknown, ok = true, status = ok ? 200 : 502) {
   const fetchMock = mock<
     (input: string, init?: RequestInit) => Promise<Response>
-  >(async () => ({ ok, json: async () => body }) as Response);
+  >(async () => ({ ok, status, json: async () => body }) as Response);
   globalThis.fetch = fetchMock as unknown as typeof fetch;
   return fetchMock;
 }
+
+/** A model failure, as every AI route reports it. */
+const modelFailure = () =>
+  respondWith(
+    { error: 'The AI service did not respond. Please try again in a moment.' },
+    false
+  );
 
 describe('PerformanceAnalytics', () => {
   test('shows the measured figures and nothing the app does not measure', async () => {
@@ -108,5 +128,135 @@ describe('ShareButton', () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ isPublic: true }),
     });
+  });
+});
+
+const builderResume = {
+  personalInfo: {
+    name: 'Zoë Ñúñez',
+    email: 'zoe@example.com',
+    summary: 'Backend engineer',
+  },
+  experiences: [
+    {
+      company: 'Café Ünïcode',
+      position: 'Engineer',
+      location: '',
+      startDate: '2024',
+      endDate: 'Present',
+      description: 'Built APIs',
+      bullets: ['Cut a batch from 30 to 4 minutes'],
+    },
+  ],
+  education: [],
+  skills: ['Go', 'PostgreSQL'],
+};
+
+// Each AI feature, and how a user starts it.
+const aiFeatures = [
+  {
+    name: 'KeywordOptimizer',
+    start: () => {
+      const view = render(<KeywordOptimizer resumeData={builderResume} />);
+      fireEvent.change(view.getByPlaceholderText(/Paste the job description/), {
+        target: { value: 'Needs PostgreSQL' },
+      });
+      fireEvent.click(view.getByRole('button', { name: 'Analyze Keywords' }));
+      return view;
+    },
+  },
+  {
+    name: 'ResumeReviewer',
+    start: () => {
+      const view = render(<ResumeReviewer resumeData={builderResume} />);
+      fireEvent.click(
+        view.getByRole('button', { name: 'Get Professional AI Review' })
+      );
+      return view;
+    },
+  },
+  {
+    name: 'CoverLetterGenerator',
+    start: () => {
+      const view = render(
+        <CoverLetterGenerator resumeData={{ _id: 'r1', ...builderResume }} />
+      );
+      fireEvent.change(view.getByPlaceholderText('Software Engineer'), {
+        target: { value: 'Engineer' },
+      });
+      fireEvent.change(view.getByPlaceholderText('Google'), {
+        target: { value: 'Acme' },
+      });
+      fireEvent.click(
+        view.getByRole('button', { name: 'Generate Cover Letter' })
+      );
+      return view;
+    },
+  },
+  {
+    name: 'ATSOptimizer',
+    start: () => {
+      const view = render(<ATSOptimizer resumeData={builderResume} />);
+      fireEvent.click(view.getByRole('button', { name: /Analyze Resume/ }));
+      return view;
+    },
+  },
+  {
+    name: 'ExperienceForm',
+    start: () => {
+      const view = render(
+        <ExperienceForm
+          initialData={{ experiences: builderResume.experiences }}
+          onSubmit={() => {}}
+        />
+      );
+      fireEvent.click(view.getByRole('button', { name: /AI Generate/ }));
+      return view;
+    },
+  },
+];
+
+/**
+ * Wait until no AI request is in flight (every loading label reads "Analyzing" or
+ * "Generating..."), so the component's last state update lands inside the test rather
+ * than after the DOM is unregistered.
+ */
+const settled = (view: ReturnType<typeof render>) =>
+  waitFor(() =>
+    expect(view.baseElement.textContent).not.toMatch(
+      /Analyzing|Generating\.\.\./
+    )
+  );
+
+describe('AI features', () => {
+  test.each(aiFeatures)(
+    '$name tells the user when the model fails, and shows no result',
+    async ({ start }) => {
+      modelFailure();
+      const view = start();
+      await view.findByText(AI_UNAVAILABLE);
+      await settled(view);
+      expect(view.baseElement.textContent).not.toContain('undefined');
+    }
+  );
+
+  test('ATSOptimizer shows the score the model returned', async () => {
+    respondWith({
+      atsScore: 72,
+      suggestions: ['Add metrics'],
+      keywords: ['AWS'],
+    });
+    const view = aiFeatures[3].start();
+    await view.findByText('72/100');
+    await settled(view);
+    expect(view.getByText('Add metrics')).toBeTruthy();
+  });
+
+  test('ExperienceForm fills in the bullets the model returned', async () => {
+    respondWith({ bulletPoints: ['Led A', 'Built B'] });
+    const view = aiFeatures[4].start();
+    await waitFor(() => expect(view.getByDisplayValue('Led A')).toBeTruthy());
+    await settled(view);
+    expect(view.getByDisplayValue('Built B')).toBeTruthy();
   });
 });

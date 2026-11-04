@@ -20,6 +20,8 @@ import {
 } from '@/lib/validation/resume.schemas';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { postAI } from '@/lib/api/ai.client';
+import { showError, showSuccess } from '@/shared/services/toast.service';
 import * as React from 'react';
 import { useFieldArray, useForm } from 'react-hook-form';
 
@@ -116,33 +118,19 @@ export default function ExperienceForm({
 
     setGeneratingAI(experienceIndex);
     try {
-      const response = await fetch('/api/ai/generate-bullets', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          jobTitle: experience?.position || '',
-          company: experience?.company || '',
-          description: experience?.description || '',
-        }),
-      });
-
-      const data = await response.json();
-      if (data.bulletPoints) {
-        // Limit to 5 bullet points max
-        const limitedBullets = data.bulletPoints.slice(0, 5);
-        form.setValue(`experiences.${experienceIndex}.bullets`, limitedBullets);
-
-        // Show success message with count
-        const toast = document.createElement('div');
-        toast.className =
-          'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-50';
-        toast.textContent = `Generated ${limitedBullets.length} bullet points!`;
-        document.body.appendChild(toast);
-        setTimeout(() => document.body.removeChild(toast), 3000);
-      }
+      // The route returns at most five bullets.
+      const { bulletPoints } = await postAI<{ bulletPoints: string[] }>(
+        '/api/ai/generate-bullets',
+        {
+          jobTitle: experience.position,
+          company: experience.company,
+          description: experience.description,
+        }
+      );
+      form.setValue(`experiences.${experienceIndex}.bullets`, bulletPoints);
+      showSuccess(`Generated ${bulletPoints.length} bullet points!`);
     } catch (error) {
-      console.error('Failed to generate AI bullets:', error);
-      alert('Failed to generate bullet points. Please try again.');
+      showError((error as Error).message);
     } finally {
       setGeneratingAI(null);
     }
