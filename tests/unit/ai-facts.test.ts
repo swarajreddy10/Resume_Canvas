@@ -317,6 +317,17 @@ describe('inventedFigures', () => {
   test.each(cases)('%s', (_, output, input, expected) => {
     expect(inventedFigures(output, input)).toEqual(expected);
   });
+
+  // Inputs are the user's résumé text, so a long run that ends in something else must not
+  // cost the square of its length.
+  test.each([
+    ['dots before a letter', `1${'.'.repeat(50_000)}a`],
+    ['zeros before a digit', `1.${'0'.repeat(50_000)}1`],
+  ])('reads %s in linear time', (_, text) => {
+    const start = performance.now();
+    inventedFigures(text, text);
+    expect(performance.now() - start).toBeLessThan(250);
+  });
 });
 
 describe('textOf', () => {

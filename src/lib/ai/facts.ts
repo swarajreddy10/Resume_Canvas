@@ -32,7 +32,6 @@ type Unit = '' | 'currency' | 'percent' | 'times';
 const SPLIT_DASH = /(?<=\d[%×]?|\d[A-Za-z]{1,2})[-‐‑–—]/g;
 // Spaces and punctuation that never sit inside a figure, Markdown marks included.
 const SEPARATORS = /[\s"'“”‘’`{}[\]()<>:;/\\|*_#!?–—]+/;
-const TRAILING = /[.,]+$/;
 const DIGIT = /\d/;
 // A token's parts: what precedes the number, the number, and what follows it.
 const FIGURE_TOKEN = /^(\D*?)(\d+(?:[.,]\d+)*)(\D*)$/u;
@@ -195,7 +194,7 @@ function amountOf(number: string, exponent: number): string {
   const point = whole.length + exponent;
   const all = (whole + fraction).padEnd(point, '0');
   const integer = all.slice(0, point).replace(/^0+(?=\d)/, '');
-  const decimals = all.slice(point).replace(/0+$/, '');
+  const decimals = trimEnd(all.slice(point), '0');
   return decimals ? `${integer}.${decimals}` : integer;
 }
 
@@ -204,11 +203,21 @@ function tokensOf(text: string): string[] {
   return text.replace(SPLIT_DASH, ' ').split(SEPARATORS);
 }
 
+/**
+ * `text` without the run of `chars` at its end, found by scanning back from the end. A
+ * regex such as /[.,]+$/ is retried from every start, so a long run that ends in another
+ * character costs the square of its length.
+ */
+function trimEnd(text: string, chars: string): string {
+  let end = text.length;
+  while (end > 0 && chars.includes(text[end - 1])) end--;
+  return text.slice(0, end);
+}
+
+/** The token without trailing full stops and commas; undefined if nothing is left. */
 function trimmed(token: string | undefined): string | undefined {
   if (!token) return undefined;
-  return TRAILING.test(token)
-    ? token.replace(TRAILING, '') || undefined
-    : token;
+  return trimEnd(token, '.,') || undefined;
 }
 
 function isCurrency(word: string): boolean {
@@ -278,6 +287,37 @@ function wordAfter(
   return exponent === undefined ? null : { exponent, words: after };
 }
 
+/** A figure as read so far: its text, unit and scale. */
+interface Reading {
+  text: string;
+  unit: Unit;
+  exponent?: number;
+}
+
+/** Each number in a token that is a word, not a figure ("B2B", "v1.2"), with no unit. */
+function bareNumbers(token: string): Figure[] {
+  return [...token.matchAll(NUMBER_RUN)].map(([number]) => ({
+    text: token,
+    amount: amountOf(number, 0),
+    unit: '',
+  }));
+}
+
+/** The reading with the unit or scale the next word gives, where it has none of its own. */
+function withWordAfter(
+  reading: Reading,
+  next: ReturnType<typeof wordAfter>
+): Reading {
+  const unit = reading.unit === '' ? next?.unit : undefined;
+  const exponent = reading.exponent === undefined ? next?.exponent : undefined;
+  if (!next || (unit === undefined && exponent === undefined)) return reading;
+  return {
+    text: `${reading.text} ${next.words}`,
+    unit: unit ?? reading.unit,
+    exponent: exponent ?? reading.exponent,
+  };
+}
+
 /** The figures in tokens[i]: one if it is a figure, its bare numbers if it is a word. */
 function figuresAt(tokens: string[], i: number): Figure[] {
   const token = trimmed(tokens[i]);
@@ -285,34 +325,28 @@ function figuresAt(tokens: string[], i: number): Figure[] {
   const parts = FIGURE_TOKEN.exec(token);
   const lead = parts ? readPrefix(parts[1]) : null;
   const tail = parts ? readSuffix(parts[3]) : null;
-  if (!parts || lead === null || tail === null) {
-    return [...token.matchAll(NUMBER_RUN)].map(([number]) => ({
-      text: token,
-      amount: amountOf(number, 0),
-      unit: '',
-    }));
-  }
+  if (!parts || lead === null || tail === null) return bareNumbers(token);
 
-  let text = token;
-  let unit: Unit = lead || tail.unit || '';
-  let exponent = tail.exponent;
   const before = trimmed(tokens[i - 1]);
-  if (!lead && before !== undefined && isCurrency(before)) {
-    unit = 'currency';
-    text = `${before} ${text}`;
-  }
-  if (unit === 'currency' && exponent === undefined) {
-    exponent = CURRENCY_SCALE_LETTERS.get(parts[3].replace(/\+$/, ''));
-  }
-  const next = wordAfter(tokens, i);
-  if (next) {
-    const addsUnit = next.unit !== undefined && unit === '';
-    const addsScale = next.exponent !== undefined && exponent === undefined;
-    if (addsUnit && next.unit) unit = next.unit;
-    if (addsScale) exponent = next.exponent;
-    if (addsUnit || addsScale) text = `${text} ${next.words}`;
-  }
-  return [{ text, amount: amountOf(parts[2], exponent ?? 0), unit }];
+  const code =
+    !lead && before !== undefined && isCurrency(before) ? before : '';
+  const unit: Unit = code ? 'currency' : lead || tail.unit || '';
+  const exponent =
+    tail.exponent ??
+    (unit === 'currency'
+      ? CURRENCY_SCALE_LETTERS.get(parts[3].replace(/\+$/, ''))
+      : undefined);
+  const reading = withWordAfter(
+    { text: code ? `${code} ${token}` : token, unit, exponent },
+    wordAfter(tokens, i)
+  );
+  return [
+    {
+      text: reading.text,
+      amount: amountOf(parts[2], reading.exponent ?? 0),
+      unit: reading.unit,
+    },
+  ];
 }
 
 function figuresIn(text: string): Figure[] {
