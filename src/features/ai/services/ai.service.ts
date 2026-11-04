@@ -86,24 +86,23 @@ export async function generateBulletPoints(
   const prompt = `
 You are a professional resume writer with expertise in creating ATS-optimized, achievement-focused bullet points.
 
-Generate 4 or 5 POWERFUL, QUANTIFIABLE resume bullet points for:
+Generate 4 or 5 resume bullet points for:
 Role: ${request.jobTitle}
 Company: ${request.company}
 Description: ${request.description}
 ${request.skills ? `Key Skills: ${request.skills.join(', ')}` : ''}
 
-CRITICAL Requirements:
-1. START with strong action verbs (Led, Architected, Optimized, Spearheaded, Engineered, etc.)
-2. INCLUDE specific metrics and numbers (%, $, time saved, users impacted, etc.)
-3. FOCUS on business impact and results, not just responsibilities
-4. USE industry-specific technical keywords
-5. KEEP each bullet 100-150 characters for optimal ATS parsing
-6. FOLLOW the formula: [Action Verb] + [What you did] + [How you did it] + [Quantifiable result]
+Every bullet goes on a real person's resume, so it must be true:
+1. Use only facts in the role, description and skills above. Never invent numbers, percentages, money, team sizes, user counts, durations or results.
+2. Keep every number the description gives, exactly as given; do not calculate new ones from it.
+3. Where a result would be stronger with a metric the description does not give, write a placeholder in square brackets for the person to fill in, such as [X%], [N users] or [time saved].
+4. Start with a strong action verb (Led, Built, Designed, Optimized, Automated).
+5. Show what was done, how, and the result, in 100-150 characters.
+6. Use the technical terms from the description and skills.
 
-Examples of GOOD bullet points:
-- "Architected microservices infrastructure reducing deployment time by 60% and serving 2M+ daily users"
-- "Led cross-functional team of 8 engineers to deliver $2M revenue-generating feature 3 weeks ahead of schedule"
-- "Optimized database queries improving application response time by 45% and reducing server costs by $50K annually"
+Example. Description: "Moved nightly reports from a cron job to a queue; reports now finish before 6 am."
+- "Moved nightly reporting from a cron job to a queue-based worker, so reports finish before 6 am"
+- "Rebuilt the report scheduler on a queue, cutting failed runs by [X%]"
 
 Reply with JSON only: {"bullets": ["bullet text without symbols or numbering"]}
 `;
@@ -313,15 +312,14 @@ Candidate's Resume Data:
 ${JSON.stringify(resumeData, null, 2)}
 
 Requirements:
-1. Professional tone, 3-4 paragraphs
-2. Opening: Express enthusiasm and mention specific role
-3. Body: Highlight 2-3 relevant achievements from resume with metrics
-4. Closing: Call to action and availability
-5. Use candidate's actual experience and skills
-6. Match keywords from job description if provided
-7. Keep under 400 words
+1. Professional tone, 3-4 paragraphs, under 400 words
+2. Opening: express enthusiasm and name the role
+3. Body: highlight 2-3 relevant achievements from the resume
+4. Closing: a call to action
+5. Match keywords from the job description if provided
+6. Use only facts from the resume data and job description. Never invent numbers, employers, titles, dates or achievements; keep any number the resume gives exactly as given, and do not calculate new ones from it.
 
-Return ONLY the cover letter text, no additional formatting or explanations.
+Write the letter body only: start with "Dear Hiring Team," and end with a sign-off and the candidate's name from the resume data (just the sign-off if it has none). No addresses, dates, subject line, or placeholders in square brackets, and no explanations.
 `;
   return complete(prompt, 2048, false);
 }

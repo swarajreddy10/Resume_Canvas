@@ -85,6 +85,8 @@ const invalid = [
   { route: 'generate-cover-letter', body: { jobTitle: 'Engineer' } },
 ];
 
+// Importing the route modules is the slow part of a cold run (16.6 s seen on Windows with
+// coverage), so the hook gets the 60 s the other integration files give theirs.
 beforeAll(async () => {
   for (const { route } of cases) {
     routes[route] = (
@@ -93,7 +95,7 @@ beforeAll(async () => {
       }
     ).POST;
   }
-});
+}, 60_000);
 
 beforeEach(() => {
   session = { user: { email: 'ai-routes@example.com', name: 'AI Routes' } };

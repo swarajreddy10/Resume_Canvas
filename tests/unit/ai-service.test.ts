@@ -209,6 +209,16 @@ describe('generateBulletPoints', () => {
     await generateBulletPoints({ ...bulletRequest, skills: undefined });
     expect(lastPrompt()).not.toContain('Key Skills:');
   });
+
+  // The live measurement behind this rule: scripts/ai-facts-eval.ts.
+  test('asks for only the facts given, with a placeholder where a metric is missing', async () => {
+    replyWith('{"bullets": ["Led A"]}');
+    await generateBulletPoints(bulletRequest);
+    const prompt = lastPrompt();
+    expect(prompt).toContain('Never invent numbers');
+    expect(prompt).toContain('[X%]');
+    expect(prompt).not.toMatch(/INCLUDE specific metrics|\$\d|\d+M\+/);
+  });
 });
 
 describe('optimizeResume', () => {
@@ -282,5 +292,14 @@ describe('generateCoverLetter', () => {
     replyWith('Letter');
     await generateCoverLetter(letterInput);
     expect(lastPrompt()).not.toContain('Job Description:');
+  });
+
+  test('asks for the letter body only, from the facts given', async () => {
+    replyWith('Letter');
+    await generateCoverLetter(letterInput);
+    const prompt = lastPrompt();
+    expect(prompt).toContain('Never invent numbers');
+    expect(prompt).toContain('No addresses, dates, subject line');
+    expect(prompt).toContain('Dear Hiring Team,');
   });
 });
