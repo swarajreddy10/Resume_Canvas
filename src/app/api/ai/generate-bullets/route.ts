@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { aiService } from '@/services/ai.service';
+import { generateBulletPoints } from '@/services/ai.service';
+import { aiErrorResponse } from '@/lib/ai/errors';
 import { withAuth } from '@/lib/middleware/withAuth';
 import { withRateLimit } from '@/lib/middleware/withRateLimit';
 import { aiRateLimit } from '@/lib/security/rateLimit';
@@ -13,10 +14,13 @@ export const POST = withRateLimit(aiRateLimit)(
       const { jobTitle, company, description, skills } = sanitizeInput(body);
 
       if (!jobTitle || !company || !description) {
-        return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+        return NextResponse.json(
+          { error: 'Missing required fields' },
+          { status: 400 }
+        );
       }
 
-      const bulletPoints = await aiService.generateBulletPoints({
+      const bulletPoints = await generateBulletPoints({
         jobTitle,
         company,
         description,
@@ -24,8 +28,7 @@ export const POST = withRateLimit(aiRateLimit)(
       });
       return NextResponse.json({ bulletPoints });
     } catch (error) {
-      console.error(JSON.stringify({ level: 'error', msg: 'AI generation failed', error }));
-      return NextResponse.json({ error: 'Failed to generate bullet points' }, { status: 500 });
+      return aiErrorResponse(error, 'Failed to generate bullet points');
     }
   })
 );

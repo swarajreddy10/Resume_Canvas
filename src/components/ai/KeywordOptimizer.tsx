@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Target, TrendingUp } from 'lucide-react';
+import { postAI } from '@/lib/api/ai.client';
+import { showError } from '@/shared/services/toast.service';
 
 interface KeywordMatch {
   keyword: string;
@@ -30,19 +32,14 @@ export default function KeywordOptimizer({
 
     setAnalyzing(true);
     try {
-      const response = await fetch('/api/ai/analyze-keywords', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resumeData, jobDescription }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setKeywords(data.keywords);
-        setMatchScore(data.matchScore);
-      }
+      const data = await postAI<{
+        matchScore: number;
+        keywords: KeywordMatch[];
+      }>('/api/ai/analyze-keywords', { resumeData, jobDescription });
+      setKeywords(data.keywords);
+      setMatchScore(data.matchScore);
     } catch (error) {
-      console.error('Failed to analyze keywords:', error);
+      showError((error as Error).message);
     } finally {
       setAnalyzing(false);
     }
