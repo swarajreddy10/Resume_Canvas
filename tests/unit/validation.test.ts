@@ -532,6 +532,26 @@ describe('international input', () => {
     expect(PersonalInfoSchema.safeParse(person(name)).success).toBe(true);
   });
 
+  // Before Unicode 5.1 the five Malayalam chillus were written consonant + virama + ZWJ, so
+  // the joiner can end a word, and older data still holds that form (Unicode 17, section
+  // 12.9, Table 12-42: "implementations must be prepared to handle both kinds of data").
+  test.each([
+    ['nna', 'ണ'],
+    ['na', 'ന'],
+    ['rra', 'ര'],
+    ['la', 'ല'],
+    ['lla', 'ള'],
+  ])('accepts a legacy chillu %s at the end of a word', (_, consonant) => {
+    const chillu = `${consonant}്‍`;
+    expect(
+      PersonalInfoSchema.safeParse(person(`മോഹ${chillu} കുമാർ`)).success
+    ).toBe(true);
+    expect(
+      ExperienceSchema.safeParse(job(`ടെക്${chillu}`, `കൊച്ചി${chillu}`))
+        .success
+    ).toBe(true);
+  });
+
   test('accepts a non-joiner inside an employer and a location', () => {
     expect(
       ExperienceSchema.safeParse(job('نرم‌افزار', 'تهران‌پارس')).success

@@ -16,15 +16,18 @@ const PHONE_REGEX =
 // Letters of any script (\p{L}) and combining marks (\p{M}, for decomposed accents), not
 // a-z: names, employers and places are written in every language, with apostrophes
 // (O’Brien, McDonald's). https://www.w3.org/International/questions/qa-personal-names
-// U+200C and U+200D are allowed between letters or marks only: Persian compounds need the
+// U+200C and U+200D are allowed between letters or marks: Persian compounds need the
 // non-joiner (https://www.w3.org/International/alreq/), and Indic clusters take either after
-// the virama (https://www.unicode.org/faq/indic.html).
+// the virama (https://www.unicode.org/faq/indic.html). U+200D may also end a word after one
+// of the five Malayalam consonants + virama, the chillu form text used before Unicode 5.1
+// (Unicode 17, section 12.9, Table 12-42). The two joiner rules never match the same
+// character, so a long run of joiners cannot be matched in more than one way.
 const NAME_REGEX =
-  /^(?:[\p{L}\p{M}\s.,'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}]))+$/u;
+  /^(?:[\p{L}\p{M}\s.,'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}])|(?<=[ണനരലള]്)‍(?![\p{L}\p{M}]))+$/u;
 const COMPANY_REGEX =
-  /^(?:[\p{L}\p{M}\p{N}\s.,&()'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}]))+$/u;
+  /^(?:[\p{L}\p{M}\p{N}\s.,&()'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}])|(?<=[ണനരലള]്)‍(?![\p{L}\p{M}]))+$/u;
 const LOCATION_REGEX =
-  /^(?:[\p{L}\p{M}\p{N}\s.,'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}]))+$/u;
+  /^(?:[\p{L}\p{M}\p{N}\s.,'’-]|(?<=[\p{L}\p{M}])[‌‍](?=[\p{L}\p{M}])|(?<=[ണനരലള]്)‍(?![\p{L}\p{M}]))+$/u;
 const DATE_REGEX =
   /^(0[1-9]|1[0-2])[\/\-]\d{4}$|^\d{4}$|^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|January|February|March|April|May|June|July|August|September|October|November|December)\s\d{4}$|^Present$/i;
 
