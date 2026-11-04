@@ -520,4 +520,28 @@ describe('international input', () => {
     );
     expect(PersonalInfoSchema.safeParse(person('Zoë 2')).success).toBe(false);
   });
+
+  // Persian compounds need U+200C (ZWNJ) to break joining, and Indic clusters take U+200C or
+  // U+200D (ZWJ) after the virama, both inside words (W3C Arabic and Persian layout
+  // requirements; Unicode Indic FAQ). Outside a word they are only invisible noise.
+  test.each([
+    ['a Persian name with a non-joiner', 'علی‌رضا'],
+    ['a Devanagari name with a joiner', 'क्‍ष'],
+  ])('accepts %s', (_, name) => {
+    expect(PersonalInfoSchema.safeParse(person(name)).success).toBe(true);
+  });
+
+  test('accepts a non-joiner inside an employer and a location', () => {
+    expect(
+      ExperienceSchema.safeParse(job('نرم‌افزار', 'تهران‌پارس')).success
+    ).toBe(true);
+  });
+
+  test.each([
+    ['after the last letter', 'Zoë‌'],
+    ['before the first letter', '‍Zoë'],
+    ['between spaces', 'Zoë ‌ Ñúñez'],
+  ])('refuses a joiner %s', (_, name) => {
+    expect(PersonalInfoSchema.safeParse(person(name)).success).toBe(false);
+  });
 });
