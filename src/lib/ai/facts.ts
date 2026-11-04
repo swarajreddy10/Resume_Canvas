@@ -6,29 +6,31 @@
  * A figure keeps its unit: "30 minutes" does not license "30%", "4x" or "$30", though a
  * bare number may restate a figure given with a unit ("30 percent" after "30%"). Its scale
  * is part of the amount: "10k" does not license "10M", while "$10k" and "$10,000" are the
- * same figure. A placeholder is a bracket with no digit in it ([X%], [N users]); "[20%]"
- * is a figure.
+ * same figure. A number with more than one dot is an identifier (a version, an address)
+ * and matches only as written. A placeholder is a bracket with no digit in it ([X%],
+ * [N users]); "[20%]" is a figure.
  */
-// A number, an optional currency sign before it, and the word or sign after it, which
-// figuresIn() classifies; keeping the classes in code keeps the pattern simple.
-const FIGURE = /([$€£₹]?)(\d+(?:[.,]\d+)*)(?: ?(\p{L}+|%|×))?/gu;
-const QUALIFIERS: Record<string, 'percent' | 'times'> = {
+// A number not inside a word ("B2B" holds no figure), an optional currency sign before it,
+// and the whole word or sign after it, which figuresIn() classifies; keeping the classes
+// in code keeps the pattern simple.
+const FIGURE =
+  /(?<![\p{L}\p{N}])([$€£₹]?)(\d+(?:[.,]\d+)*)(?: ?(\p{L}[\p{L}\p{N}&]*|%|×))?/gu;
+// Signs and single letters are read as written: "M" and "B" are million and billion, while
+// "10m" is as likely minutes or metres. Words are read in any case ("10 Million").
+const UNIT_SIGNS: Record<string, 'percent' | 'times'> = {
   '%': 'percent',
-  percent: 'percent',
+  '×': 'times',
   x: 'times',
   X: 'times',
-  '×': 'times',
 };
-// Case matters: "M" and "B" are million and billion, "10m" is as likely minutes or metres.
-const SCALES: Record<string, number> = {
-  k: 1e3,
-  K: 1e3,
-  thousand: 1e3,
-  M: 1e6,
-  million: 1e6,
-  B: 1e9,
-  bn: 1e9,
-  billion: 1e9,
+const UNIT_WORDS: Record<string, 'percent'> = { percent: 'percent' };
+/** Scales as powers of ten. */
+const SCALE_LETTERS: Record<string, number> = { k: 3, K: 3, M: 6, B: 9 };
+const SCALE_WORDS: Record<string, number> = {
+  thousand: 3,
+  million: 6,
+  billion: 9,
+  bn: 9,
 };
 const PLACEHOLDER = /\[[^\]\d\n]{1,80}\]/g;
 // One small pattern per date shape, and the month checked in code: a single pattern with
@@ -59,27 +61,46 @@ function isMonth(word: string): boolean {
 }
 
 interface Figure {
-  /** As written, with its currency sign and its unit or scale word when it has one. */
+  /** As written: the currency sign and number, and the unit or scale word if it has one. */
   text: string;
-  /** The amount: the number times its scale ("$10k" and "$10,000" are both 10000). */
-  amount: number;
+  /** The amount as a decimal string ("$10k" and "$10,000" are both "10000"). */
+  amount: string;
   unit: '' | 'currency' | 'percent' | 'times';
 }
 
+/**
+ * The amount with its scale applied by moving the decimal point, as a canonical decimal
+ * string: floating point would make 16.1 * 1000 equal 16100.000000000002. A number with
+ * more than one dot is an identifier and is kept as written.
+ */
+function amountOf(number: string, exponent: number): string {
+  const digits = number.replace(/,/g, '');
+  const parts = digits.split('.');
+  if (parts.length > 2) return digits;
+  const [whole, fraction = ''] = parts;
+  const point = whole.length + exponent;
+  const all = (whole + fraction).padEnd(point, '0');
+  const integer = all.slice(0, point).replace(/^0+(?=\d)/, '');
+  const decimals = all.slice(point).replace(/0+$/, '');
+  return decimals ? `${integer}.${decimals}` : integer;
+}
+
 function figuresIn(text: string): Figure[] {
-  return [...text.matchAll(FIGURE)].map(([, currency, number, word = '']) => {
-    const qualifier = QUALIFIERS[word];
-    const scale = SCALES[word];
-    let unit: Figure['unit'] = qualifier ?? '';
-    if (currency) unit = 'currency';
-    const attached = qualifier || scale ? word : '';
-    const space = attached && attached.length > 2 ? ' ' : '';
-    return {
-      text: `${currency}${number}${space}${attached}`,
-      amount: Number(number.replace(/,/g, '')) * (scale ?? 1),
-      unit,
-    };
-  });
+  return [...text.matchAll(FIGURE)].map(
+    ([match, currency, number, word = '']) => {
+      const lower = word.toLowerCase();
+      const qualifier = UNIT_SIGNS[word] ?? UNIT_WORDS[lower];
+      const exponent = SCALE_LETTERS[word] ?? SCALE_WORDS[lower];
+      let unit: Figure['unit'] = qualifier ?? '';
+      if (currency) unit = 'currency';
+      const classified = qualifier !== undefined || exponent !== undefined;
+      return {
+        text: classified ? match : `${currency}${number}`,
+        amount: amountOf(number, exponent ?? 0),
+        unit,
+      };
+    }
+  );
 }
 
 /** Figures in `output` that `input` does not give, as written, in order of appearance. */

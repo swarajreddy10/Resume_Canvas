@@ -48,6 +48,48 @@ describe('inventedFigures', () => {
     expect(
       inventedFigures('Served 2.5 million users', 'served 2.5M users')
     ).toEqual([]);
+    // Decimal arithmetic, not floating point: 16.1 * 1000 is 16100.000000000002.
+    expect(
+      inventedFigures('Cut spend by $16.1k', 'cut spend by $16,100')
+    ).toEqual([]);
+    expect(
+      inventedFigures('Served 16,100 users', 'served 16.1k users')
+    ).toEqual([]);
+  });
+
+  test('a version or an address is matched as written', () => {
+    expect(
+      inventedFigures('Upgraded to React 18.2.0', 'upgraded to React 18.2.0')
+    ).toEqual([]);
+    expect(
+      inventedFigures('Moved 192.168.1.10 to a VPC', 'moved 192.168.1.10')
+    ).toEqual([]);
+    expect(inventedFigures('Upgraded to React 18.3.1', 'React 18.2.0')).toEqual(
+      ['18.3.1']
+    );
+  });
+
+  test('a scale is a whole word, not the first letter of one', () => {
+    expect(
+      inventedFigures('Onboarded 3 B2B clients', 'onboarded 3 clients in B2B')
+    ).toEqual([]);
+    expect(inventedFigures('Shipped 3 M&A tools', 'shipped 3 tools')).toEqual(
+      []
+    );
+    // A digit inside a word is part of the word, not a figure.
+    expect(
+      inventedFigures('Built our B2B platform', 'built a platform')
+    ).toEqual([]);
+  });
+
+  test('scale and unit words are read in any case', () => {
+    expect(
+      inventedFigures('Served 10 Million users', 'served 10 users')
+    ).toEqual(['10 Million']);
+    expect(inventedFigures('Raised $3 Bn', 'raised $3 Bn')).toEqual([]);
+    expect(
+      inventedFigures('Cut errors by 30 Percent', 'cut errors in 30 minutes')
+    ).toEqual(['30 Percent']);
   });
 
   test('a bare number may restate a figure the input gave with its unit', () => {
