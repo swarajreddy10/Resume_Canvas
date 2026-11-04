@@ -131,8 +131,9 @@ const NO_SUFFIX: { unit?: Unit; exponent?: number } = Object.freeze({});
 const PLACEHOLDER = /\[[^\]\d\n]{1,80}\]/g;
 // One small pattern per date shape, and the month checked in code: a single pattern with
 // the month names inline scored 127 on Sonar's regex complexity rule (S5843, limit 20).
-const MONTH_FIRST = /\b([A-Z][a-z]{2,8}) \d{1,2},? \d{4}\b/g;
-const DAY_FIRST = /\b\d{1,2} ([A-Z][a-z]{2,8}),? \d{4}\b/g;
+// A short month may take a full stop ("Nov. 4") and a day an ordinal ("4th", "21st").
+const MONTH_FIRST = /\b([A-Z][a-z]{2,8})\.? \d{1,2}(?:st|nd|rd|th)?,? \d{4}\b/g;
+const DAY_FIRST = /\b\d{1,2}(?:st|nd|rd|th)? ([A-Z][a-z]{2,8})\.?,? \d{4}\b/g;
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/g;
 const NUMERIC_DATE = /\b\d{1,2}[/.]\d{1,2}[/.]\d{4}\b/g;
 const MONTHS = [

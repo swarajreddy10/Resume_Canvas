@@ -386,4 +386,17 @@ describe('dates', () => {
       []
     );
   });
+
+  test('takes a full stop after a short month and an ordinal day', () => {
+    expect(
+      dates(
+        'Sent Nov. 4, 2026, 4 Dec. 2025, November 4th, 2026 and 21st March 2025'
+      )
+    ).toEqual([
+      'Nov. 4, 2026',
+      '4 Dec. 2025',
+      'November 4th, 2026',
+      '21st March 2025',
+    ]);
+  });
 });
