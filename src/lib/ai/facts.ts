@@ -32,7 +32,6 @@ type Unit = '' | 'currency' | 'percent' | 'times';
 const SPLIT_DASH = /(?<=\d[%×]?|\d[A-Za-z]{1,2})[-‐‑–—]/g;
 // Spaces and punctuation that never sit inside a figure, Markdown marks included.
 const SEPARATORS = /[\s"'“”‘’`{}[\]()<>:;/\\|*_#!?–—]+/;
-const TRAILING = /[.,]+$/;
 const DIGIT = /\d/;
 // A token's parts: what precedes the number, the number, and what follows it.
 const FIGURE_TOKEN = /^(\D*?)(\d+(?:[.,]\d+)*)(\D*)$/u;
@@ -132,8 +131,10 @@ const NO_SUFFIX: { unit?: Unit; exponent?: number } = Object.freeze({});
 const PLACEHOLDER = /\[[^\]\d\n]{1,80}\]/g;
 // One small pattern per date shape, and the month checked in code: a single pattern with
 // the month names inline scored 127 on Sonar's regex complexity rule (S5843, limit 20).
-const MONTH_FIRST = /\b([A-Z][a-z]{2,8}) \d{1,2},? \d{4}\b/g;
-const DAY_FIRST = /\b\d{1,2} ([A-Z][a-z]{2,8}),? \d{4}\b/g;
+// A day may take an ordinal ("4th", "21st"), and a month a full stop, which isMonth allows
+// after a short name only ("Nov. 4", not "May. 10" ending a sentence).
+const MONTH_FIRST = /\b([A-Z][a-z]{2,8}\.?) \d{1,2}(?:st|nd|rd|th)?,? \d{4}\b/g;
+const DAY_FIRST = /\b\d{1,2}(?:st|nd|rd|th)? ([A-Z][a-z]{2,8}\.?),? \d{4}\b/g;
 const ISO_DATE = /\b\d{4}-\d{2}-\d{2}\b/g;
 const NUMERIC_DATE = /\b\d{1,2}[/.]\d{1,2}[/.]\d{4}\b/g;
 const MONTHS = [
@@ -151,10 +152,19 @@ const MONTHS = [
   'december',
 ];
 
-/** A full month name, its first three letters, or "Sept". */
+/**
+ * A full month name, its first three letters, or "Sept"; a full stop may follow a short
+ * name that abbreviates a longer one ("Nov.", "Sept."), not a full name ("May.", "June.").
+ */
 function isMonth(word: string): boolean {
-  const w = word.toLowerCase();
-  return w === 'sept' || MONTHS.some((m) => w === m || w === m.slice(0, 3));
+  const dotted = word.endsWith('.');
+  const w = (dotted ? word.slice(0, -1) : word).toLowerCase();
+  if (w === 'sept') return true;
+  return MONTHS.some((m) =>
+    dotted
+      ? m.length > 3 && w === m.slice(0, 3)
+      : w === m || w === m.slice(0, 3)
+  );
 }
 
 /**
@@ -195,20 +205,30 @@ function amountOf(number: string, exponent: number): string {
   const point = whole.length + exponent;
   const all = (whole + fraction).padEnd(point, '0');
   const integer = all.slice(0, point).replace(/^0+(?=\d)/, '');
-  const decimals = all.slice(point).replace(/0+$/, '');
+  const decimals = trimEnd(all.slice(point), '0');
   return decimals ? `${integer}.${decimals}` : integer;
 }
 
-/** Tokens as split; trailing punctuation is trimmed only where a figure is read. */
-function tokensOf(text: string): string[] {
-  return text.replace(SPLIT_DASH, ' ').split(SEPARATORS);
+/** Tokens as split, each trimmed once; undefined where nothing is left. */
+function tokensOf(text: string): (string | undefined)[] {
+  return text.replace(SPLIT_DASH, ' ').split(SEPARATORS).map(trimmed);
 }
 
+/**
+ * `text` without the run of `chars` at its end, found by scanning back from the end. A
+ * regex such as /[.,]+$/ is retried from every start, so a long run that ends in another
+ * character costs the square of its length.
+ */
+function trimEnd(text: string, chars: string): string {
+  let end = text.length;
+  while (end > 0 && chars.includes(text[end - 1])) end--;
+  return text.slice(0, end);
+}
+
+/** The token without trailing full stops and commas; undefined if nothing is left. */
 function trimmed(token: string | undefined): string | undefined {
   if (!token) return undefined;
-  return TRAILING.test(token)
-    ? token.replace(TRAILING, '') || undefined
-    : token;
+  return trimEnd(token, '.,') || undefined;
 }
 
 function isCurrency(word: string): boolean {
@@ -224,23 +244,14 @@ function readPrefix(prefix: string): Unit | null {
   return SIGN_UNITS.get(p) === 'times' ? 'times' : null;
 }
 
-/**
- * What follows the number in its token: a unit, a scale, nothing, or another unit such as
- * "h" or "GB" (a plain figure); null if the token is a word. A trailing "+" ("5+",
- * "10k+") leaves the figure as written.
- */
-function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
-  if (suffix === '') return NO_SUFFIX;
-  const s = suffix.endsWith('+') ? suffix.slice(0, -1) : suffix;
+/** The suffix without a trailing "+" ("5+", "10k+"), which leaves the figure as written. */
+function withoutPlus(suffix: string): string {
+  return suffix.endsWith('+') ? suffix.slice(0, -1) : suffix;
+}
+
+/** A suffix with no currency sign: a unit, a scale, nothing or a word; null otherwise. */
+function unitOrScale(s: string): { unit?: Unit; exponent?: number } | null {
   if (s === '') return NO_SUFFIX;
-  if (TRAILING_CURRENCY.has(s)) return { unit: 'currency' };
-  // A sign after a scale ("10k€"): money, at that scale.
-  if (s.length > 1 && TRAILING_CURRENCY.has(s.slice(-1))) {
-    const scaled = readSuffix(s.slice(0, -1));
-    return scaled && !scaled.unit
-      ? { unit: 'currency', exponent: scaled.exponent }
-      : null;
-  }
   const unit = SIGN_UNITS.get(s) ?? WORD_UNITS.get(s.toLowerCase());
   if (unit) return { unit };
   const exponent = SCALE_LETTERS.get(s) ?? SCALE_WORDS.get(s.toLowerCase());
@@ -249,19 +260,37 @@ function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
 }
 
 /**
+ * What follows the number in its token: a unit, a scale, nothing, or another unit such as
+ * "h" or "GB" (a plain figure); null if the token is a word.
+ */
+function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
+  const s = withoutPlus(suffix);
+  if (TRAILING_CURRENCY.has(s)) return { unit: 'currency' };
+  // A sign after a scale ("10k€"): money, at that scale. One sign is read, so a run of
+  // signs is a word, not a call per sign.
+  if (s.length > 1 && TRAILING_CURRENCY.has(s.slice(-1))) {
+    const scaled = unitOrScale(withoutPlus(s.slice(0, -1)));
+    return scaled && !scaled.unit
+      ? { unit: 'currency', exponent: scaled.exponent }
+      : null;
+  }
+  return unitOrScale(s);
+}
+
+/**
  * What the word after a figure adds: a currency ("500 euros"), a unit ("30 percent", "30
  * per cent", "10 times faster") or a scale ("10 million", "₹5 lacs"). A lone letter is a
  * word, not a scale ("3 B-tree", "Plan 2 B"), and "20 times a day" is a count.
  */
 function wordAfter(
-  tokens: string[],
+  tokens: (string | undefined)[],
   i: number
 ): { unit?: Unit; exponent?: number; words: string } | null {
-  const after = trimmed(tokens[i + 1]);
+  const after = tokens[i + 1];
   if (after === undefined) return null;
   const lower = after.toLowerCase();
   if (CURRENCY_WORDS.has(lower)) return { unit: 'currency', words: after };
-  const then = trimmed(tokens[i + 2]);
+  const then = tokens[i + 2];
   if (lower === 'per' && then?.toLowerCase() === 'cent') {
     return { unit: 'percent', words: `${after} ${then}` };
   }
@@ -278,41 +307,66 @@ function wordAfter(
   return exponent === undefined ? null : { exponent, words: after };
 }
 
+/** A figure as read so far: its text, unit and scale. */
+interface Reading {
+  text: string;
+  unit: Unit;
+  exponent?: number;
+}
+
+/** Each number in a token that is a word, not a figure ("B2B", "v1.2"), with no unit. */
+function bareNumbers(token: string): Figure[] {
+  return [...token.matchAll(NUMBER_RUN)].map(([number]) => ({
+    text: token,
+    amount: amountOf(number, 0),
+    unit: '',
+  }));
+}
+
+/** The reading with the unit or scale the next word gives, where it has none of its own. */
+function withWordAfter(
+  reading: Reading,
+  next: ReturnType<typeof wordAfter>
+): Reading {
+  const unit = reading.unit === '' ? next?.unit : undefined;
+  const exponent = reading.exponent === undefined ? next?.exponent : undefined;
+  if (!next || (unit === undefined && exponent === undefined)) return reading;
+  return {
+    text: `${reading.text} ${next.words}`,
+    unit: unit ?? reading.unit,
+    exponent: exponent ?? reading.exponent,
+  };
+}
+
 /** The figures in tokens[i]: one if it is a figure, its bare numbers if it is a word. */
-function figuresAt(tokens: string[], i: number): Figure[] {
-  const token = trimmed(tokens[i]);
+function figuresAt(tokens: (string | undefined)[], i: number): Figure[] {
+  const token = tokens[i];
   if (!token || !DIGIT.test(token)) return [];
   const parts = FIGURE_TOKEN.exec(token);
   const lead = parts ? readPrefix(parts[1]) : null;
   const tail = parts ? readSuffix(parts[3]) : null;
-  if (!parts || lead === null || tail === null) {
-    return [...token.matchAll(NUMBER_RUN)].map(([number]) => ({
-      text: token,
-      amount: amountOf(number, 0),
-      unit: '',
-    }));
-  }
+  if (!parts || lead === null || tail === null) return bareNumbers(token);
 
-  let text = token;
-  let unit: Unit = lead || tail.unit || '';
-  let exponent = tail.exponent;
-  const before = trimmed(tokens[i - 1]);
-  if (!lead && before !== undefined && isCurrency(before)) {
-    unit = 'currency';
-    text = `${before} ${text}`;
-  }
-  if (unit === 'currency' && exponent === undefined) {
-    exponent = CURRENCY_SCALE_LETTERS.get(parts[3].replace(/\+$/, ''));
-  }
-  const next = wordAfter(tokens, i);
-  if (next) {
-    const addsUnit = next.unit !== undefined && unit === '';
-    const addsScale = next.exponent !== undefined && exponent === undefined;
-    if (addsUnit && next.unit) unit = next.unit;
-    if (addsScale) exponent = next.exponent;
-    if (addsUnit || addsScale) text = `${text} ${next.words}`;
-  }
-  return [{ text, amount: amountOf(parts[2], exponent ?? 0), unit }];
+  const before = tokens[i - 1];
+  const code =
+    !lead && before !== undefined && isCurrency(before) ? before : '';
+  const unit: Unit = code ? 'currency' : lead || tail.unit || '';
+  const exponent =
+    tail.exponent ??
+    (unit === 'currency'
+      ? CURRENCY_SCALE_LETTERS.get(withoutPlus(parts[3]))
+      : undefined);
+  const reading = withWordAfter(
+    { text: code ? `${code} ${token}` : token, unit, exponent },
+    wordAfter(tokens, i)
+  );
+  return [
+    {
+      text: reading.text,
+      amount: amountOf(parts[2], reading.exponent ?? 0),
+      unit: reading.unit,
+    },
+  ];
 }
 
 function figuresIn(text: string): Figure[] {
@@ -322,11 +376,15 @@ function figuresIn(text: string): Figure[] {
 
 /** Figures in `output` that `input` does not give, as written, in order of appearance. */
 export function inventedFigures(output: string, input: string): string[] {
-  const given = figuresIn(input);
-  const supported = (f: Figure) =>
-    given.some(
-      (g) => g.amount === f.amount && (f.unit === '' || g.unit === f.unit)
-    );
+  // Each amount the input gives, with the units it is given in: one lookup per figure.
+  const given = new Map<string, Set<Unit>>();
+  for (const g of figuresIn(input)) {
+    given.set(g.amount, (given.get(g.amount) ?? new Set<Unit>()).add(g.unit));
+  }
+  const supported = (f: Figure) => {
+    const units = given.get(f.amount);
+    return units !== undefined && (f.unit === '' || units.has(f.unit));
+  };
   return [
     ...new Set(
       figuresIn(output)

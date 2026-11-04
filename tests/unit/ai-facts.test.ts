@@ -317,6 +317,22 @@ describe('inventedFigures', () => {
   test.each(cases)('%s', (_, output, input, expected) => {
     expect(inventedFigures(output, input)).toEqual(expected);
   });
+
+  // Inputs are the user's résumé text, so no long run, and no long list of figures, may
+  // cost the square of its length.
+  test.each([
+    ['dots before a letter', `1${'.'.repeat(50_000)}a`],
+    ['zeros before a digit', `1.${'0'.repeat(50_000)}1`],
+    ['currency signs after a number', `1${'$'.repeat(50_000)}`],
+    [
+      'twenty thousand figures',
+      Array.from({ length: 20_000 }, (_, i) => String(i)).join(' '),
+    ],
+  ])('reads %s in linear time', (_, text) => {
+    const start = performance.now();
+    inventedFigures(text, text);
+    expect(performance.now() - start).toBeLessThan(250);
+  });
 });
 
 describe('textOf', () => {
@@ -369,5 +385,32 @@ describe('dates', () => {
     expect(dates('Sprint 12 2025 shipped; Release 3 2024 followed')).toEqual(
       []
     );
+  });
+
+  test('takes a full stop after a short month and an ordinal day', () => {
+    expect(
+      dates(
+        'Sent Nov. 4, 2026, 4 Dec. 2025, November 4th, 2026 and 21st March 2025'
+      )
+    ).toEqual([
+      'Nov. 4, 2026',
+      '4 Dec. 2025',
+      'November 4th, 2026',
+      '21st March 2025',
+    ]);
+    // Short names of the shortest months, and the four-letter Sept.
+    expect(dates('Sent Jun. 9, 2024, 3 Jul. 2025 and Sept. 3, 2025')).toEqual([
+      'Jun. 9, 2024',
+      '3 Jul. 2025',
+      'Sept. 3, 2025',
+    ]);
+  });
+
+  test('a full month name ending a sentence is not a dated month', () => {
+    expect(
+      dates(
+        'Shipped in May. 10 2026 releases followed, in June. 4 2025 more, and on 4 June. 2025 a fix'
+      )
+    ).toEqual([]);
   });
 });

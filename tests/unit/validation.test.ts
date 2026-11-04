@@ -6,6 +6,7 @@ import {
   ProjectSchema,
   CertificationSchema,
 } from '@/lib/validation/resume.schemas';
+import { EMAIL_REGEX } from '@/lib/validation/email.regex';
 
 describe('PersonalInfoSchema - Edge Cases', () => {
   test('validates correct personal info', () => {
@@ -531,6 +532,71 @@ describe('international input', () => {
     expect(PersonalInfoSchema.safeParse(person(name)).success).toBe(true);
   });
 
+  // Before Unicode 5.1 the five Malayalam chillus were written consonant + virama + ZWJ, so
+  // the joiner can end a word, and older data still holds that form (Unicode 17, section
+  // 12.9, Table 12-42: "implementations must be prepared to handle both kinds of data").
+  const VIRAMA = String.fromCharCode(0x0d4d);
+  const ZWJ = String.fromCharCode(0x200d);
+  const ZWNJ = String.fromCharCode(0x200c);
+  const school = (school: string, location = 'Kochi') => ({
+    school,
+    degree: 'BTech',
+    field: 'Computer Science',
+    startDate: '2018',
+    endDate: '2022',
+    location,
+  });
+  // Every field the script patterns check: name, school, employer, and both locations.
+  const fields = [
+    ['name', (v: string) => PersonalInfoSchema.safeParse(person(v)).success],
+    ['school', (v: string) => EducationSchema.safeParse(school(v)).success],
+    [
+      'school location',
+      (v: string) => EducationSchema.safeParse(school('CUSAT', v)).success,
+    ],
+    ['employer', (v: string) => ExperienceSchema.safeParse(job(v)).success],
+    [
+      'job location',
+      (v: string) => ExperienceSchema.safeParse(job('Acme', v)).success,
+    ],
+  ] as const;
+
+  test.each([
+    ['nna', 'ണ'],
+    ['na', 'ന'],
+    ['rra', 'ര'],
+    ['la', 'ല'],
+    ['lla', 'ള'],
+  ])('accepts a legacy chillu %s at the end of a word', (_, consonant) => {
+    const value = `മോഹ${consonant}${VIRAMA}${ZWJ} കുമാർ`;
+    for (const [, accepts] of fields) expect(accepts(value)).toBe(true);
+  });
+
+  test.each([
+    ['after a consonant the table does not list (ka)', `മോഹക${VIRAMA}${ZWJ}`],
+    ['as a non-joiner', `മോഹന${VIRAMA}${ZWNJ}`],
+    ['twice', `മോഹന${VIRAMA}${ZWJ}${ZWJ}`],
+    ['twice before a letter', `മോഹന${VIRAMA}${ZWJ}${ZWJ}ക`],
+    ['then a non-joiner before a letter', `മോഹന${VIRAMA}${ZWJ}${ZWNJ}ക`],
+    ['with no virama', `മോഹന${ZWJ}`],
+  ])('refuses a Malayalam joiner %s', (_, value) => {
+    for (const [, accepts] of fields) expect(accepts(value)).toBe(false);
+  });
+
+  // A pattern rule for legacy chillus that overlapped the between-letters joiner rule let
+  // each joiner match two ways: 22 of them before a refused character took over a second.
+  test.each(fields)(
+    'refuses a long run of legacy chillus in the %s in linear time',
+    (_, accepts) => {
+      // Plain chillus, and chillus each followed by a second joiner, which stay as written.
+      for (const unit of [`ന${VIRAMA}${ZWJ}`, `ന${VIRAMA}${ZWJ}${ZWJ}`]) {
+        const start = performance.now();
+        expect(accepts(unit.repeat(22) + 'ന<')).toBe(false);
+        expect(performance.now() - start).toBeLessThan(250);
+      }
+    }
+  );
+
   test('accepts a non-joiner inside an employer and a location', () => {
     expect(
       ExperienceSchema.safeParse(job('نرم‌افزار', 'تهران‌پارس')).success
@@ -543,5 +609,35 @@ describe('international input', () => {
     ['between spaces', 'Zoë ‌ Ñúñez'],
   ])('refuses a joiner %s', (_, name) => {
     expect(PersonalInfoSchema.safeParse(person(name)).success).toBe(false);
+  });
+});
+
+// The models check this on every save, and job-application contacts reach it with no
+// length limit before it, so it must reject in linear time.
+describe('EMAIL_REGEX', () => {
+  test.each([
+    'zoe@example.com',
+    'first.last+tag@mail.example.co.uk',
+    'zoë@exämple.de',
+  ])('accepts %s', (email) => {
+    expect(EMAIL_REGEX.test(email)).toBe(true);
+  });
+
+  test.each([
+    '',
+    'zoe',
+    'zoe@example',
+    '@example.com',
+    'zoe@example.',
+    'zoe@@example.com',
+    'zo e@example.com',
+  ])('refuses %j', (email) => {
+    expect(EMAIL_REGEX.test(email)).toBe(false);
+  });
+
+  test('refuses a long run of dots in linear time', () => {
+    const start = performance.now();
+    expect(EMAIL_REGEX.test(`a@${'.'.repeat(50_000)}@`)).toBe(false);
+    expect(performance.now() - start).toBeLessThan(250);
   });
 });

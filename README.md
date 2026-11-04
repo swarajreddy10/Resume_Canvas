@@ -203,10 +203,10 @@ out, time units, or digits outside ASCII. Bullets may quantify a result the desc
 with a placeholder such as `[X%]` for the user to fill in; cover letters carry no placeholders
 and take the candidate's facts from the resume only, never from the job description.
 `bun run ai:facts` measures the model's raw drafts live: on 2026-11-04 (6 runs each), bullets
-with a number the user never gave fell from 58 of 59 on the old prompt to 1 of 48 (a
-"26-minute" cut the model worked out from "30 to 4 minutes", which the check drops), and cover
-letters with invented numbers, `[Your Address]`-style placeholders or a made-up date from 6, 6
-and 4 of 6 to none.
+with a number the user never gave fell from 59 of 59 on the old prompt to 1 of 48 and then 0 of
+48 in two runs of the current one (the 1 a "26-minute" cut the model worked out from "30 to 4
+minutes", which the check drops), and cover letters with invented numbers, `[Your Address]`-style
+placeholders or a made-up date from 6, 6 and at least 4 of 6 to none.
 
 | AI Feature        | Input                           | Output                                                        |
 | ----------------- | ------------------------------- | ------------------------------------------------------------- |
