@@ -13,7 +13,7 @@ describe('inventedFigures', () => {
         'Cut a batch from 30 to 4 minutes (87% faster), serving 15k users and saving $120,000.',
         'replaced row-wise inserts, cutting a batch from 30 to 4 minutes'
       )
-    ).toEqual(['87%', '15', '$120,000']);
+    ).toEqual(['87%', '15k', '$120,000']);
   });
 
   test('accepts figures the input gave, however they are written', () => {
@@ -28,6 +28,26 @@ describe('inventedFigures', () => {
     expect(inventedFigures('Boosted throughput 4x', input)).toEqual(['4x']);
     expect(inventedFigures('Saved $30 a month', input)).toEqual(['$30']);
     expect(inventedFigures('Cut it to 4 minutes', input)).toEqual([]);
+  });
+
+  test('a scale is part of the figure: 10k does not license 10M', () => {
+    expect(inventedFigures('Served 10M users', 'served 10k users')).toEqual([
+      '10M',
+    ]);
+    expect(
+      inventedFigures('Served 10 million users', 'served 10k users')
+    ).toEqual(['10 million']);
+    expect(inventedFigures('Raised $10M', 'raised $10k')).toEqual(['$10M']);
+    expect(inventedFigures('Served 15k users', 'served 15 users')).toEqual([
+      '15k',
+    ]);
+  });
+
+  test('the same amount written another way is the same figure', () => {
+    expect(inventedFigures('Raised $10,000', 'raised $10k')).toEqual([]);
+    expect(
+      inventedFigures('Served 2.5 million users', 'served 2.5M users')
+    ).toEqual([]);
   });
 
   test('a bare number may restate a figure the input gave with its unit', () => {
