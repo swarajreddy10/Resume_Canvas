@@ -34,6 +34,10 @@ describe('evaluate', () => {
     });
     expect(lines).toHaveLength(4);
     expect(JSON.parse(lines[1]).invented).toEqual(['50%']);
+    // The whole letter is saved, so a run can be counted again when the check changes.
+    expect(JSON.parse(lines[3]).letter).toBe(
+      '[Your Address]\nApril 27 2026\nDear Hiring Team, I cut a batch 87% faster.'
+    );
   });
 
   test('counts a failed generation instead of stopping', async () => {

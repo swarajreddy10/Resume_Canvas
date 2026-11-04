@@ -7,8 +7,9 @@
  * from "30 to 4 minutes"), or a number reused with another unit, counts as invented.
  *
  * Usage: bun run ai:facts [runs per input, default 6] (live Groq API, GROQ_API_KEY set).
- * Prints one JSON line per generation, then a summary. Each run is two bullet requests
- * and one cover letter, about 2,700 tokens.
+ * Prints one JSON line per bullet and one per cover letter, each with its whole text so a
+ * saved run can be counted again when the check changes, one per failed request, then a
+ * summary. Each run is two bullet requests and one cover letter, about 2,700 tokens.
  */
 import {
   coverLetterFacts,
@@ -17,7 +18,7 @@ import {
   type BulletPointRequest,
   type CoverLetterRequest,
 } from '@/features/ai/services/ai.service';
-import { dates, inventedFigures, placeholders } from '@/lib/ai/facts';
+import { dates, inventedFigures, placeholders, textOf } from '@/lib/ai/facts';
 
 const bulletInputs: BulletPointRequest[] = [
   {
@@ -74,7 +75,7 @@ async function measureBullets(
   log: Log
 ) {
   for (const bullet of await draftBulletPoints(input)) {
-    const invented = inventedFigures(bullet, JSON.stringify(input));
+    const invented = inventedFigures(bullet, textOf(input));
     summary.bullets++;
     if (invented.length) summary.bulletsWithInventedNumber++;
     if (placeholders(bullet).length) summary.bulletsWithPlaceholder++;
@@ -95,7 +96,7 @@ async function measureLetter(summary: Summary, log: Log) {
       invented,
       placeholders: placeholders(letter),
       dates: dates(letter),
-      opening: letter.slice(0, 120),
+      letter,
     })
   );
 }
