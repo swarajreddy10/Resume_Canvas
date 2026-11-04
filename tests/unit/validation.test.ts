@@ -570,8 +570,10 @@ describe('international input', () => {
     ['after a consonant the table does not list (ka)', `മോഹക${VIRAMA}${ZWJ}`],
     ['as a non-joiner', `മോഹന${VIRAMA}${ZWNJ}`],
     ['twice', `മോഹന${VIRAMA}${ZWJ}${ZWJ}`],
+    ['twice before a letter', `മോഹന${VIRAMA}${ZWJ}${ZWJ}ക`],
+    ['then a non-joiner before a letter', `മോഹന${VIRAMA}${ZWJ}${ZWNJ}ക`],
     ['with no virama', `മോഹന${ZWJ}`],
-  ])('refuses a word-final joiner %s', (_, value) => {
+  ])('refuses a Malayalam joiner %s', (_, value) => {
     for (const [, accepts] of fields) expect(accepts(value)).toBe(false);
   });
 

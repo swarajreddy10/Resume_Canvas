@@ -28,9 +28,10 @@ const LOCATION_REGEX =
 // Before Unicode 5.1 the five Malayalam chillus were written consonant + virama + U+200D, so
 // that joiner can end a word, and older text still holds the form (Unicode 17, section 12.9,
 // Table 12-42: "implementations must be prepared to handle both kinds of data"). Each is
-// read as its consonant before a pattern is tested, so the joiner rule above stays one rule.
+// read as its consonant before a pattern is tested, so the joiner rule above stays one rule;
+// not where another joiner follows, which would then sit after a letter and pass.
 const LEGACY_CHILLU =
-  /([\u{0D23}\u{0D28}\u{0D30}\u{0D32}\u{0D33}])\u{0D4D}\u{200D}/gu;
+  /([\u{0D23}\u{0D28}\u{0D30}\u{0D32}\u{0D33}])\u{0D4D}\u{200D}(?![\u{200C}\u{200D}])/gu;
 
 /** A check that `value`, with each legacy chillu read as its consonant, matches `pattern`. */
 const inScript = (pattern: RegExp) => (value: string) =>
