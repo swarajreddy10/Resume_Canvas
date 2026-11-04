@@ -1,6 +1,6 @@
 /**
  * The one email pattern the database models check, for account, resume and contact
- * addresses alike. Client-safe: no Node-only imports.
+ * addresses alike.
  *
  * It accepts the same addresses as /^[^\s@]+@[^\s@]+\.[^\s@]+$/, which let both runs on
  * either side of the dot take the domain's other dots, so a long run of dots cost the

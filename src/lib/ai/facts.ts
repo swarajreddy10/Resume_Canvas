@@ -198,9 +198,9 @@ function amountOf(number: string, exponent: number): string {
   return decimals ? `${integer}.${decimals}` : integer;
 }
 
-/** Tokens as split; trailing punctuation is trimmed only where a figure is read. */
-function tokensOf(text: string): string[] {
-  return text.replace(SPLIT_DASH, ' ').split(SEPARATORS);
+/** Tokens as split, each trimmed once; undefined where nothing is left. */
+function tokensOf(text: string): (string | undefined)[] {
+  return text.replace(SPLIT_DASH, ' ').split(SEPARATORS).map(trimmed);
 }
 
 /**
@@ -233,23 +233,14 @@ function readPrefix(prefix: string): Unit | null {
   return SIGN_UNITS.get(p) === 'times' ? 'times' : null;
 }
 
-/**
- * What follows the number in its token: a unit, a scale, nothing, or another unit such as
- * "h" or "GB" (a plain figure); null if the token is a word. A trailing "+" ("5+",
- * "10k+") leaves the figure as written.
- */
-function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
-  if (suffix === '') return NO_SUFFIX;
-  const s = suffix.endsWith('+') ? suffix.slice(0, -1) : suffix;
+/** The suffix without a trailing "+" ("5+", "10k+"), which leaves the figure as written. */
+function withoutPlus(suffix: string): string {
+  return suffix.endsWith('+') ? suffix.slice(0, -1) : suffix;
+}
+
+/** A suffix with no currency sign: a unit, a scale, nothing or a word; null otherwise. */
+function unitOrScale(s: string): { unit?: Unit; exponent?: number } | null {
   if (s === '') return NO_SUFFIX;
-  if (TRAILING_CURRENCY.has(s)) return { unit: 'currency' };
-  // A sign after a scale ("10k€"): money, at that scale.
-  if (s.length > 1 && TRAILING_CURRENCY.has(s.slice(-1))) {
-    const scaled = readSuffix(s.slice(0, -1));
-    return scaled && !scaled.unit
-      ? { unit: 'currency', exponent: scaled.exponent }
-      : null;
-  }
   const unit = SIGN_UNITS.get(s) ?? WORD_UNITS.get(s.toLowerCase());
   if (unit) return { unit };
   const exponent = SCALE_LETTERS.get(s) ?? SCALE_WORDS.get(s.toLowerCase());
@@ -258,19 +249,37 @@ function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
 }
 
 /**
+ * What follows the number in its token: a unit, a scale, nothing, or another unit such as
+ * "h" or "GB" (a plain figure); null if the token is a word.
+ */
+function readSuffix(suffix: string): { unit?: Unit; exponent?: number } | null {
+  const s = withoutPlus(suffix);
+  if (TRAILING_CURRENCY.has(s)) return { unit: 'currency' };
+  // A sign after a scale ("10k€"): money, at that scale. One sign is read, so a run of
+  // signs is a word, not a call per sign.
+  if (s.length > 1 && TRAILING_CURRENCY.has(s.slice(-1))) {
+    const scaled = unitOrScale(withoutPlus(s.slice(0, -1)));
+    return scaled && !scaled.unit
+      ? { unit: 'currency', exponent: scaled.exponent }
+      : null;
+  }
+  return unitOrScale(s);
+}
+
+/**
  * What the word after a figure adds: a currency ("500 euros"), a unit ("30 percent", "30
  * per cent", "10 times faster") or a scale ("10 million", "₹5 lacs"). A lone letter is a
  * word, not a scale ("3 B-tree", "Plan 2 B"), and "20 times a day" is a count.
  */
 function wordAfter(
-  tokens: string[],
+  tokens: (string | undefined)[],
   i: number
 ): { unit?: Unit; exponent?: number; words: string } | null {
-  const after = trimmed(tokens[i + 1]);
+  const after = tokens[i + 1];
   if (after === undefined) return null;
   const lower = after.toLowerCase();
   if (CURRENCY_WORDS.has(lower)) return { unit: 'currency', words: after };
-  const then = trimmed(tokens[i + 2]);
+  const then = tokens[i + 2];
   if (lower === 'per' && then?.toLowerCase() === 'cent') {
     return { unit: 'percent', words: `${after} ${then}` };
   }
@@ -319,22 +328,22 @@ function withWordAfter(
 }
 
 /** The figures in tokens[i]: one if it is a figure, its bare numbers if it is a word. */
-function figuresAt(tokens: string[], i: number): Figure[] {
-  const token = trimmed(tokens[i]);
+function figuresAt(tokens: (string | undefined)[], i: number): Figure[] {
+  const token = tokens[i];
   if (!token || !DIGIT.test(token)) return [];
   const parts = FIGURE_TOKEN.exec(token);
   const lead = parts ? readPrefix(parts[1]) : null;
   const tail = parts ? readSuffix(parts[3]) : null;
   if (!parts || lead === null || tail === null) return bareNumbers(token);
 
-  const before = trimmed(tokens[i - 1]);
+  const before = tokens[i - 1];
   const code =
     !lead && before !== undefined && isCurrency(before) ? before : '';
   const unit: Unit = code ? 'currency' : lead || tail.unit || '';
   const exponent =
     tail.exponent ??
     (unit === 'currency'
-      ? CURRENCY_SCALE_LETTERS.get(parts[3].replace(/\+$/, ''))
+      ? CURRENCY_SCALE_LETTERS.get(withoutPlus(parts[3]))
       : undefined);
   const reading = withWordAfter(
     { text: code ? `${code} ${token}` : token, unit, exponent },
@@ -356,11 +365,15 @@ function figuresIn(text: string): Figure[] {
 
 /** Figures in `output` that `input` does not give, as written, in order of appearance. */
 export function inventedFigures(output: string, input: string): string[] {
-  const given = figuresIn(input);
-  const supported = (f: Figure) =>
-    given.some(
-      (g) => g.amount === f.amount && (f.unit === '' || g.unit === f.unit)
-    );
+  // Each amount the input gives, with the units it is given in: one lookup per figure.
+  const given = new Map<string, Set<Unit>>();
+  for (const g of figuresIn(input)) {
+    given.set(g.amount, (given.get(g.amount) ?? new Set<Unit>()).add(g.unit));
+  }
+  const supported = (f: Figure) => {
+    const units = given.get(f.amount);
+    return units !== undefined && (f.unit === '' || units.has(f.unit));
+  };
   return [
     ...new Set(
       figuresIn(output)

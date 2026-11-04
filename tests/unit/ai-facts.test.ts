@@ -318,11 +318,16 @@ describe('inventedFigures', () => {
     expect(inventedFigures(output, input)).toEqual(expected);
   });
 
-  // Inputs are the user's résumé text, so a long run that ends in something else must not
+  // Inputs are the user's résumé text, so no long run, and no long list of figures, may
   // cost the square of its length.
   test.each([
     ['dots before a letter', `1${'.'.repeat(50_000)}a`],
     ['zeros before a digit', `1.${'0'.repeat(50_000)}1`],
+    ['currency signs after a number', `1${'$'.repeat(50_000)}`],
+    [
+      'twenty thousand figures',
+      Array.from({ length: 20_000 }, (_, i) => String(i)).join(' '),
+    ],
   ])('reads %s in linear time', (_, text) => {
     const start = performance.now();
     inventedFigures(text, text);
